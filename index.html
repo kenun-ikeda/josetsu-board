@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>除雪機械管理ボード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#1F4E79; --accent2:#2e6da4; --line:#d8e0e8; --bg:#f4f6f9;
+    --ok:#1a7f4b; --warn:#b45309; --bad:#b3261e; --muted:#5b6b7b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Noto Sans JP",sans-serif;color:#1a2430;background:var(--bg);font-size:14px;line-height:1.55}
+  .mono{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+
+  /* ---------- login ---------- */
+  #login{position:fixed;inset:0;background:linear-gradient(135deg,#1F4E79,#2e6da4);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px}
+  #login .box{background:#fff;border-radius:16px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 18px 60px rgba(0,0,0,.3);text-align:center}
+  #login h1{font-size:22px;margin:0 0 6px;color:var(--accent)}
+  #login p{font-size:12px;color:var(--muted);margin:0 0 20px}
+  #login input{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:15px;text-align:center;margin-bottom:12px}
+  #login input:focus{outline:none;border-color:var(--accent2)}
+  #login .err{color:var(--bad);font-size:12px;min-height:16px;margin-bottom:10px}
+
+  /* ---------- header ---------- */
+  header{background:var(--accent);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.5px}
+  header .sub{font-size:12px;opacity:.9}
+  header .spacer{flex:1}
+  .offline-badge{display:none;background:#fff3e0;color:var(--warn);border:1px solid #f0c674;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;white-space:nowrap}
+  .offline-badge.show{display:inline-block}
+  header .logout{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600}
+  header .logout:hover{background:rgba(255,255,255,.28)}
+
+  main{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+
+  /* ---------- summary tiles ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .stat .n{font-size:28px;font-weight:800;color:var(--accent);font-family:"JetBrains Mono",monospace}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)} .stat.ok .n{color:var(--ok)}
+
+  /* ---------- tabs ---------- */
+  nav{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  nav button{background:none;border:none;padding:11px 18px;font-size:14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;font-weight:700;font-family:inherit}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+  nav button .badge{background:var(--bad);color:#fff;border-radius:999px;font-size:11px;padding:1px 7px;margin-left:6px;font-weight:700}
+  .tab{display:none}
+  .tab.active{display:block}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  h2{font-size:15px;color:var(--accent);margin:0 0 12px;border-left:4px solid var(--accent);padding-left:10px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .spacer{flex:1}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:9px 15px;font-size:13px;cursor:pointer;font-weight:700;font-family:inherit}
+  .btn:hover{background:#173a5c}
+  .btn.sec{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+  .btn.sec:hover{background:#eef4fa}
+  .btn.sm{padding:5px 11px;font-size:12px}
+  .btn.danger{background:#fff;color:var(--bad);border:1px solid #e6b4b0}
+  .btn.danger:hover{background:#fbeceb}
+  .hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+  .empty{color:var(--muted);text-align:center;padding:26px;font-size:13px}
+
+  /* ---------- company groups ---------- */
+  .company{margin-bottom:18px}
+  .company-head{display:flex;align-items:center;gap:12px;background:#f7fafd;border:1px solid var(--line);border-radius:10px 10px 0 0;padding:11px 14px;flex-wrap:wrap}
+  .company-head .cname{font-size:15px;font-weight:800;color:var(--accent)}
+  .pill{display:inline-block;background:#eef2f7;border-radius:999px;padding:2px 10px;font-size:12px;color:var(--muted);font-weight:700}
+  .m-grid{border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;background:#fff}
+  .m-card{display:flex;gap:12px;border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;transition:.15s;background:#fff;align-items:flex-start}
+  .m-card:hover{border-color:var(--accent2);box-shadow:0 3px 12px rgba(31,78,121,.12);transform:translateY(-1px)}
+  .m-thumb{width:72px;height:56px;border-radius:8px;object-fit:cover;background:#eef2f7;flex-shrink:0}
+  .m-thumb.ph{display:flex;align-items:center;justify-content:center;font-size:24px;color:#b6c2cf}
+  .m-info{min-width:0;flex:1}
+  .m-cat{font-size:11px;color:var(--muted);font-weight:700}
+  .m-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .m-plate{font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace}
+  .m-insp{font-size:12px;margin-top:4px;display:flex;align-items:center;gap:6px}
+  .tag{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700}
+  .tag.exp{background:#fbe9e7;color:var(--bad)}
+  .tag.soon{background:#fff3e0;color:var(--warn)}
+  .tag.ok{background:#e7f5ec;color:var(--ok)}
+  .tag.none{background:#eef2f7;color:var(--muted)}
+
+  /* ---------- alert table ---------- */
+  .tbl-wrap{border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:middle;white-space:nowrap}
+  th{background:#eef2f7;font-weight:700;color:#2a3a49}
+  tr.exp td{background:#fdf2f0} tr.soon td{background:#fff9ef}
+  td.num{text-align:right;font-family:"JetBrains Mono",monospace}
+
+  /* ---------- modal ---------- */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(20,30,45,.5);z-index:200;align-items:flex-start;justify-content:center;padding:30px 14px;overflow:auto}
+  .overlay.show{display:flex}
+  .panel{background:#fff;border-radius:14px;max-width:640px;width:100%;padding:20px 22px;box-shadow:0 14px 44px rgba(0,0,0,.28)}
+  .panel-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .panel-head h3{color:var(--accent);margin:0;font-size:17px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fld.full{grid-column:1 / -1}
+  .fld label{font-size:12px;color:var(--muted);font-weight:700}
+  .fld input,.fld select,.fld textarea{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:14px;font-family:inherit;color:#1a2430;width:100%}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--accent2)}
+  .fld textarea{resize:vertical;min-height:56px}
+  .modal-thumb{width:100%;max-height:150px;object-fit:contain;border-radius:8px;background:#eef2f7;margin-top:6px}
+
+  /* ---------- toast ---------- */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a2430;color:#fff;padding:11px 20px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;z-index:600;pointer-events:none;max-width:90%;text-align:center}
+  .toast.show{opacity:1}
+
+  /* ---------- resource / link cards ---------- */
+  .link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .link-card{display:flex;align-items:center;gap:12px;text-decoration:none;color:#1a2430;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff;transition:.15s}
+  .link-card:hover{border-color:var(--accent2);box-shadow:0 3px 12px rgba(31,78,121,.12);transform:translateY(-1px)}
+  .link-card.primary{background:linear-gradient(135deg,#1F4E79,#2e6da4);color:#fff;border-color:#1F4E79}
+  .link-card.primary .lc-s{color:#e3edf6}
+  .lc-ic{font-size:26px;line-height:1}
+  .lc-t{font-weight:700;font-size:14px}
+  .lc-s{font-size:12px;color:var(--muted);margin-top:2px}
+
+  /* ---------- progress bars (home) ---------- */
+  .prog-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+  .prog-name{width:180px;font-weight:700;font-size:13px;flex-shrink:0}
+  .prog-track{flex:1;min-width:120px;background:#eef2f7;border-radius:999px;height:14px;overflow:hidden}
+  .prog-fill{height:100%;background:var(--ok);border-radius:999px;transition:width .3s}
+  .prog-fill.part{background:var(--warn)}
+  .prog-fill.zero{background:#c8d2dc}
+  .prog-val{width:66px;text-align:right;font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--muted);flex-shrink:0}
+
+  /* ---------- submissions ---------- */
+  .sub-status{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700}
+  .sub-status.done{background:#e7f5ec;color:var(--ok)}
+  .sub-status.prog{background:#fff3e0;color:var(--warn)}
+  .sub-status.none{background:#eef2f7;color:var(--muted)}
+  #subs-table select,#subs-table input{border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;width:100%;background:#fff}
+  #subs-table select:focus,#subs-table input:focus{outline:none;border-color:var(--accent2)}
+
+  @media (max-width:520px){ .form-grid{grid-template-columns:1fr} .prog-name{width:100%} }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<!--
+  ログインはクライアント側の簡易パスワード。ソースが公開されるGitHub Pagesでは
+  本物のアクセス制御にはなりません（目隠し程度）。実際のアクセス制御はGAS側の
+  API_TOKEN（合言葉）で担保します。パスワードは APP_PASSWORD で任意に変更可能。
+-->
+<div id="login">
+  <div class="box">
+    <h1>❄ 除雪業務 管理ボード</h1>
+    <p>パスワードを入力してください</p>
+    <input id="login-pw" type="password" placeholder="パスワード" autocomplete="off">
+    <div class="err" id="login-err"></div>
+    <button class="btn" style="width:100%" onclick="tryLogin()">ログイン</button>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" style="display:none">
+  <header>
+    <div>
+      <h1>❄ 除雪業務 管理ボード</h1>
+      <div style="font-size:11px;opacity:.85;margin-top:1px">機械調書・提出物などをまとめて管理</div>
+    </div>
+    <div class="sub" id="hdr-sub"></div>
+    <div class="spacer"></div>
+    <span class="offline-badge" id="offline-badge">⚠️ オフライン（サンプルデータ）</span>
+    <button class="logout" onclick="logout()">ログアウト</button>
+  </header>
+
+  <main>
+    <nav>
+      <button data-tab="home" class="active">ホーム</button>
+      <button data-tab="list">機械調書</button>
+      <button data-tab="alert">車検アラート<span class="badge" id="nav-badge" style="display:none">0</span></button>
+      <button data-tab="subs">提出物管理</button>
+      <button data-tab="res">手順・資料</button>
+    </nav>
+
+    <!-- HOME -->
+    <section class="tab active" id="tab-home">
+      <div class="stat-grid" id="summary"></div>
+      <div class="card">
+        <h2>各社の提出進捗</h2>
+        <div id="home-progress"></div>
+        <p class="hint">「提出済」「確認済」を提出済みとして、必要書類（<span id="home-doccount">7</span>種）に対する割合を表示します。詳細は「提出物管理」タブで編集できます。</p>
+      </div>
+      <div class="card">
+        <h2>手順・資料</h2>
+        <div class="link-grid" id="home-links"></div>
+      </div>
+    </section>
+
+    <!-- LIST（機械調書） -->
+    <section class="tab" id="tab-list">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">構成会社ごとの機械</h2>
+          <div class="spacer"></div>
+          <button class="btn sec sm" onclick="openModal(null,'')">＋ 機械を追加</button>
+        </div>
+        <p class="hint">カードをクリックすると編集できます。会社名の横の「＋機械を追加」でその会社に機械を追加します。</p>
+      </div>
+      <div id="companies"></div>
+    </section>
+
+    <!-- ALERT -->
+    <section class="tab" id="tab-alert">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">車検アラート</h2>
+          <div class="spacer"></div>
+          <button class="btn" onclick="makeDraft('exp')">✉ 車検切れの担当へ下書き</button>
+          <button class="btn sec" onclick="makeDraft('expsoon')">✉ 満了間近も含めて下書き</button>
+        </div>
+        <p class="hint">車検満了日の近い順に並びます。ボタンを押すとGAS側で対象の担当あてにGmail下書きを作成します（自動送信はしません）。「満了間近も含めて」は車検切れ＋満了間近（残り日数がリード日数以内）が対象です。</p>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>状態</th><th>車検満了日</th><th>残り</th><th>会社</th><th>機械種別</th><th>機械名称</th><th>車両番号</th><th>担当者</th><th>通知先メール</th>
+            </tr></thead>
+            <tbody id="alert-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUBMISSIONS（提出物管理） -->
+    <section class="tab" id="tab-subs">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">各社の提出物リスト</h2>
+          <div class="spacer"></div>
+          <button class="btn sec sm" onclick="addSubCompany()">＋ 会社を追加</button>
+        </div>
+        <p class="hint">会社ごとに必要書類の提出状況を管理します。状態・提出日・リンク・備考を変更すると自動で保存されます。機械が未登録の会社も「会社を追加」で対象にできます。</p>
+      </div>
+      <div id="subs-table"></div>
+    </section>
+
+    <!-- RESOURCES（手順・資料） -->
+    <section class="tab" id="tab-res">
+      <div class="card">
+        <h2>手順・資料</h2>
+        <p class="hint">道路維持除雪業務の資料・フォルダを新規タブで開きます。</p>
+        <div class="link-grid" id="res-links"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ EDIT MODAL ============ -->
+<div class="overlay" id="modal">
+  <div class="panel">
+    <div class="panel-head">
+      <h3 id="modal-title">機械を追加</h3>
+      <div class="spacer"></div>
+      <button class="btn sec sm" onclick="closeModal()">閉じる</button>
+    </div>
+    <datalist id="company-list"></datalist>
+    <div class="form-grid">
+      <div class="fld">
+        <label>会社</label>
+        <input id="f-company" list="company-list" placeholder="会社名">
+      </div>
+      <div class="fld">
+        <label>機械種別</label>
+        <select id="f-category"></select>
+      </div>
+      <div class="fld">
+        <label>規格・能力</label>
+        <input id="f-spec" placeholder="例）10t級 / 2.5m">
+      </div>
+      <div class="fld">
+        <label>機械名称</label>
+        <input id="f-name" placeholder="機械名称">
+      </div>
+      <div class="fld">
+        <label>型式</label>
+        <input id="f-model" placeholder="型式">
+      </div>
+      <div class="fld">
+        <label>車両番号</label>
+        <input id="f-plate" placeholder="札幌100あ12-34">
+      </div>
+      <div class="fld">
+        <label>区分</label>
+        <select id="f-ownership"></select>
+      </div>
+      <div class="fld">
+        <label>車検満了日</label>
+        <input id="f-inspection" type="date">
+      </div>
+      <div class="fld">
+        <label>台数</label>
+        <input id="f-qty" type="number" min="0" step="1" value="1">
+      </div>
+      <div class="fld">
+        <label>担当者</label>
+        <input id="f-manager" placeholder="担当者名">
+      </div>
+      <div class="fld full">
+        <label>担当メール</label>
+        <input id="f-email" type="email" placeholder="tantou@example.com">
+      </div>
+      <div class="fld full">
+        <label>車両画像URL（Googleドライブの共有リンク可）</label>
+        <input id="f-imageUrl" placeholder="https://drive.google.com/file/d/..." oninput="updateModalThumb()">
+        <img id="modal-thumb" class="modal-thumb" style="display:none" alt="">
+      </div>
+      <div class="fld full">
+        <label>車検証リンク</label>
+        <input id="f-shakenLink" placeholder="https://drive.google.com/...">
+      </div>
+      <div class="fld full">
+        <label>備考</label>
+        <textarea id="f-note" placeholder="備考"></textarea>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn" id="modal-save" onclick="saveMachine()">保存</button>
+      <button class="btn danger sm" id="modal-del" style="display:none" onclick="deleteMachine()">削除</button>
+      <div class="spacer"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/*════════════════ 設定定数（ここだけ書き換えれば動きます） ════════════════*/
+const GAS_URL   = 'https://script.google.com/macros/s/AKfycbx7DtBGTk_QGYsHK7mGNxigC2FhTM-ZZds8O33pziuErRTv2tH-ab6MvjfjOBeK7_Z_Pg/exec'; // GASのウェブアプリURL
+const API_TOKEN = 'kenun-josetsu-2026';             // GAS側 API_TOKEN と一致必須（機械管理_AppsScript.gs で確認済み）
+const APP_PASSWORD = 'Kitamaruchi';                  // ログインパスワード（ユーザーが任意に変更）
+const DEMO = GAS_URL.indexOf('PASTE') >= 0;         // true ならGAS無しでもメモリ内サンプルで動作
+
+/*════════════════ 定数 ════════════════*/
+const CATEGORIES = ["除雪トラック","ロータリ除雪車","除雪ドーザ","小型ロータリ","タイヤショベル","歩道除雪車","ダンプトラック","その他"];
+const OWNERSHIP  = ["所有","リース","レンタル","市貸与"];
+// 提出物のフォールバック既定値（GASの list が docs/subStatus を返せば上書き）
+const DEFAULT_DOCS = ['一般競争入札参加資格確認申請書','同種業務履行実績書','配置予定技術者経歴書','協定書','除雪機械所有調書','車検証の写し','機械使用調書'];
+const DEFAULT_SUB_STATUS = ['未提出','準備中','提出済','確認済'];
+// 手順・資料リンク
+const RESOURCES = [
+  {ic:'📘', t:'引き継ぎ資料（Doc）', s:'入札〜終了の流れ・手順書', url:'https://docs.google.com/document/d/1PymDge84iKU17ymO91nEdFmHcsOZbJ09dEJidpwW97U/edit', primary:true},
+  {ic:'📊', t:'機械管理台帳（Sheet）', s:'各社の機械・車検期限・担当', url:'https://docs.google.com/spreadsheets/d/1Lkec_iHcQVmV_fGNVaISGSVcYiTMEqtCT3slVD1AXYg/edit'},
+  {ic:'📄', t:'入札書類フォルダ', s:'年度別の入札関係書類・様式', url:'https://drive.google.com/drive/folders/1woC8vmSr9sUE6KFRu68a_pi7XiHzv4OE'},
+  {ic:'🚜', t:'車両画像フォルダ', s:'車両の写真フォルダ', url:'https://drive.google.com/drive/folders/1So0VghhMvqyTcg9gxnC8grEGDswZyYUh'},
+  {ic:'📁', t:'フォルダ全体', s:'道路維持除雪業務（親フォルダ）', url:'https://drive.google.com/drive/folders/1uu3htMBPPVlnVE1FTa7u8KOTYtEly892'}
+];
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+/*════════════════ 状態 ════════════════*/
+let CONFIG   = {lead:30, jv:'', district:'', year:'', defaultEmail:'', signature:''};
+let MACHINES = [];
+let SUBMISSIONS = [];              // [{row, company, doc, status, date, link, note}]
+let DOCS = DEFAULT_DOCS.slice();   // 必要書類マスタ
+let SUB_STATUS = DEFAULT_SUB_STATUS.slice();
+let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社（機械なし）
+let offline  = false;
+let editingRow = null; // 編集中の行番号（新規は null）
+
+/*════════════════ ユーティリティ ════════════════*/
+function esc(s){ return (s==null?"":String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function num(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+// 'yyyy-mm-dd' はローカル分解(new Date(y,m-1,d))で解釈しTZずれを防ぐ。それ以外は通常パース。
+function parseDate(s){
+  if(!s) return null;
+  const str = String(s).trim();
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  let d;
+  if(m){ d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3])); }
+  else { d = new Date(str); }
+  if(isNaN(d)) return null; d.setHours(0,0,0,0); return d;
+}
+function isoDaysLeft(iso){ const d=parseDate(iso); if(!d) return null; return Math.round((d-TODAY)/86400000); }
+function statusFromDays(days){ if(days==null) return 'none'; if(days<0) return 'exp'; if(days<=num(CONFIG.lead)) return 'soon'; return 'ok'; }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* Googleドライブ共有リンク → サムネイル表示URL（uc?export=view は503が出るので使わない） */
+function driveThumb(url){
+  if(!url) return '';
+  const m = String(url).match(/[-\w]{25,}/); // 25文字以上の英数字ID
+  if(m) return 'https://drive.google.com/thumbnail?id='+m[0]+'&sz=w400';
+  return /^https?:\/\//.test(url) ? url : ''; // ドライブ以外の直リンクはそのまま
+}
+
+/*════════════════ オフライン表示 ════════════════*/
+function setOffline(v){
+  offline = v;
+  document.getElementById('offline-badge').classList.toggle('show', v);
+}
+
+/*════════════════ GAS呼び出し（10秒タイムアウト＋1回リトライ→失敗でモック） ════════════════*/
+// Content-Type ヘッダは付けない（text/plain のままにして CORS プリフライトを回避＝既存アプリの流儀）
+async function gasFetch(payload){
+  const body = JSON.stringify(Object.assign({token:API_TOKEN}, payload));
+  let lastErr = null;
+  for(let attempt=0; attempt<2; attempt++){ // 初回＋リトライ1回
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 10000); // 10秒
+    try{
+      const res = await fetch(GAS_URL, {method:'POST', body, signal:ctrl.signal});
+      clearTimeout(timer);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      return await res.json();
+    }catch(e){
+      clearTimeout(timer);
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('network error');
+}
+
+// 本体：DEMO時／リトライも失敗時はメモリ内サンプルで再現し、オフラインバッジを出す
+async function callApi(payload){
+  if(DEMO){ setOffline(true); return mockApi(payload); }
+  try{
+    const data = await gasFetch(payload);
+    setOffline(false);
+    return data;
+  }catch(e){
+    setOffline(true);
+    return mockApi(payload);
+  }
+}
+
+/*════════════════ メモリ内サンプル（モック） ════════════════*/
+function isoFromToday(days){ const d=new Date(TODAY.getTime()+days*86400000); return d.toISOString().slice(0,10); }
+const mockStore = {
+  config: {lead:30, jv:'厚別建設 企業体', district:'厚別区北地区', year:'令和8年度',
+           defaultEmail:'genba-kanri@example.com', signature:'厚別建設 企業体　管理部'},
+  machines: [
+    {row:3, company:'A建設（代表）', category:'除雪トラック', spec:'10t級', name:'除雪ドーザ付', model:'XZU-720', plate:'札幌100あ12-34', ownership:'所有', inspection:isoFromToday(-8),  qty:2, manager:'佐藤', email:'sato@a-kensetsu.example', imageUrl:'', shakenLink:'', note:''},
+    {row:4, company:'A建設（代表）', category:'ロータリ除雪車', spec:'2.5m', name:'HTR', model:'HTR265', plate:'札幌800か56-78', ownership:'所有', inspection:isoFromToday(18),  qty:1, manager:'佐藤', email:'sato@a-kensetsu.example', imageUrl:'', shakenLink:'', note:''},
+    {row:5, company:'A建設（代表）', category:'タイヤショベル', spec:'1.3m3', name:'ホイールローダ', model:'WA200', plate:'—', ownership:'リース', inspection:isoFromToday(140), qty:2, manager:'鈴木', email:'', imageUrl:'', shakenLink:'', note:'リース契約書添付'},
+    {row:6, company:'B土木', category:'除雪ドーザ', spec:'3.1m', name:'モータグレーダ', model:'GD505', plate:'—', ownership:'所有', inspection:isoFromToday(60), qty:1, manager:'田中', email:'tanaka@b-doboku.example', imageUrl:'', shakenLink:'', note:''},
+    {row:7, company:'B土木', category:'ダンプトラック', spec:'10t', name:'ダンプ', model:'FV', plate:'札幌100か90-12', ownership:'所有', inspection:isoFromToday(25), qty:3, manager:'田中', email:'tanaka@b-doboku.example', imageUrl:'', shakenLink:'', note:''}
+  ],
+  submissions: [
+    {row:2, company:'A建設（代表）', doc:'一般競争入札参加資格確認申請書', status:'確認済', date:isoFromToday(-20), link:'', note:''},
+    {row:3, company:'A建設（代表）', doc:'除雪機械所有調書', status:'提出済', date:isoFromToday(-5), link:'', note:''},
+    {row:4, company:'B土木', doc:'協定書', status:'準備中', date:'', link:'', note:'押印待ち'}
+  ]
+};
+function mockWithStatus(m){
+  const days = isoDaysLeft(m.inspection);
+  let status = 'none';
+  if(days!=null) status = days<0 ? 'exp' : (days<=num(mockStore.config.lead) ? 'soon' : 'ok');
+  return Object.assign({}, m, {days:days, status:status});
+}
+function mockApi(payload){
+  const a = payload.action;
+  if(a==='list'){
+    return {ok:true, config:Object.assign({}, mockStore.config), machines: mockStore.machines.map(mockWithStatus),
+            submissions: mockStore.submissions.map(function(x){ return Object.assign({}, x); }),
+            docs: DEFAULT_DOCS.slice(), subStatus: DEFAULT_SUB_STATUS.slice()};
+  }
+  if(a==='saveSub'){
+    const sub = Object.assign({}, payload.sub || {});
+    let row = sub.row;
+    if(!row || row < 2){
+      // company+doc 一致の既存行を探す
+      const found = mockStore.submissions.find(function(x){ return x.company===sub.company && x.doc===sub.doc; });
+      if(found){ row = found.row; }
+      else { row = mockStore.submissions.reduce(function(mx,x){ return Math.max(mx, x.row||1); }, 1) + 1; }
+    }
+    sub.row = row;
+    const idx = mockStore.submissions.findIndex(function(x){ return x.row===row; });
+    if(idx>=0) mockStore.submissions[idx] = sub; else mockStore.submissions.push(sub);
+    return {ok:true, row:row};
+  }
+  if(a==='delSub'){
+    mockStore.submissions = mockStore.submissions.filter(function(x){ return x.row!==payload.row; });
+    return {ok:true};
+  }
+  if(a==='save'){
+    const m = Object.assign({}, payload.machine || {});
+    let row = m.row;
+    if(!row || row < 3){
+      row = mockStore.machines.reduce((mx,x)=>Math.max(mx, x.row||2), 2) + 1;
+      m.row = row;
+      mockStore.machines.push(m);
+    }else{
+      const idx = mockStore.machines.findIndex(x=>x.row===row);
+      if(idx>=0) mockStore.machines[idx] = m; else mockStore.machines.push(m);
+    }
+    return {ok:true, row:row};
+  }
+  if(a==='delete'){
+    mockStore.machines = mockStore.machines.filter(x=>x.row!==payload.row);
+    return {ok:true};
+  }
+  if(a==='draft'){
+    const scope = payload.scope || 'exp';
+    const pick = mockStore.machines.map(mockWithStatus).filter(function(m){
+      if(m.days==null) return false;
+      return scope==='exp' ? m.days<0 : m.days<=num(mockStore.config.lead);
+    });
+    const groups = {}; let skipped = 0;
+    pick.forEach(function(m){
+      const to = m.email || mockStore.config.defaultEmail || '';
+      if(!to){ skipped++; return; }
+      (groups[to] = groups[to] || []).push(m);
+    });
+    return {ok:true, result:{drafts:Object.keys(groups).length, skipped:skipped}};
+  }
+  return {ok:false, error:'unknown action: '+a};
+}
+
+/*════════════════ データ取得 ════════════════*/
+async function loadData(){
+  const res = await callApi({action:'list'});
+  if(res && res.ok){
+    CONFIG   = res.config || CONFIG;
+    MACHINES = Array.isArray(res.machines) ? res.machines : [];
+    SUBMISSIONS = Array.isArray(res.submissions) ? res.submissions : [];
+    if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
+    if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
+    // days/status がGASから来ない場合に備えて補完
+    MACHINES.forEach(function(m){
+      if(m.days === undefined || m.days === null){ m.days = isoDaysLeft(m.inspection); }
+      if(!m.status){ m.status = statusFromDays(m.days); }
+    });
+    renderAll();
+  }else{
+    toast('データ取得に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+
+/*════════════════ 描画 ════════════════*/
+function companyList(){
+  const seen = []; MACHINES.forEach(function(m){ if(m.company && seen.indexOf(m.company)<0) seen.push(m.company); }); return seen;
+}
+// 提出物対象の会社 = 機械の会社 ∪ 提出物データの会社 ∪ 手動追加分
+function allCompanies(){
+  const seen = [];
+  function add(c){ if(c && seen.indexOf(c)<0) seen.push(c); }
+  MACHINES.forEach(function(m){ add(m.company); });
+  SUBMISSIONS.forEach(function(s){ add(s.company); });
+  EXTRA_COMPANIES.forEach(add);
+  return seen;
+}
+
+function renderAll(){
+  renderHeader();
+  renderSummary();
+  renderHome();
+  renderResources();
+  renderList();
+  renderAlert();
+  renderSubs();
+  renderCompanyDatalist();
+}
+
+/* ホーム：提出進捗バー＋資料リンク */
+function subStat(company){
+  // 提出済み = 状態が「提出済」または「確認済」
+  let done = 0;
+  DOCS.forEach(function(doc){
+    const rec = SUBMISSIONS.find(function(s){ return s.company===company && s.doc===doc; });
+    if(rec && (rec.status==='提出済' || rec.status==='確認済')) done++;
+  });
+  return {done:done, need:DOCS.length};
+}
+function linkCardHtml(r){
+  return '<a class="link-card'+(r.primary?' primary':'')+'" href="'+esc(r.url)+'" target="_blank" rel="noopener">'
+    + '<div class="lc-ic">'+r.ic+'</div>'
+    + '<div><div class="lc-t">'+esc(r.t)+'</div><div class="lc-s">'+esc(r.s)+'</div></div></a>';
+}
+function renderHome(){
+  document.getElementById('home-doccount').textContent = DOCS.length;
+  const companies = allCompanies();
+  const prog = document.getElementById('home-progress');
+  if(companies.length===0){
+    prog.innerHTML = '<div class="empty">会社が登録されていません。</div>';
+  }else{
+    prog.innerHTML = companies.map(function(c){
+      const st = subStat(c);
+      const pct = st.need ? Math.round(st.done/st.need*100) : 0;
+      const cls = pct>=100 ? '' : (pct>0 ? 'part' : 'zero');
+      return '<div class="prog-row">'
+        + '<div class="prog-name">'+esc(c)+'</div>'
+        + '<div class="prog-track"><div class="prog-fill '+cls+'" style="width:'+pct+'%"></div></div>'
+        + '<div class="prog-val">'+st.done+'/'+st.need+'</div>'
+        + '</div>';
+    }).join('');
+  }
+  document.getElementById('home-links').innerHTML = RESOURCES.map(linkCardHtml).join('');
+}
+function renderResources(){
+  document.getElementById('res-links').innerHTML = RESOURCES.map(linkCardHtml).join('');
+}
+
+function renderHeader(){
+  const parts = [];
+  if(CONFIG.district) parts.push(CONFIG.district);
+  if(CONFIG.year) parts.push(CONFIG.year);
+  if(CONFIG.jv) parts.push(CONFIG.jv);
+  document.getElementById('hdr-sub').textContent = parts.join('　/　');
+}
+
+function renderSummary(){
+  const companies = companyList().length;
+  const totalQty  = MACHINES.reduce(function(s,m){ return s + num(m.qty); }, 0);
+  const exp  = MACHINES.filter(function(m){ return m.status==='exp'; }).length;
+  const soon = MACHINES.filter(function(m){ return m.status==='soon'; }).length;
+  const tiles = [
+    {n:companies, l:'構成会社数'},
+    {n:totalQty,  l:'機械台数（合計）'},
+    {n:exp,  l:'車検切れ', cls:exp>0?'bad':''},
+    {n:soon, l:'満了間近', cls:soon>0?'warn':''}
+  ];
+  document.getElementById('summary').innerHTML = tiles.map(function(t){
+    return '<div class="stat '+(t.cls||'')+'"><div class="n">'+t.n+'</div><div class="l">'+t.l+'</div></div>';
+  }).join('');
+
+  const badge = document.getElementById('nav-badge');
+  const cnt = exp + soon;
+  if(cnt>0){ badge.style.display=''; badge.textContent=cnt; } else { badge.style.display='none'; }
+}
+
+function tagHtml(status){
+  const map = {exp:'車検切れ', soon:'満了間近', ok:'OK', none:'日付未設定'};
+  return '<span class="tag '+status+'">'+map[status]+'</span>';
+}
+function remainText(days){
+  if(days==null) return '—';
+  if(days<0) return (-days)+'日超過';
+  return 'あと'+days+'日';
+}
+
+function renderList(){
+  const wrap = document.getElementById('companies');
+  const companies = companyList();
+  if(MACHINES.length===0){
+    wrap.innerHTML = '<div class="card empty">まだ機械が登録されていません。「＋ 機械を追加」から登録してください。</div>';
+    return;
+  }
+  wrap.innerHTML = companies.map(function(comp){
+    const list = MACHINES.filter(function(m){ return m.company===comp; });
+    const qty  = list.reduce(function(s,m){ return s + num(m.qty); }, 0);
+    const cards = list.map(function(m){
+      const thumb = driveThumb(m.imageUrl);
+      // 画像読込失敗時は img を🚜プレースホルダのdivへ差し替える（imgはテキスト子を描画しないため）
+      const img = thumb
+        ? '<img class="m-thumb" src="'+esc(thumb)+'" alt="" onerror="this.outerHTML=\'<div class=\\\'m-thumb ph\\\'>🚜</div>\'">'
+        : '<div class="m-thumb ph">🚜</div>';
+      return '<div class="m-card" onclick="openModal('+m.row+')">'
+        + img
+        + '<div class="m-info">'
+        +   '<div class="m-cat">'+esc(m.category||'')+'</div>'
+        +   '<div class="m-name">'+esc(m.name||'（名称未設定）')+'</div>'
+        +   '<div class="m-plate">'+esc(m.plate||'車両番号なし')+'</div>'
+        +   '<div class="m-insp"><span class="mono">'+esc(m.inspection||'—')+'</span>'+tagHtml(m.status||'none')+'</div>'
+        + '</div></div>';
+    }).join('');
+    return '<div class="company">'
+      + '<div class="company-head">'
+      +   '<span class="cname">'+esc(comp)+'</span>'
+      +   '<span class="pill">機械 '+list.length+' 種 / 計 '+qty+' 台</span>'
+      +   '<div class="spacer"></div>'
+      +   '<button class="btn sec sm" onclick="openModal(null,\''+esc(comp).replace(/'/g,"\\'")+'\')">＋ 機械を追加</button>'
+      + '</div>'
+      + '<div class="m-grid">'+cards+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderAlert(){
+  const rows = MACHINES.slice().sort(function(a,b){
+    if(a.days==null) return 1; if(b.days==null) return -1; return a.days - b.days;
+  });
+  const tb = document.getElementById('alert-body');
+  if(rows.length===0){
+    tb.innerHTML = '<tr><td colspan="9" class="empty" style="border:none">機械が登録されていません。</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(function(m){
+    const to = m.email || CONFIG.defaultEmail || '';
+    const mail = to ? esc(to) : '<span style="color:var(--bad)">未設定</span>';
+    const cls = (m.status==='exp'||m.status==='soon') ? m.status : '';
+    return '<tr class="'+cls+'">'
+      + '<td>'+tagHtml(m.status||'none')+'</td>'
+      + '<td class="mono">'+esc(m.inspection||'—')+'</td>'
+      + '<td class="num">'+remainText(m.days)+'</td>'
+      + '<td>'+esc(m.company||'')+'</td>'
+      + '<td>'+esc(m.category||'')+'</td>'
+      + '<td>'+esc(m.name||'')+'</td>'
+      + '<td class="mono">'+esc(m.plate||'')+'</td>'
+      + '<td>'+esc(m.manager||'')+'</td>'
+      + '<td>'+mail+'</td>'
+      + '</tr>';
+  }).join('');
+}
+
+function renderCompanyDatalist(){
+  document.getElementById('company-list').innerHTML =
+    companyList().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
+}
+
+/*════════════════ 提出物管理 ════════════════*/
+function subStatusColor(status){
+  if(status==='提出済' || status==='確認済') return {bg:'#e7f5ec', fg:'#1a7f4b'};
+  if(status==='準備中') return {bg:'#fff3e0', fg:'#b45309'};
+  return {bg:'#eef2f7', fg:'#5b6b7b'}; // 未提出 ほか
+}
+function renderSubs(){
+  const wrap = document.getElementById('subs-table');
+  const companies = allCompanies();
+  if(companies.length===0){
+    wrap.innerHTML = '<div class="card empty">会社がありません。「＋ 会社を追加」から登録してください。</div>';
+    return;
+  }
+  wrap.innerHTML = companies.map(function(comp, ci){
+    const st = subStat(comp);
+    const rows = DOCS.map(function(doc, di){
+      const rec = SUBMISSIONS.find(function(s){ return s.company===comp && s.doc===doc; }) || {status:'未提出', date:'', link:'', note:'', row:null};
+      const col = subStatusColor(rec.status);
+      const opts = SUB_STATUS.map(function(o){ return '<option '+(o===rec.status?'selected':'')+'>'+esc(o)+'</option>'; }).join('');
+      const idp = 'sub-'+ci+'-'+di;
+      const delBtn = (rec.row!=null)
+        ? '<button class="btn danger sm" title="この記録を削除" onclick="delSubRow('+rec.row+')">×</button>'
+        : '';
+      return '<tr>'
+        + '<td>'+esc(doc)+'</td>'
+        + '<td><select id="'+idp+'-status" style="background:'+col.bg+';color:'+col.fg+';font-weight:700" onchange="saveSubField('+ci+','+di+')">'+opts+'</select></td>'
+        + '<td><input id="'+idp+'-date" type="date" value="'+esc((rec.date||'').slice(0,10))+'" onchange="saveSubField('+ci+','+di+')"></td>'
+        + '<td><input id="'+idp+'-link" type="text" placeholder="ファイルURL" value="'+esc(rec.link||'')+'" onchange="saveSubField('+ci+','+di+')"></td>'
+        + '<td><input id="'+idp+'-note" type="text" placeholder="備考" value="'+esc(rec.note||'')+'" onchange="saveSubField('+ci+','+di+')"></td>'
+        + '<td style="text-align:center">'+delBtn+'</td>'
+        + '</tr>';
+    }).join('');
+    return '<div class="company">'
+      + '<div class="company-head">'
+      +   '<span class="cname">'+esc(comp)+'</span>'
+      +   '<span class="pill" id="sub-pill-'+ci+'">提出 '+st.done+' / '+st.need+'</span>'
+      + '</div>'
+      + '<div class="tbl-wrap" style="border-radius:0 0 10px 10px;border-top:none">'
+      +   '<table><thead><tr><th style="width:34%">書類名</th><th style="width:14%">状態</th><th style="width:15%">提出日</th><th style="width:20%">リンク</th><th style="width:14%">備考</th><th style="width:3%"></th></tr></thead>'
+      +   '<tbody>'+rows+'</tbody></table>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+// 会社を手動追加（機械が無い会社も対象にする）
+function addSubCompany(){
+  const name = (prompt('追加する会社名を入力してください') || '').trim();
+  if(!name) return;
+  if(allCompanies().indexOf(name) >= 0){ toast('その会社は既に一覧にあります'); return; }
+  EXTRA_COMPANIES.push(name);
+  renderSubs(); renderHome();
+  toast('会社を追加しました');
+}
+// 変更した1行のステータス色と会社進捗ピルだけをその場で更新（入力欄は作り直さずフォーカス維持）
+function refreshSubRowCosmetics(ci, di, comp){
+  const idp = 'sub-'+ci+'-'+di;
+  const sel = document.getElementById(idp+'-status');
+  if(sel){ const col = subStatusColor(sel.value); sel.style.background = col.bg; sel.style.color = col.fg; }
+  const st = subStat(comp);
+  const pill = document.getElementById('sub-pill-'+ci);
+  if(pill) pill.textContent = '提出 '+st.done+' / '+st.need;
+}
+// 1行の入力値を集めて saveSub を呼ぶ（成功後はローカル配列のみ更新し、全再取得・全再描画はしない）
+async function saveSubField(ci, di){
+  const comp = allCompanies()[ci];
+  const doc  = DOCS[di];
+  if(comp==null || doc==null) return;
+  const idp = 'sub-'+ci+'-'+di;
+  const sub = {
+    company: comp,
+    doc:     doc,
+    status:  document.getElementById(idp+'-status').value,
+    date:    document.getElementById(idp+'-date').value,
+    link:    document.getElementById(idp+'-link').value.trim(),
+    note:    document.getElementById(idp+'-note').value.trim()
+  };
+  const existing = SUBMISSIONS.find(function(s){ return s.company===comp && s.doc===doc; });
+  const wasNew = !(existing && existing.row!=null); // 保存前にレコード（row付き）が無かった＝新規作成
+  if(existing && existing.row!=null) sub.row = existing.row;
+  const res = await callApi({action:'saveSub', sub:sub});
+  if(res && res.ok){
+    // 返ってきた row でローカル SUBMISSIONS の該当レコードだけを更新（無ければ追加）
+    const rec = Object.assign({}, sub, {row: res.row});
+    const idx = SUBMISSIONS.findIndex(function(s){ return s.row===res.row || (s.company===comp && s.doc===doc); });
+    if(idx>=0) SUBMISSIONS[idx] = rec; else SUBMISSIONS.push(rec);
+    if(wasNew){
+      // 新規作成時のみ提出物タブを描画し直して×ボタンを表示。可能なら同じ状態selectへフォーカスを戻す。
+      renderSubs();
+      const back = document.getElementById(idp+'-status');
+      if(back && back.focus) back.focus();
+    }else{
+      // 既存レコードの更新は行を作り直さず色・進捗のみ更新（フォーカス維持）
+      refreshSubRowCosmetics(ci, di, comp);
+    }
+    renderHome();
+    toast('提出物を保存しました' + (offline?'（サンプル）':''));
+  }else{
+    toast('提出物の保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+async function delSubRow(row){
+  if(row==null) return;
+  if(!confirm('この提出記録を削除しますか？（状態は未提出に戻ります）')) return;
+  const res = await callApi({action:'delSub', row:row});
+  if(res && res.ok){
+    // ローカル配列から該当レコードを除去し、提出物タブとホーム進捗だけ再描画（機械側は触らない）
+    SUBMISSIONS = SUBMISSIONS.filter(function(s){ return s.row!==row; });
+    renderSubs();
+    renderHome();
+    toast('削除しました' + (offline?'（サンプル）':''));
+  }else{
+    toast('削除に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+
+/*════════════════ 追加/編集モーダル ════════════════*/
+function fillSelect(id, opts){
+  document.getElementById(id).innerHTML = opts.map(function(o){ return '<option>'+esc(o)+'</option>'; }).join('');
+}
+function openModal(row, presetCompany){
+  editingRow = (row!=null) ? row : null;
+  fillSelect('f-category', CATEGORIES);
+  fillSelect('f-ownership', OWNERSHIP);
+  let m = {company:presetCompany||'', category:CATEGORIES[0], spec:'', name:'', model:'', plate:'',
+           ownership:'所有', inspection:'', qty:1, manager:'', email:'', imageUrl:'', shakenLink:'', note:''};
+  if(editingRow!=null){
+    const found = MACHINES.find(function(x){ return x.row===editingRow; });
+    if(found) m = found;
+  }
+  document.getElementById('modal-title').textContent = (editingRow!=null) ? '機械を編集' : '機械を追加';
+  document.getElementById('f-company').value    = m.company||'';
+  document.getElementById('f-category').value    = m.category||CATEGORIES[0];
+  document.getElementById('f-spec').value        = m.spec||'';
+  document.getElementById('f-name').value        = m.name||'';
+  document.getElementById('f-model').value       = m.model||'';
+  document.getElementById('f-plate').value       = m.plate||'';
+  document.getElementById('f-ownership').value   = m.ownership||'所有';
+  document.getElementById('f-inspection').value  = (m.inspection||'').slice(0,10);
+  document.getElementById('f-qty').value         = (m.qty==null||m.qty==='') ? 1 : m.qty;
+  document.getElementById('f-manager').value     = m.manager||'';
+  document.getElementById('f-email').value       = m.email||'';
+  document.getElementById('f-imageUrl').value    = m.imageUrl||'';
+  document.getElementById('f-shakenLink').value  = m.shakenLink||'';
+  document.getElementById('f-note').value        = m.note||'';
+  document.getElementById('modal-del').style.display = (editingRow!=null) ? '' : 'none';
+  updateModalThumb();
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('show'); editingRow=null; }
+function updateModalThumb(){
+  const url = document.getElementById('f-imageUrl').value;
+  const t = driveThumb(url);
+  const img = document.getElementById('modal-thumb');
+  if(t){ img.src = t; img.style.display=''; img.onerror=function(){ img.style.display='none'; }; }
+  else { img.style.display='none'; img.removeAttribute('src'); }
+}
+function readForm(){
+  const m = {
+    company:    document.getElementById('f-company').value.trim(),
+    category:   document.getElementById('f-category').value,
+    spec:       document.getElementById('f-spec').value.trim(),
+    name:       document.getElementById('f-name').value.trim(),
+    model:      document.getElementById('f-model').value.trim(),
+    plate:      document.getElementById('f-plate').value.trim(),
+    ownership:  document.getElementById('f-ownership').value,
+    inspection: document.getElementById('f-inspection').value,
+    qty:        num(document.getElementById('f-qty').value),
+    manager:    document.getElementById('f-manager').value.trim(),
+    email:      document.getElementById('f-email').value.trim(),
+    imageUrl:   document.getElementById('f-imageUrl').value.trim(),
+    shakenLink: document.getElementById('f-shakenLink').value.trim(),
+    note:       document.getElementById('f-note').value.trim()
+  };
+  if(editingRow!=null) m.row = editingRow;
+  return m;
+}
+async function saveMachine(){
+  const m = readForm();
+  if(!m.company){ toast('会社名を入力してください'); return; }
+  const btn = document.getElementById('modal-save');
+  btn.disabled = true; btn.textContent = '保存中...';
+  const res = await callApi({action:'save', machine:m});
+  btn.disabled = false; btn.textContent = '保存';
+  if(res && res.ok){
+    closeModal();
+    await loadData();
+    toast('保存しました' + (offline?'（サンプル）':''));
+  }else{
+    toast('保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+async function deleteMachine(){
+  if(editingRow==null) return;
+  if(!confirm('この機械を削除しますか？')) return;
+  const res = await callApi({action:'delete', row:editingRow});
+  if(res && res.ok){
+    closeModal();
+    await loadData();
+    toast('削除しました' + (offline?'（サンプル）':''));
+  }else{
+    toast('削除に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+
+/*════════════════ 車検アラート：メール下書き作成 ════════════════*/
+async function makeDraft(scope){
+  scope = scope || 'exp'; // 'exp'=車検切れのみ / それ以外(例 'expsoon')=切れ＋満了間近
+  const res = await callApi({action:'draft', scope:scope});
+  if(res && res.ok){
+    const r = res.result || {};
+    let msg = 'メール下書きを ' + (r.drafts||0) + ' 件作成しました';
+    if(r.skipped) msg += '（通知先メール未設定 ' + r.skipped + ' 件を除外）';
+    if(offline) msg += '　※サンプル動作のため実際のGmail下書きは作成されません';
+    toast(msg);
+  }else{
+    toast('下書き作成に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+
+/*════════════════ タブ切替 ════════════════*/
+document.querySelectorAll('nav button').forEach(function(b){
+  b.onclick = function(){
+    document.querySelectorAll('nav button').forEach(function(x){ x.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+    b.classList.add('active');
+    document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+  };
+});
+
+/*════════════════ ログイン ════════════════*/
+function logout(){
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login').style.display = 'flex';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('login-pw').focus();
+}
+function tryLogin(){
+  const pw = document.getElementById('login-pw').value;
+  if(pw === APP_PASSWORD){
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    loadData();
+  }else{
+    document.getElementById('login-err').textContent = 'パスワードが違います';
+  }
+}
+document.getElementById('login-pw').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') tryLogin();
+});
+
+// モーダル外クリックで閉じる
+document.getElementById('modal').addEventListener('click', function(e){
+  if(e.target === this) closeModal();
+});
+
+// DEMOモードのときはヒント表示（本番URL未設定）
+if(DEMO){
+  document.querySelector('#login p').textContent = 'サンプルデータで動作中（GAS_URL 未設定）／パスワードを入力してください';
+}
+window.addEventListener('load', function(){ document.getElementById('login-pw').focus(); });
+</script>
+</body>
+</html>
