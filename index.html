@@ -188,9 +188,13 @@
     <section class="tab active" id="tab-home">
       <div class="stat-grid" id="summary"></div>
       <div class="card">
-        <h2>各社の提出進捗</h2>
+        <h2>各社の提出進捗（今年度）</h2>
         <div id="home-progress"></div>
-        <p class="hint">「提出済」「確認済」を提出済みとして、必要書類（<span id="home-doccount">7</span>種）に対する割合を表示します。詳細は「提出物管理」タブで編集できます。</p>
+        <p class="hint">今年度分について「提出済」「確認済」を提出済みとして、必要書類（<span id="home-doccount">7</span>種）に対する割合を表示します。詳細は「提出物管理」タブで編集できます。</p>
+      </div>
+      <div class="card">
+        <h2>予定カレンダー</h2>
+        <div id="home-calendar"></div>
       </div>
       <div class="card">
         <h2>手順・資料</h2>
@@ -240,9 +244,12 @@
         <div class="row">
           <h2 style="margin:0">各社の提出物リスト</h2>
           <div class="spacer"></div>
+          <label for="sub-year" style="font-size:12px;color:var(--muted);font-weight:700">年度</label>
+          <select id="sub-year" onchange="onSubYearChange()" style="border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff;font-weight:700;color:var(--accent)"></select>
+          <button class="btn sec sm" onclick="addSubYear()">＋ 新しい年度</button>
           <button class="btn sec sm" onclick="addSubCompany()">＋ 会社を追加</button>
         </div>
-        <p class="hint">会社ごとに必要書類の提出状況を管理します。状態・提出日・リンク・備考を変更すると自動で保存されます。機械が未登録の会社も「会社を追加」で対象にできます。</p>
+        <p class="hint">年度ごとに、会社ごとの必要書類の提出状況を管理します。状態・提出日・リンク・備考を変更すると自動で保存されます。年度を切り替えても過去の記録は履歴として残ります。「＋ 新しい年度」で年度を追加、「＋ 会社を追加」で機械未登録の会社も対象にできます。</p>
       </div>
       <div id="subs-table"></div>
     </section>
@@ -360,12 +367,14 @@ const RESOURCES = [
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 
 /*════════════════ 状態 ════════════════*/
-let CONFIG   = {lead:30, jv:'', district:'', year:'', defaultEmail:'', signature:''};
+let CONFIG   = {lead:30, jv:'', district:'', year:'', defaultEmail:'', signature:'', calendarUrl:''};
 let MACHINES = [];
-let SUBMISSIONS = [];              // [{row, company, doc, status, date, link, note}]
+let SUBMISSIONS = [];              // [{row, year, company, doc, status, date, link, note}]
 let DOCS = DEFAULT_DOCS.slice();   // 必要書類マスタ
 let SUB_STATUS = DEFAULT_SUB_STATUS.slice();
 let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社（機械なし）
+let EXTRA_YEARS = [];              // 提出物管理で手動追加した年度
+let SELECTED_YEAR = '';            // 提出物管理で選択中の年度
 let offline  = false;
 let editingRow = null; // 編集中の行番号（新規は null）
 
@@ -436,9 +445,16 @@ async function callApi(payload){
 
 /*════════════════ メモリ内サンプル（モック） ════════════════*/
 function isoFromToday(days){ const d=new Date(TODAY.getTime()+days*86400000); return d.toISOString().slice(0,10); }
+// DEMO表示用の現年度（日本会計年度：4月始まり）を「令和○年度」で算出
+function mockCurrentNendo(){
+  const d = new Date(), y = d.getFullYear(), m = d.getMonth();
+  const fy = (m >= 3) ? y : y - 1;
+  return '令和' + (fy - 2018) + '年度';
+}
 const mockStore = {
-  config: {lead:30, jv:'厚別建設 企業体', district:'厚別区北地区', year:'令和8年度',
-           defaultEmail:'genba-kanri@example.com', signature:'厚別建設 企業体　管理部'},
+  config: {lead:30, jv:'厚別建設 企業体', district:'厚別区北地区', year:mockCurrentNendo(),
+           defaultEmail:'genba-kanri@example.com', signature:'厚別建設 企業体　管理部',
+           calendarUrl:'https://calendar.google.com/calendar/embed?src=atsukitazyosetsu%40gmail.com&ctz=Asia%2FTokyo'},
   machines: [
     {row:3, company:'A建設（代表）', category:'除雪トラック', spec:'10t級', name:'除雪ドーザ付', model:'XZU-720', plate:'札幌100あ12-34', ownership:'所有', inspection:isoFromToday(-8),  qty:2, manager:'佐藤', email:'sato@a-kensetsu.example', imageUrl:'', shakenLink:'', note:''},
     {row:4, company:'A建設（代表）', category:'ロータリ除雪車', spec:'2.5m', name:'HTR', model:'HTR265', plate:'札幌800か56-78', ownership:'所有', inspection:isoFromToday(18),  qty:1, manager:'佐藤', email:'sato@a-kensetsu.example', imageUrl:'', shakenLink:'', note:''},
@@ -447,9 +463,10 @@ const mockStore = {
     {row:7, company:'B土木', category:'ダンプトラック', spec:'10t', name:'ダンプ', model:'FV', plate:'札幌100か90-12', ownership:'所有', inspection:isoFromToday(25), qty:3, manager:'田中', email:'tanaka@b-doboku.example', imageUrl:'', shakenLink:'', note:''}
   ],
   submissions: [
-    {row:2, company:'A建設（代表）', doc:'一般競争入札参加資格確認申請書', status:'確認済', date:isoFromToday(-20), link:'', note:''},
-    {row:3, company:'A建設（代表）', doc:'除雪機械所有調書', status:'提出済', date:isoFromToday(-5), link:'', note:''},
-    {row:4, company:'B土木', doc:'協定書', status:'準備中', date:'', link:'', note:'押印待ち'}
+    {row:2, year:mockCurrentNendo(), company:'A建設（代表）', doc:'一般競争入札参加資格確認申請書', status:'確認済', date:isoFromToday(-20), link:'', note:''},
+    {row:3, year:mockCurrentNendo(), company:'A建設（代表）', doc:'除雪機械所有調書', status:'提出済', date:isoFromToday(-5), link:'', note:''},
+    {row:4, year:mockCurrentNendo(), company:'B土木', doc:'協定書', status:'準備中', date:'', link:'', note:'押印待ち'},
+    {row:5, year:'令和'+(nendoNum(mockCurrentNendo())-1)+'年度', company:'A建設（代表）', doc:'協定書', status:'確認済', date:isoFromToday(-380), link:'', note:'前年度分（履歴）'}
   ]
 };
 function mockWithStatus(m){
@@ -469,8 +486,8 @@ function mockApi(payload){
     const sub = Object.assign({}, payload.sub || {});
     let row = sub.row;
     if(!row || row < 2){
-      // company+doc 一致の既存行を探す
-      const found = mockStore.submissions.find(function(x){ return x.company===sub.company && x.doc===sub.doc; });
+      // year+company+doc 一致の既存行を探す
+      const found = mockStore.submissions.find(function(x){ return (x.year||'')===(sub.year||'') && x.company===sub.company && x.doc===sub.doc; });
       if(found){ row = found.row; }
       else { row = mockStore.submissions.reduce(function(mx,x){ return Math.max(mx, x.row||1); }, 1) + 1; }
     }
@@ -526,6 +543,8 @@ async function loadData(){
     SUBMISSIONS = Array.isArray(res.submissions) ? res.submissions : [];
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
+    // 提出物の選択年度を初期化（未選択、または一覧に無い場合は現年度に）
+    if(!SELECTED_YEAR || allYears().indexOf(SELECTED_YEAR) < 0){ SELECTED_YEAR = CONFIG.year || ''; }
     // days/status がGASから来ない場合に備えて補完
     MACHINES.forEach(function(m){
       if(m.days === undefined || m.days === null){ m.days = isoDaysLeft(m.inspection); }
@@ -541,7 +560,7 @@ async function loadData(){
 function companyList(){
   const seen = []; MACHINES.forEach(function(m){ if(m.company && seen.indexOf(m.company)<0) seen.push(m.company); }); return seen;
 }
-// 提出物対象の会社 = 機械の会社 ∪ 提出物データの会社 ∪ 手動追加分
+// 提出物対象の会社（全年度） = 機械の会社 ∪ 提出物データの会社 ∪ 手動追加分
 function allCompanies(){
   const seen = [];
   function add(c){ if(c && seen.indexOf(c)<0) seen.push(c); }
@@ -550,11 +569,32 @@ function allCompanies(){
   EXTRA_COMPANIES.forEach(add);
   return seen;
 }
+// 指定年度の提出物対象会社 = 機械の会社 ∪ その年度の提出物の会社 ∪ 手動追加会社
+function companiesForYear(year){
+  const seen = [];
+  function add(c){ if(c && seen.indexOf(c)<0) seen.push(c); }
+  MACHINES.forEach(function(m){ add(m.company); });
+  SUBMISSIONS.forEach(function(s){ if((s.year||'')===year) add(s.company); });
+  EXTRA_COMPANIES.forEach(add);
+  return seen;
+}
+// 令和○年度 などから数値を抽出（年度の降順ソート用）
+function nendoNum(y){ const m=String(y||'').match(/(\d+)/); return m?Number(m[1]):0; }
+// 年度一覧 = 提出物に存在する年度 ∪ 現年度(config.year) ∪ 手動追加年度、降順ソート
+function allYears(){
+  const seen = [];
+  function add(y){ if(y && seen.indexOf(y)<0) seen.push(y); }
+  SUBMISSIONS.forEach(function(s){ add(s.year); });
+  add(CONFIG.year);
+  EXTRA_YEARS.forEach(add);
+  return seen.sort(function(a,b){ return nendoNum(b)-nendoNum(a); });
+}
 
 function renderAll(){
   renderHeader();
   renderSummary();
   renderHome();
+  renderCalendar();
   renderResources();
   renderList();
   renderAlert();
@@ -562,12 +602,12 @@ function renderAll(){
   renderCompanyDatalist();
 }
 
-/* ホーム：提出進捗バー＋資料リンク */
-function subStat(company){
+/* ホーム：提出進捗バー＋資料リンク（year指定でその年度のみ集計） */
+function subStat(company, year){
   // 提出済み = 状態が「提出済」または「確認済」
   let done = 0;
   DOCS.forEach(function(doc){
-    const rec = SUBMISSIONS.find(function(s){ return s.company===company && s.doc===doc; });
+    const rec = SUBMISSIONS.find(function(s){ return (s.year||'')===year && s.company===company && s.doc===doc; });
     if(rec && (rec.status==='提出済' || rec.status==='確認済')) done++;
   });
   return {done:done, need:DOCS.length};
@@ -579,13 +619,14 @@ function linkCardHtml(r){
 }
 function renderHome(){
   document.getElementById('home-doccount').textContent = DOCS.length;
-  const companies = allCompanies();
+  const curYear = CONFIG.year || '';
+  const companies = companiesForYear(curYear); // 現年度の会社のみ
   const prog = document.getElementById('home-progress');
   if(companies.length===0){
     prog.innerHTML = '<div class="empty">会社が登録されていません。</div>';
   }else{
     prog.innerHTML = companies.map(function(c){
-      const st = subStat(c);
+      const st = subStat(c, curYear);
       const pct = st.need ? Math.round(st.done/st.need*100) : 0;
       const cls = pct>=100 ? '' : (pct>0 ? 'part' : 'zero');
       return '<div class="prog-row">'
@@ -599,6 +640,25 @@ function renderHome(){
 }
 function renderResources(){
   document.getElementById('res-links').innerHTML = RESOURCES.map(linkCardHtml).join('');
+}
+
+/* ホーム：Googleカレンダー埋め込み */
+function renderCalendar(){
+  const box = document.getElementById('home-calendar');
+  if(!box) return;
+  let url = (CONFIG.calendarUrl || '').trim();
+  // '<iframe ... src="...">' が丸ごと入っていても src を抽出して使う（堅牢化）
+  if(url && url.indexOf('<iframe') >= 0){
+    const m = url.match(/src\s*=\s*["']([^"']+)["']/i);
+    url = m ? m[1] : '';
+  }
+  if(url){
+    box.innerHTML = '<iframe src="'+esc(url)+'" title="予定カレンダー" '
+      + 'style="width:100%;height:600px;max-width:100%;border:0;display:block;border-radius:8px" '
+      + 'frameborder="0" scrolling="no" loading="lazy"></iframe>';
+  }else{
+    box.innerHTML = '<div class="empty">設定シートの「カレンダー埋め込みURL」にGoogleカレンダーの埋め込みURLを入れると表示されます。</div>';
+  }
 }
 
 function renderHeader(){
@@ -714,17 +774,42 @@ function subStatusColor(status){
   if(status==='準備中') return {bg:'#fff3e0', fg:'#b45309'};
   return {bg:'#eef2f7', fg:'#5b6b7b'}; // 未提出 ほか
 }
+// 年度セレクタの選択肢を再構築（現在の SELECTED_YEAR を選択状態に）
+function renderYearSelect(){
+  const sel = document.getElementById('sub-year');
+  if(!sel) return;
+  const years = allYears();
+  if(years.indexOf(SELECTED_YEAR) < 0){ SELECTED_YEAR = years[0] || (CONFIG.year || ''); }
+  sel.innerHTML = years.map(function(y){
+    return '<option value="'+esc(y)+'"'+(y===SELECTED_YEAR?' selected':'')+'>'+esc(y)+'</option>';
+  }).join('');
+}
+function onSubYearChange(){
+  const sel = document.getElementById('sub-year');
+  if(sel) SELECTED_YEAR = sel.value;
+  renderSubs();
+}
+// 新しい年度を追加してその年度へ切替（過去の記録は履歴として残る）
+function addSubYear(){
+  const name = (prompt('追加する年度名を入力してください（例：令和9年度）') || '').trim();
+  if(!name) return;
+  if(allYears().indexOf(name) < 0) EXTRA_YEARS.push(name);
+  SELECTED_YEAR = name;
+  renderSubs();
+  toast('年度を追加しました：' + name);
+}
 function renderSubs(){
+  renderYearSelect();
   const wrap = document.getElementById('subs-table');
-  const companies = allCompanies();
+  const companies = companiesForYear(SELECTED_YEAR);
   if(companies.length===0){
     wrap.innerHTML = '<div class="card empty">会社がありません。「＋ 会社を追加」から登録してください。</div>';
     return;
   }
   wrap.innerHTML = companies.map(function(comp, ci){
-    const st = subStat(comp);
+    const st = subStat(comp, SELECTED_YEAR);
     const rows = DOCS.map(function(doc, di){
-      const rec = SUBMISSIONS.find(function(s){ return s.company===comp && s.doc===doc; }) || {status:'未提出', date:'', link:'', note:'', row:null};
+      const rec = SUBMISSIONS.find(function(s){ return (s.year||'')===SELECTED_YEAR && s.company===comp && s.doc===doc; }) || {status:'未提出', date:'', link:'', note:'', row:null};
       const col = subStatusColor(rec.status);
       const opts = SUB_STATUS.map(function(o){ return '<option '+(o===rec.status?'selected':'')+'>'+esc(o)+'</option>'; }).join('');
       const idp = 'sub-'+ci+'-'+di;
@@ -756,7 +841,7 @@ function renderSubs(){
 function addSubCompany(){
   const name = (prompt('追加する会社名を入力してください') || '').trim();
   if(!name) return;
-  if(allCompanies().indexOf(name) >= 0){ toast('その会社は既に一覧にあります'); return; }
+  if(companiesForYear(SELECTED_YEAR).indexOf(name) >= 0){ toast('その会社は既に一覧にあります'); return; }
   EXTRA_COMPANIES.push(name);
   renderSubs(); renderHome();
   toast('会社を追加しました');
@@ -766,17 +851,18 @@ function refreshSubRowCosmetics(ci, di, comp){
   const idp = 'sub-'+ci+'-'+di;
   const sel = document.getElementById(idp+'-status');
   if(sel){ const col = subStatusColor(sel.value); sel.style.background = col.bg; sel.style.color = col.fg; }
-  const st = subStat(comp);
+  const st = subStat(comp, SELECTED_YEAR);
   const pill = document.getElementById('sub-pill-'+ci);
   if(pill) pill.textContent = '提出 '+st.done+' / '+st.need;
 }
 // 1行の入力値を集めて saveSub を呼ぶ（成功後はローカル配列のみ更新し、全再取得・全再描画はしない）
 async function saveSubField(ci, di){
-  const comp = allCompanies()[ci];
+  const comp = companiesForYear(SELECTED_YEAR)[ci];
   const doc  = DOCS[di];
   if(comp==null || doc==null) return;
   const idp = 'sub-'+ci+'-'+di;
   const sub = {
+    year:    SELECTED_YEAR,
     company: comp,
     doc:     doc,
     status:  document.getElementById(idp+'-status').value,
@@ -784,14 +870,14 @@ async function saveSubField(ci, di){
     link:    document.getElementById(idp+'-link').value.trim(),
     note:    document.getElementById(idp+'-note').value.trim()
   };
-  const existing = SUBMISSIONS.find(function(s){ return s.company===comp && s.doc===doc; });
+  const existing = SUBMISSIONS.find(function(s){ return (s.year||'')===SELECTED_YEAR && s.company===comp && s.doc===doc; });
   const wasNew = !(existing && existing.row!=null); // 保存前にレコード（row付き）が無かった＝新規作成
   if(existing && existing.row!=null) sub.row = existing.row;
   const res = await callApi({action:'saveSub', sub:sub});
   if(res && res.ok){
     // 返ってきた row でローカル SUBMISSIONS の該当レコードだけを更新（無ければ追加）
     const rec = Object.assign({}, sub, {row: res.row});
-    const idx = SUBMISSIONS.findIndex(function(s){ return s.row===res.row || (s.company===comp && s.doc===doc); });
+    const idx = SUBMISSIONS.findIndex(function(s){ return s.row===res.row || ((s.year||'')===SELECTED_YEAR && s.company===comp && s.doc===doc); });
     if(idx>=0) SUBMISSIONS[idx] = rec; else SUBMISSIONS.push(rec);
     if(wasNew){
       // 新規作成時のみ提出物タブを描画し直して×ボタンを表示。可能なら同じ状態selectへフォーカスを戻す。
