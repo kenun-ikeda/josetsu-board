@@ -140,6 +140,48 @@
   .ev-time{width:46px;flex-shrink:0;color:var(--muted);font-size:13px}
   .ev-title{flex:1;min-width:0;font-size:13px;word-break:break-word}
 
+  /* ---------- haisetsu map ---------- */
+  .map-stage{position:relative;width:100%}
+  .map-stage.adding{cursor:crosshair}
+  .map-img{width:100%;height:auto;display:block;border-radius:8px;background:#eef2f7}
+  .map-pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;line-height:1;text-align:center;z-index:2}
+  .map-pin .pin-dot{display:block;width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);margin:0 auto;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45)}
+  .map-pin.done .pin-dot{background:var(--ok)}
+  .map-pin.todo .pin-dot{background:var(--bad)}
+  .map-pin .pin-label{display:inline-block;font-size:10px;font-weight:700;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-top:3px;white-space:nowrap;line-height:1.5;color:#1a2430;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+  .map-legend{display:flex;gap:16px;align-items:center;margin-top:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .map-legend .lg{display:inline-flex;align-items:center;gap:6px}
+  .map-legend .sw{width:12px;height:12px;border-radius:50%}
+  .map-legend .sw.done{background:var(--ok)} .map-legend .sw.todo{background:var(--bad)}
+  .map-legend .sym-box{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid var(--line);border-radius:4px;background:#fff;font-size:13px;font-weight:700}
+  .map-legend .sym-box.toki{background:#cfe8f7}
+  .map-legend .sym-box.kyu{background:#d9d9d9}
+
+  /* ---------- shift schedule ---------- */
+  .shift-months{display:inline-flex;gap:4px;flex-wrap:wrap}
+  .shift-months button{background:#fff;border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .shift-months button.active{background:var(--accent);color:#fff}
+  .shift-tbl{border-collapse:collapse;font-size:12px}
+  .shift-tbl th,.shift-tbl td{border:1px solid var(--line);text-align:center;padding:0}
+  .shift-tbl th.day-col{min-width:30px;padding:2px 0}
+  .shift-tbl th.day-col .dnum{font-size:12px;font-weight:700}
+  .shift-tbl th.day-col .dwd{font-size:10px;color:var(--muted)}
+  .shift-tbl th.sat .dnum,.shift-tbl th.sat .dwd{color:#1c5fb0}
+  .shift-tbl th.sun .dnum,.shift-tbl th.sun .dwd{color:#c0392b}
+  .shift-tbl th.sat{background:#eef4fb} .shift-tbl th.sun{background:#fdeeec}
+  .shift-tbl td.cell{width:30px;height:30px;cursor:pointer;font-size:14px;font-weight:700;user-select:none;background:#fff}
+  .shift-tbl td.c-toki{background:#cfe8f7}
+  .shift-tbl td.c-kyu{background:#d9d9d9}
+  .shift-tbl .name-col{min-width:110px;text-align:left}
+  .shift-tbl .name-in{border:1px solid transparent;border-radius:4px;padding:5px 6px;font-size:12px;font-family:inherit;width:100%;background:transparent}
+  .shift-tbl .name-in:focus{outline:none;border-color:var(--accent2);background:#fff}
+  .shift-tbl .stick{position:sticky;left:0;z-index:1;background:#fff}
+  .shift-tbl thead th.stick{z-index:3;background:#eef2f7}
+  .shift-tbl .sum-col{min-width:42px;background:#f2f6fa;font-weight:700;font-family:"JetBrains Mono",monospace}
+  .shift-tbl thead th.sum-col{background:#eef2f7}
+  .shift-tbl .tot-row td{background:#f7fafd;font-weight:700;font-family:"JetBrains Mono",monospace}
+  .shift-tbl .tot-row td.stick{background:#f7fafd}
+
   /* ---------- submissions ---------- */
   .sub-status{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700}
   .sub-status.done{background:#e7f5ec;color:var(--ok)}
@@ -188,6 +230,8 @@
       <button data-tab="list">機械調書</button>
       <button data-tab="alert">車検アラート<span class="badge" id="nav-badge" style="display:none">0</span></button>
       <button data-tab="subs">提出物管理</button>
+      <button data-tab="map">排雪マップ</button>
+      <button data-tab="shift">勤務予定表</button>
       <button data-tab="res">手順・資料</button>
     </nav>
 
@@ -262,6 +306,59 @@
         <p class="hint">年度ごとに、会社ごとの必要書類の提出状況を管理します。状態・提出日・リンク・備考を変更すると自動で保存されます。年度を切り替えても過去の記録は履歴として残ります。「＋ 新しい年度」で年度を追加、「＋ 会社を追加」で機械未登録の会社も対象にできます。</p>
       </div>
       <div id="subs-table"></div>
+    </section>
+
+    <!-- MAP（排雪マップ） -->
+    <section class="tab" id="tab-map">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">排雪マップ</h2>
+          <div class="spacer"></div>
+          <span class="pill" id="map-count"></span>
+          <button class="btn sec sm" id="map-add-btn" onclick="toggleAddPoint()">＋ 地点を追加</button>
+        </div>
+        <p class="hint" id="map-hint">地図上のピンをクリックすると各地点の予定・完了日を編集できます。緑＝完了 / 赤＝未完了。</p>
+        <div class="map-legend">
+          <span class="lg"><span class="sw done"></span>完了</span>
+          <span class="lg"><span class="sw todo"></span>未完了</span>
+        </div>
+      </div>
+      <div class="card">
+        <div id="map-wrap"></div>
+      </div>
+      <div class="card">
+        <h2>地点一覧</h2>
+        <p class="hint">行をクリックしても編集できます（ピンが押しにくい端末向け）。</p>
+        <div id="map-list"></div>
+      </div>
+    </section>
+
+    <!-- SHIFT（勤務予定表） -->
+    <section class="tab" id="tab-shift">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">勤務予定表</h2>
+          <div class="spacer"></div>
+          <label for="shift-year" style="font-size:12px;color:var(--muted);font-weight:700">年度</label>
+          <select id="shift-year" onchange="onShiftYearChange()" style="border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff;font-weight:700;color:var(--accent)"></select>
+          <div id="shift-months" class="shift-months">
+            <button data-month="11" onclick="setShiftMonth(11)">11月</button>
+            <button data-month="12" onclick="setShiftMonth(12)">12月</button>
+            <button data-month="1" onclick="setShiftMonth(1)">1月</button>
+            <button data-month="2" onclick="setShiftMonth(2)">2月</button>
+            <button data-month="3" onclick="setShiftMonth(3)">3月</button>
+          </div>
+        </div>
+        <div class="map-legend">
+          <span class="lg"><span class="sym-box">○</span>通常出勤（白）</span>
+          <span class="lg"><span class="sym-box toki">◎</span>出勤時のみ（水色）</span>
+          <span class="lg"><span class="sym-box kyu"></span>休（グレー）</span>
+        </div>
+        <p class="hint">セルをクリックすると 空欄→○通常出勤→◎出勤時のみ→休 の順に切り替わり自動保存されます。職員名は入力後に確定（Enter／フォーカス移動）で保存。右端「出勤」＝その職員の出勤日数（通＋時）、最下段「日計」＝各日の出勤人数。</p>
+      </div>
+      <div class="card">
+        <div id="shift-grid"></div>
+      </div>
     </section>
 
     <!-- RESOURCES（手順・資料） -->
@@ -351,6 +448,44 @@
   </div>
 </div>
 
+<!-- ============ MAP POINT MODAL ============ -->
+<div class="overlay" id="map-modal">
+  <div class="panel" style="max-width:460px">
+    <div class="panel-head">
+      <h3 id="map-modal-title">地点を追加</h3>
+      <div class="spacer"></div>
+      <button class="btn sec sm" onclick="closeMapModal()">閉じる</button>
+    </div>
+    <div class="form-grid">
+      <div class="fld full">
+        <label>名称（町内会／区域）</label>
+        <input id="mp-name" placeholder="○○町内会">
+      </div>
+      <div class="fld">
+        <label>予定時期</label>
+        <input id="mp-plan" placeholder="例）1月中旬">
+      </div>
+      <div class="fld">
+        <label>完了日</label>
+        <input id="mp-done" type="date">
+      </div>
+      <div class="fld full">
+        <label>担当</label>
+        <input id="mp-manager" placeholder="担当者名">
+      </div>
+      <div class="fld full">
+        <label>備考</label>
+        <textarea id="mp-note" placeholder="備考"></textarea>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn" id="mp-save" onclick="saveMapPoint()">保存</button>
+      <button class="btn danger sm" id="mp-del" style="display:none" onclick="deleteMapPoint()">削除</button>
+      <div class="spacer"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -377,7 +512,7 @@ const RESOURCES = [
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 
 /*════════════════ 状態 ════════════════*/
-let CONFIG   = {lead:30, jv:'', district:'', year:'', defaultEmail:'', signature:'', calendarUrl:''};
+let CONFIG   = {lead:30, jv:'', district:'', year:'', defaultEmail:'', signature:'', calendarUrl:'', mapUrl:''};
 let MACHINES = [];
 let SUBMISSIONS = [];              // [{row, year, company, doc, status, date, link, note}]
 let DOCS = DEFAULT_DOCS.slice();   // 必要書類マスタ
@@ -386,6 +521,14 @@ let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社
 let EXTRA_YEARS = [];              // 提出物管理で手動追加した年度
 let SELECTED_YEAR = '';            // 提出物管理で選択中の年度
 let EVENTS = {today:[], week:[]};  // Googleカレンダーの予定（list取得時に更新）
+let MAPPOINTS = [];                // 排雪マップの地点 [{row,name,plan,doneDate,manager,x,y,note,status}]
+let addingPoint = false;           // 地点追加モード（地図クリックで配置）
+let pendingPoint = null;           // 新規配置中の {x,y}
+let editingMapRow = null;          // 編集中の地点row（新規はnull）
+let editingMapXY = {x:50, y:50};   // 保存時に保持する地点座標
+let SHIFTS = [];                   // 勤務予定 [{row, ym, idx, name, days:[31]}]
+let SHIFT_NENDO = null;            // 選択中の年度（令和X の X）
+let SHIFT_MONTH = null;            // 選択中の月（11,12,1,2,3）
 let offline  = false;
 let editingRow = null; // 編集中の行番号（新規は null）
 
@@ -465,7 +608,8 @@ function mockCurrentNendo(){
 const mockStore = {
   config: {lead:30, jv:'厚別建設 企業体', district:'厚別区北地区', year:mockCurrentNendo(),
            defaultEmail:'genba-kanri@example.com', signature:'厚別建設 企業体　管理部',
-           calendarUrl:'https://calendar.google.com/calendar/embed?src=atsukitazyosetsu%40gmail.com&ctz=Asia%2FTokyo'},
+           calendarUrl:'https://calendar.google.com/calendar/embed?src=atsukitazyosetsu%40gmail.com&ctz=Asia%2FTokyo',
+           mapUrl:'map.png'},
   machines: [
     {row:3, company:'A建設（代表）', category:'除雪トラック', spec:'10t級', name:'除雪ドーザ付', model:'XZU-720', plate:'札幌100あ12-34', ownership:'所有', inspection:isoFromToday(-8),  qty:2, manager:'佐藤', email:'sato@a-kensetsu.example', imageUrl:'', shakenLink:'', note:''},
     {row:4, company:'A建設（代表）', category:'ロータリ除雪車', spec:'2.5m', name:'HTR', model:'HTR265', plate:'札幌800か56-78', ownership:'所有', inspection:isoFromToday(18),  qty:1, manager:'佐藤', email:'sato@a-kensetsu.example', imageUrl:'', shakenLink:'', note:''},
@@ -478,7 +622,25 @@ const mockStore = {
     {row:3, year:mockCurrentNendo(), company:'A建設（代表）', doc:'除雪機械所有調書', status:'提出済', date:isoFromToday(-5), link:'', note:''},
     {row:4, year:mockCurrentNendo(), company:'B土木', doc:'協定書', status:'準備中', date:'', link:'', note:'押印待ち'},
     {row:5, year:'令和'+(nendoNum(mockCurrentNendo())-1)+'年度', company:'A建設（代表）', doc:'協定書', status:'確認済', date:isoFromToday(-380), link:'', note:'前年度分（履歴）'}
-  ]
+  ],
+  mapPoints: [
+    {row:2, name:'中央町内会', plan:'1月中旬', doneDate:isoFromToday(-3), manager:'佐藤', x:32, y:24, note:''},
+    {row:3, name:'東地区',     plan:'1月下旬', doneDate:'',              manager:'田中', x:64, y:45, note:'幹線優先'},
+    {row:4, name:'南公園周辺', plan:'2月上旬', doneDate:'',              manager:'',     x:48, y:72, note:''}
+  ],
+  shifts: (function(){
+    const ym = (nendoNum(mockCurrentNendo())+2018) + '-11'; // 現年度の11月
+    function mk(idx, name, pairs){
+      const days = new Array(31).fill('');
+      pairs.forEach(function(p){ days[p[0]-1] = p[1]; });
+      return {row: idx+1, ym: ym, idx: idx, name: name, days: days};
+    }
+    return [
+      mk(1, '山田', [[1,'通'],[2,'通'],[3,'休'],[4,'通'],[5,'時']]),
+      mk(2, '鈴木', [[1,'時'],[2,'通'],[3,'通'],[5,'休']]),
+      mk(3, '高橋', [[1,'休'],[2,'時'],[4,'通']])
+    ];
+  })()
 };
 function mockWithStatus(m){
   const days = isoDaysLeft(m.inspection);
@@ -507,7 +669,39 @@ function mockApi(payload){
   if(a==='list'){
     return {ok:true, config:Object.assign({}, mockStore.config), machines: mockStore.machines.map(mockWithStatus),
             submissions: mockStore.submissions.map(function(x){ return Object.assign({}, x); }),
-            docs: DEFAULT_DOCS.slice(), subStatus: DEFAULT_SUB_STATUS.slice(), events: mockEvents()};
+            docs: DEFAULT_DOCS.slice(), subStatus: DEFAULT_SUB_STATUS.slice(), events: mockEvents(),
+            mapPoints: mockStore.mapPoints.map(function(p){ return Object.assign({}, p, {status: p.doneDate ? '完了' : '未完了'}); }),
+            shifts: mockStore.shifts.map(function(s){ return Object.assign({}, s, {days: s.days.slice()}); })};
+  }
+  if(a==='saveShift'){
+    const sh = payload.shift || {};
+    const ym = String(sh.ym||''); const idx = Number(sh.idx)||0;
+    if(!ym || !idx) return {ok:false, error:'ym/idx required'};
+    let rec = mockStore.shifts.find(function(s){ return s.ym===ym && Number(s.idx)===idx; });
+    if(!rec){
+      const row = mockStore.shifts.reduce(function(mx,s){ return Math.max(mx, s.row||1); }, 1) + 1;
+      rec = {row:row, ym:ym, idx:idx, name:'', days:new Array(31).fill('')};
+      mockStore.shifts.push(rec);
+    }
+    if(sh.name!==undefined && sh.name!==null) rec.name = sh.name;
+    if(sh.day!==undefined && sh.day!==null){ const d=Number(sh.day); if(d>=1 && d<=31) rec.days[d-1] = sh.code||''; }
+    return {ok:true, row:rec.row};
+  }
+  if(a==='saveMapPt'){
+    const pt = Object.assign({}, payload.point || {});
+    let row = pt.row;
+    if(!row || row < 2){
+      row = mockStore.mapPoints.reduce(function(mx,p){ return Math.max(mx, p.row||1); }, 1) + 1;
+    }
+    pt.row = row;
+    pt.status = pt.doneDate ? '完了' : '未完了';
+    const idx = mockStore.mapPoints.findIndex(function(p){ return p.row===row; });
+    if(idx>=0) mockStore.mapPoints[idx] = pt; else mockStore.mapPoints.push(pt);
+    return {ok:true, row:row};
+  }
+  if(a==='delMapPt'){
+    mockStore.mapPoints = mockStore.mapPoints.filter(function(p){ return p.row!==payload.row; });
+    return {ok:true};
   }
   if(a==='saveSub'){
     const sub = Object.assign({}, payload.sub || {});
@@ -571,6 +765,11 @@ async function loadData(){
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
     EVENTS = (res.events && typeof res.events==='object') ? res.events : {today:[], week:[]};
+    MAPPOINTS = Array.isArray(res.mapPoints) ? res.mapPoints : [];
+    SHIFTS = Array.isArray(res.shifts) ? res.shifts : [];
+    // 勤務予定表の初期選択（年度＝config.yearから解析、月＝今日が対象月ならその月、外なら11月）
+    if(SHIFT_NENDO==null){ SHIFT_NENDO = nendoNum(CONFIG.year) || currentNendoNum(); }
+    if(SHIFT_MONTH==null){ SHIFT_MONTH = defaultShiftMonth(); }
     // 提出物の選択年度を初期化（未選択、または一覧に無い場合は現年度に）
     if(!SELECTED_YEAR || allYears().indexOf(SELECTED_YEAR) < 0){ SELECTED_YEAR = CONFIG.year || ''; }
     // days/status がGASから来ない場合に備えて補完
@@ -627,6 +826,8 @@ function renderAll(){
   renderList();
   renderAlert();
   renderSubs();
+  renderMap();
+  renderShift();
   renderCompanyDatalist();
 }
 
@@ -691,6 +892,327 @@ function renderCalendar(){
   }else{
     box.innerHTML = '<div class="empty">設定シートの「カレンダー埋め込みURL」にGoogleカレンダーの埋め込みURLを入れると表示されます。</div>';
   }
+}
+
+/*════════════════ 排雪マップ ════════════════*/
+// 背景画像URLの解決：空なら 'map.png'。Drive共有リンク(25文字以上のID含む)は thumbnail に変換。
+function mapImageUrl(){
+  let u = (CONFIG.mapUrl || '').trim() || 'map.png';
+  const m = String(u).match(/[-\w]{25,}/);
+  if(m) return 'https://drive.google.com/thumbnail?id='+m[0]+'&sz=w1600';
+  return u; // 相対パス・通常URLはそのまま
+}
+function tagMapStatus(status){
+  return status==='完了' ? '<span class="tag ok">完了</span>' : '<span class="tag exp">未完了</span>';
+}
+// 将来拡張：ズーム/パンは未実装（フィット表示）。必要なら map-stage に transform:scale を掛ける想定。
+function renderMap(){
+  const wrap = document.getElementById('map-wrap');
+  if(!wrap) return;
+  const pts = MAPPOINTS || [];
+  const done = pts.filter(function(p){ return p.status==='完了'; }).length;
+  const countEl = document.getElementById('map-count');
+  if(countEl) countEl.textContent = '完了 '+done+' / 全 '+pts.length;
+
+  const url = mapImageUrl();
+  const pins = pts.map(function(p){
+    const cls = p.status==='完了' ? 'done' : 'todo';
+    return '<div class="map-pin '+cls+'" style="left:'+num(p.x)+'%;top:'+num(p.y)+'%" data-row="'+p.row+'" title="'+esc(p.name||'')+'">'
+      + '<span class="pin-dot"></span><span class="pin-label">'+esc(p.name||'')+'</span></div>';
+  }).join('');
+  wrap.innerHTML = '<div class="map-stage'+(addingPoint?' adding':'')+'" id="map-stage">'
+    + '<img class="map-img" id="map-img" src="'+esc(url)+'" alt="排雪マップ">'
+    + pins
+    + '</div>';
+
+  const img = document.getElementById('map-img');
+  img.onerror = function(){
+    wrap.innerHTML = '<div class="empty">地図画像を用意してください（map.png をリポジトリにアップロード、または設定シートの「地図画像URL」にURLを設定）</div>';
+  };
+  const stage = document.getElementById('map-stage');
+  if(stage) stage.onclick = onMapClick;
+  Array.prototype.forEach.call(wrap.querySelectorAll('.map-pin'), function(el){
+    el.onclick = function(e){ e.stopPropagation(); openMapModal(Number(el.getAttribute('data-row'))); };
+  });
+  renderMapList();
+}
+function renderMapList(){
+  const el = document.getElementById('map-list');
+  if(!el) return;
+  const pts = MAPPOINTS || [];
+  if(pts.length===0){
+    el.innerHTML = '<div class="empty">地点がありません。「＋ 地点を追加」で地図上に地点を配置してください。</div>';
+    return;
+  }
+  el.innerHTML = '<div class="tbl-wrap"><table><thead><tr>'
+    + '<th>名称</th><th>予定時期</th><th>状態</th><th>完了日</th><th>担当</th></tr></thead><tbody>'
+    + pts.map(function(p){
+        return '<tr style="cursor:pointer" data-row="'+p.row+'">'
+          + '<td>'+esc(p.name||'')+'</td>'
+          + '<td>'+esc(p.plan||'')+'</td>'
+          + '<td>'+tagMapStatus(p.status)+'</td>'
+          + '<td class="mono">'+esc(p.doneDate||'—')+'</td>'
+          + '<td>'+esc(p.manager||'')+'</td>'
+          + '</tr>';
+      }).join('')
+    + '</tbody></table></div>';
+  Array.prototype.forEach.call(el.querySelectorAll('tr[data-row]'), function(tr){
+    tr.onclick = function(){ openMapModal(Number(tr.getAttribute('data-row'))); };
+  });
+}
+function toggleAddPoint(){
+  addingPoint = !addingPoint;
+  updateAddBtn();
+  const stage = document.getElementById('map-stage');
+  if(stage) stage.classList.toggle('adding', addingPoint);
+}
+function updateAddBtn(){
+  const btn = document.getElementById('map-add-btn');
+  const hint = document.getElementById('map-hint');
+  if(btn) btn.textContent = addingPoint ? '✕ 追加をやめる' : '＋ 地点を追加';
+  if(hint) hint.textContent = addingPoint
+    ? '地図をクリックして地点を追加してください（もう一度ボタンを押すと解除）。'
+    : '地図上のピンをクリックすると各地点の予定・完了日を編集できます。緑＝完了 / 赤＝未完了。';
+}
+// 追加モード中の地図クリック：クリック位置を x%,y% に変換して新規地点モーダルを開く
+function onMapClick(e){
+  if(!addingPoint) return;
+  const img = document.getElementById('map-img');
+  if(!img) return;
+  const rect = img.getBoundingClientRect();
+  if(!rect.width || !rect.height) return;
+  const x = Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width  * 100));
+  const y = Math.max(0, Math.min(100, (e.clientY - rect.top)  / rect.height * 100));
+  pendingPoint = { x: Math.round(x*10)/10, y: Math.round(y*10)/10 };
+  addingPoint = false;
+  updateAddBtn();
+  const stage = document.getElementById('map-stage');
+  if(stage) stage.classList.remove('adding');
+  openMapModal(null); // 新規（pendingPoint を座標に使う）
+}
+function openMapModal(row){
+  editingMapRow = (row!=null) ? row : null;
+  let pt = {name:'', plan:'', doneDate:'', manager:'', note:'',
+            x:(pendingPoint?pendingPoint.x:50), y:(pendingPoint?pendingPoint.y:50)};
+  if(editingMapRow!=null){
+    const found = MAPPOINTS.find(function(p){ return p.row===editingMapRow; });
+    if(found) pt = found;
+  }
+  editingMapXY = { x: num(pt.x), y: num(pt.y) }; // 保存時に座標を保持
+  document.getElementById('map-modal-title').textContent = (editingMapRow!=null) ? '地点を編集' : '地点を追加';
+  document.getElementById('mp-name').value    = pt.name||'';
+  document.getElementById('mp-plan').value    = pt.plan||'';
+  document.getElementById('mp-done').value    = (pt.doneDate||'').slice(0,10);
+  document.getElementById('mp-manager').value = pt.manager||'';
+  document.getElementById('mp-note').value    = pt.note||'';
+  document.getElementById('mp-del').style.display = (editingMapRow!=null) ? '' : 'none';
+  document.getElementById('map-modal').classList.add('show');
+}
+function closeMapModal(){
+  document.getElementById('map-modal').classList.remove('show');
+  editingMapRow = null; pendingPoint = null;
+}
+async function saveMapPoint(){
+  const name = document.getElementById('mp-name').value.trim();
+  if(!name){ toast('名称を入力してください'); return; }
+  const pt = {
+    name: name,
+    plan: document.getElementById('mp-plan').value.trim(),
+    doneDate: document.getElementById('mp-done').value,
+    manager: document.getElementById('mp-manager').value.trim(),
+    note: document.getElementById('mp-note').value.trim(),
+    x: editingMapXY.x, y: editingMapXY.y
+  };
+  if(editingMapRow!=null) pt.row = editingMapRow;
+  const btn = document.getElementById('mp-save');
+  btn.disabled = true; btn.textContent = '保存中...';
+  const res = await callApi({action:'saveMapPt', point:pt});
+  btn.disabled = false; btn.textContent = '保存';
+  if(res && res.ok){
+    const rec = Object.assign({}, pt, {row: res.row, status: pt.doneDate ? '完了' : '未完了'});
+    const idx = MAPPOINTS.findIndex(function(p){ return p.row===res.row; });
+    if(idx>=0) MAPPOINTS[idx] = rec; else MAPPOINTS.push(rec);
+    closeMapModal();
+    renderMap();
+    toast('地点を保存しました' + (offline?'（サンプル）':''));
+  }else{
+    toast('地点の保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+async function deleteMapPoint(){
+  if(editingMapRow==null) return;
+  if(!confirm('この地点を削除しますか？')) return;
+  const res = await callApi({action:'delMapPt', row:editingMapRow});
+  if(res && res.ok){
+    MAPPOINTS = MAPPOINTS.filter(function(p){ return p.row!==editingMapRow; });
+    closeMapModal();
+    renderMap();
+    toast('削除しました' + (offline?'（サンプル）':''));
+  }else{
+    toast('削除に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+
+/*════════════════ 勤務予定表（シフト） ════════════════*/
+const SHIFT_MONTHS = [11,12,1,2,3];
+const SHIFT_ROWS = 10;
+const WD_JP = ['日','月','火','水','木','金','土'];
+const SHIFT_CYCLE = ['','通','時','休']; // クリックで循環
+
+// 現在の日本会計年度（令和X の X）
+function currentNendoNum(){
+  const d=new Date(), y=d.getFullYear(), m=d.getMonth();
+  const fy=(m>=3)?y:y-1;
+  return fy-2018;
+}
+// 今日が対象月なら その月、外なら 11月
+function defaultShiftMonth(){
+  const m=new Date().getMonth()+1;
+  return SHIFT_MONTHS.indexOf(m)>=0 ? m : 11;
+}
+// 令和X年度 の月 → 西暦年（11,12月は Y=X+2018、1〜3月は Y+1）
+function nendoToSeireki(nendoNum, month){
+  const y = nendoNum + 2018;
+  return (month>=11) ? y : y+1;
+}
+// 'YYYY-MM' キー
+function shiftYm(nendoNum, month){
+  return nendoToSeireki(nendoNum, month) + '-' + (month<10?'0':'') + month;
+}
+function cellCls(code){ return code==='通'?'c-tsu':(code==='時'?'c-toki':(code==='休'?'c-kyu':'c-none')); }
+function cellSym(code){ return code==='通'?'○':(code==='時'?'◎':''); }
+function nextCode(code){ const i=SHIFT_CYCLE.indexOf(code); return SHIFT_CYCLE[(i+1)%SHIFT_CYCLE.length]; }
+function shiftRowFor(ym, idx){ return SHIFTS.find(function(s){ return s.ym===ym && Number(s.idx)===idx; }); }
+
+function renderShift(){
+  const yearSel = document.getElementById('shift-year');
+  if(!yearSel) return;
+  if(SHIFT_NENDO==null) SHIFT_NENDO = nendoNum(CONFIG.year) || currentNendoNum();
+  if(SHIFT_MONTH==null) SHIFT_MONTH = defaultShiftMonth();
+  // 年度セレクタ（現年度-1〜+2、選択中を含める）
+  const cur = currentNendoNum();
+  const yset = [];
+  for(let n=cur-1; n<=cur+2; n++) yset.push(n);
+  if(yset.indexOf(SHIFT_NENDO)<0) yset.push(SHIFT_NENDO);
+  yset.sort(function(a,b){ return b-a; });
+  yearSel.innerHTML = yset.map(function(n){
+    return '<option value="'+n+'"'+(n===SHIFT_NENDO?' selected':'')+'>令和'+n+'年度</option>';
+  }).join('');
+  // 月ボタンのアクティブ表示
+  Array.prototype.forEach.call(document.querySelectorAll('#shift-months button'), function(b){
+    b.classList.toggle('active', Number(b.dataset.month)===SHIFT_MONTH);
+  });
+
+  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  const year = nendoToSeireki(SHIFT_NENDO, SHIFT_MONTH);
+  const ndays = new Date(year, SHIFT_MONTH, 0).getDate(); // 実際の日数（うるう年対応）
+
+  // ヘッダ（日番号＋曜日、土日色分け。曜日は実際の西暦日付から算出）
+  let head = '<tr><th class="stick name-col">職員名</th>';
+  for(let d=1; d<=ndays; d++){
+    const wd = new Date(year, SHIFT_MONTH-1, d).getDay();
+    const cls = wd===0?'sun':(wd===6?'sat':'');
+    head += '<th class="day-col '+cls+'"><div class="dnum">'+d+'</div><div class="dwd">'+WD_JP[wd]+'</div></th>';
+  }
+  head += '<th class="sum-col">出勤</th></tr>';
+
+  // 本体10行
+  const dayTotals = new Array(ndays).fill(0);
+  let body = '';
+  for(let idx=1; idx<=SHIFT_ROWS; idx++){
+    const rec = shiftRowFor(ym, idx);
+    const name = rec ? rec.name : '';
+    const days = rec ? rec.days : [];
+    let rowSum = 0, cells = '';
+    for(let d=1; d<=ndays; d++){
+      const code = days[d-1] || '';
+      if(code==='通' || code==='時'){ rowSum++; dayTotals[d-1]++; }
+      cells += '<td class="cell '+cellCls(code)+'" data-idx="'+idx+'" data-day="'+d+'">'+cellSym(code)+'</td>';
+    }
+    body += '<tr>'
+      + '<td class="stick name-col"><input class="name-in" data-idx="'+idx+'" value="'+esc(name)+'" placeholder="職員名"></td>'
+      + cells
+      + '<td class="sum-col" data-sumrow="'+idx+'">'+rowSum+'</td>'
+      + '</tr>';
+  }
+  // 日計行
+  let totals = '<tr class="tot-row"><td class="stick name-col">日計</td>';
+  let grand = 0;
+  for(let d=1; d<=ndays; d++){ totals += '<td data-daytot="'+d+'">'+dayTotals[d-1]+'</td>'; grand += dayTotals[d-1]; }
+  totals += '<td class="sum-col" data-grand="1">'+grand+'</td></tr>';
+
+  document.getElementById('shift-grid').innerHTML =
+    '<div class="tbl-wrap"><table class="shift-tbl"><thead>'+head+'</thead><tbody>'+body+totals+'</tbody></table></div>';
+
+  const grid = document.getElementById('shift-grid');
+  Array.prototype.forEach.call(grid.querySelectorAll('td.cell'), function(td){
+    td.onclick = function(){ cycleShiftCell(Number(td.getAttribute('data-idx')), Number(td.getAttribute('data-day')), td); };
+  });
+  Array.prototype.forEach.call(grid.querySelectorAll('input.name-in'), function(inp){
+    inp.onchange = function(){ saveShiftName(Number(inp.getAttribute('data-idx')), inp.value); };
+  });
+}
+
+// 集計だけ再計算して該当セルのテキストを更新（全再描画せずスクロール位置維持）
+function updateShiftTotals(){
+  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  const year = nendoToSeireki(SHIFT_NENDO, SHIFT_MONTH);
+  const ndays = new Date(year, SHIFT_MONTH, 0).getDate();
+  const grid = document.getElementById('shift-grid');
+  if(!grid) return;
+  const dayTotals = new Array(ndays).fill(0);
+  let grand = 0;
+  for(let idx=1; idx<=SHIFT_ROWS; idx++){
+    const rec = shiftRowFor(ym, idx);
+    let rowSum = 0;
+    for(let d=1; d<=ndays; d++){
+      const code = rec ? (rec.days[d-1]||'') : '';
+      if(code==='通' || code==='時'){ rowSum++; dayTotals[d-1]++; }
+    }
+    const el = grid.querySelector('td.sum-col[data-sumrow="'+idx+'"]');
+    if(el) el.textContent = rowSum;
+    grand += rowSum;
+  }
+  for(let d=1; d<=ndays; d++){
+    const el = grid.querySelector('td[data-daytot="'+d+'"]');
+    if(el) el.textContent = dayTotals[d-1];
+  }
+  const gEl = grid.querySelector('td[data-grand]');
+  if(gEl) gEl.textContent = grand;
+}
+
+function onShiftYearChange(){
+  const sel = document.getElementById('shift-year');
+  SHIFT_NENDO = Number(sel.value);
+  renderShift();
+}
+function setShiftMonth(m){
+  SHIFT_MONTH = Number(m);
+  renderShift();
+}
+// セルクリック：''→通→時→休→'' を循環し即保存（該当セル＋集計のみ更新）
+async function cycleShiftCell(idx, day, td){
+  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  let rec = shiftRowFor(ym, idx);
+  const cur = rec ? (rec.days[day-1]||'') : '';
+  const code = nextCode(cur);
+  if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
+  rec.days[day-1] = code;
+  td.className = 'cell '+cellCls(code);
+  td.innerHTML = cellSym(code);
+  updateShiftTotals();
+  const res = await callApi({action:'saveShift', shift:{ym:ym, idx:idx, day:day, code:code}});
+  if(res && res.ok){ if(res.row!=null) rec.row = res.row; }
+  else { toast('シフトの保存に失敗しました' + (res && res.error ? '：'+res.error : '')); }
+}
+async function saveShiftName(idx, name){
+  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  let rec = shiftRowFor(ym, idx);
+  if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
+  rec.name = name;
+  const res = await callApi({action:'saveShift', shift:{ym:ym, idx:idx, name:name}});
+  if(res && res.ok){ if(res.row!=null) rec.row = res.row; toast('職員名を保存しました' + (offline?'（サンプル）':'')); }
+  else { toast('職員名の保存に失敗しました' + (res && res.error ? '：'+res.error : '')); }
 }
 
 function renderHeader(){
@@ -1080,6 +1602,9 @@ document.getElementById('login-pw').addEventListener('keydown', function(e){
 // モーダル外クリックで閉じる
 document.getElementById('modal').addEventListener('click', function(e){
   if(e.target === this) closeModal();
+});
+document.getElementById('map-modal').addEventListener('click', function(e){
+  if(e.target === this) closeMapModal();
 });
 
 // DEMOモードのときはヒント表示（本番URL未設定）
