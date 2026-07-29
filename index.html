@@ -133,6 +133,13 @@
   .prog-fill.zero{background:#c8d2dc}
   .prog-val{width:66px;text-align:right;font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--muted);flex-shrink:0}
 
+  /* ---------- calendar events (home) ---------- */
+  .ev-row{display:flex;align-items:baseline;gap:12px;padding:8px 2px;border-bottom:1px solid #eef2f7}
+  .ev-row:last-child{border-bottom:none}
+  .ev-date{width:66px;flex-shrink:0;font-weight:700;color:var(--accent);font-size:13px}
+  .ev-time{width:46px;flex-shrink:0;color:var(--muted);font-size:13px}
+  .ev-title{flex:1;min-width:0;font-size:13px;word-break:break-word}
+
   /* ---------- submissions ---------- */
   .sub-status{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700}
   .sub-status.done{background:#e7f5ec;color:var(--ok)}
@@ -188,9 +195,12 @@
     <section class="tab active" id="tab-home">
       <div class="stat-grid" id="summary"></div>
       <div class="card">
-        <h2>各社の提出進捗（今年度）</h2>
-        <div id="home-progress"></div>
-        <p class="hint">今年度分について「提出済」「確認済」を提出済みとして、必要書類（<span id="home-doccount">7</span>種）に対する割合を表示します。詳細は「提出物管理」タブで編集できます。</p>
+        <h2>今日の予定</h2>
+        <div id="home-today"></div>
+      </div>
+      <div class="card">
+        <h2>今週の予定</h2>
+        <div id="home-week"></div>
       </div>
       <div class="card">
         <h2>予定カレンダー</h2>
@@ -375,6 +385,7 @@ let SUB_STATUS = DEFAULT_SUB_STATUS.slice();
 let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社（機械なし）
 let EXTRA_YEARS = [];              // 提出物管理で手動追加した年度
 let SELECTED_YEAR = '';            // 提出物管理で選択中の年度
+let EVENTS = {today:[], week:[]};  // Googleカレンダーの予定（list取得時に更新）
 let offline  = false;
 let editingRow = null; // 編集中の行番号（新規は null）
 
@@ -475,12 +486,28 @@ function mockWithStatus(m){
   if(days!=null) status = days<0 ? 'exp' : (days<=num(mockStore.config.lead) ? 'soon' : 'ok');
   return Object.assign({}, m, {days:days, status:status});
 }
+// DEMO用のカレンダー予定サンプル（今日ぶん・今週ぶん）
+function mockEvents(){
+  const WD=['日','月','火','水','木','金','土'];
+  function lbl(off){ const d=new Date(TODAY.getTime()+off*86400000); return (d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')'; }
+  function iso(off,h,m){ const d=new Date(TODAY.getTime()+off*86400000); d.setHours(h,m,0,0); return d.toISOString(); }
+  const today=[
+    {title:'現場巡回', allDay:false, startIso:iso(0,9,0),  dateLabel:lbl(0), timeLabel:'09:00'},
+    {title:'除雪機械点検', allDay:false, startIso:iso(0,14,30), dateLabel:lbl(0), timeLabel:'14:30'}
+  ];
+  const week=[
+    today[0], today[1],
+    {title:'安全会議', allDay:false, startIso:iso(2,10,0), dateLabel:lbl(2), timeLabel:'10:00'},
+    {title:'書類提出締切', allDay:true, startIso:iso(4,0,0), dateLabel:lbl(4), timeLabel:'終日'}
+  ];
+  return {today:today, week:week};
+}
 function mockApi(payload){
   const a = payload.action;
   if(a==='list'){
     return {ok:true, config:Object.assign({}, mockStore.config), machines: mockStore.machines.map(mockWithStatus),
             submissions: mockStore.submissions.map(function(x){ return Object.assign({}, x); }),
-            docs: DEFAULT_DOCS.slice(), subStatus: DEFAULT_SUB_STATUS.slice()};
+            docs: DEFAULT_DOCS.slice(), subStatus: DEFAULT_SUB_STATUS.slice(), events: mockEvents()};
   }
   if(a==='saveSub'){
     const sub = Object.assign({}, payload.sub || {});
@@ -543,6 +570,7 @@ async function loadData(){
     SUBMISSIONS = Array.isArray(res.submissions) ? res.submissions : [];
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
+    EVENTS = (res.events && typeof res.events==='object') ? res.events : {today:[], week:[]};
     // 提出物の選択年度を初期化（未選択、または一覧に無い場合は現年度に）
     if(!SELECTED_YEAR || allYears().indexOf(SELECTED_YEAR) < 0){ SELECTED_YEAR = CONFIG.year || ''; }
     // days/status がGASから来ない場合に備えて補完
@@ -617,24 +645,28 @@ function linkCardHtml(r){
     + '<div class="lc-ic">'+r.ic+'</div>'
     + '<div><div class="lc-t">'+esc(r.t)+'</div><div class="lc-s">'+esc(r.s)+'</div></div></a>';
 }
+// 予定の行リストHTML（0件は薄く表示）
+function eventRowsHtml(list){
+  if(!list || list.length===0) return '<div class="empty">予定はありません</div>';
+  return list.map(function(ev){
+    return '<div class="ev-row">'
+      + '<span class="ev-date mono">'+esc(ev.dateLabel||'')+'</span>'
+      + '<span class="ev-time mono">'+esc(ev.timeLabel||'')+'</span>'
+      + '<span class="ev-title">'+esc(ev.title||'')+'</span>'
+      + '</div>';
+  }).join('');
+}
 function renderHome(){
-  document.getElementById('home-doccount').textContent = DOCS.length;
-  const curYear = CONFIG.year || '';
-  const companies = companiesForYear(curYear); // 現年度の会社のみ
-  const prog = document.getElementById('home-progress');
-  if(companies.length===0){
-    prog.innerHTML = '<div class="empty">会社が登録されていません。</div>';
+  const ev = EVENTS || {today:[], week:[]};
+  const today = document.getElementById('home-today');
+  const week  = document.getElementById('home-week');
+  if(ev.error){
+    const msg = '<div class="empty">予定を取得できませんでした</div>';
+    if(today) today.innerHTML = msg;
+    if(week)  week.innerHTML  = msg;
   }else{
-    prog.innerHTML = companies.map(function(c){
-      const st = subStat(c, curYear);
-      const pct = st.need ? Math.round(st.done/st.need*100) : 0;
-      const cls = pct>=100 ? '' : (pct>0 ? 'part' : 'zero');
-      return '<div class="prog-row">'
-        + '<div class="prog-name">'+esc(c)+'</div>'
-        + '<div class="prog-track"><div class="prog-fill '+cls+'" style="width:'+pct+'%"></div></div>'
-        + '<div class="prog-val">'+st.done+'/'+st.need+'</div>'
-        + '</div>';
-    }).join('');
+    if(today) today.innerHTML = eventRowsHtml(ev.today);
+    if(week)  week.innerHTML  = eventRowsHtml(ev.week);
   }
   document.getElementById('home-links').innerHTML = RESOURCES.map(linkCardHtml).join('');
 }
