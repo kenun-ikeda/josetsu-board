@@ -148,7 +148,9 @@
   .map-pin .pin-dot{display:block;width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);margin:0 auto;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45)}
   .map-pin.done .pin-dot{background:var(--ok)}
   .map-pin.todo .pin-dot{background:var(--bad)}
-  .map-pin .pin-label{display:inline-block;font-size:10px;font-weight:700;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-top:3px;white-space:nowrap;line-height:1.5;color:#1a2430;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+  .map-pin .pin-label{display:inline-block;font-size:10px;font-weight:700;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-top:3px;white-space:nowrap;line-height:1.5;color:#1a2430;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+  .map-pin.done .pin-label{color:#0f5c33;border-color:#a5d6bb}
+  .map-pin .pin-sub{display:block;font-size:9px;font-weight:600;background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:3px;padding:0 3px;margin-top:1px;white-space:nowrap;line-height:1.4;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis}
   .map-legend{display:flex;gap:16px;align-items:center;margin-top:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
   .map-legend .lg{display:inline-flex;align-items:center;gap:6px}
   .map-legend .sw{width:12px;height:12px;border-radius:50%}
@@ -169,7 +171,7 @@
   .shift-tbl th.sat .dnum,.shift-tbl th.sat .dwd{color:#1c5fb0}
   .shift-tbl th.sun .dnum,.shift-tbl th.sun .dwd{color:#c0392b}
   .shift-tbl th.sat{background:#eef4fb} .shift-tbl th.sun{background:#fdeeec}
-  .shift-tbl td.cell{width:30px;height:30px;cursor:pointer;font-size:14px;font-weight:700;user-select:none;background:#fff}
+  .shift-tbl td.cell{width:30px;height:30px;cursor:pointer;font-size:14px;font-weight:700;user-select:none;background:#fff;touch-action:none}
   .shift-tbl td.c-toki{background:#cfe8f7}
   .shift-tbl td.c-kyu{background:#d9d9d9}
   .shift-tbl .name-col{min-width:110px;text-align:left}
@@ -181,6 +183,18 @@
   .shift-tbl thead th.sum-col{background:#eef2f7}
   .shift-tbl .tot-row td{background:#f7fafd;font-weight:700;font-family:"JetBrains Mono",monospace}
   .shift-tbl .tot-row td.stick{background:#f7fafd}
+  .shift-palette-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .pal-caption{font-size:12px;color:var(--muted);font-weight:700}
+  .shift-palette{display:inline-flex;gap:6px;flex-wrap:wrap}
+  .pal-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:7px;padding:6px 11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:#fff;color:#1a2430}
+  .pal-btn .pal-sym{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid var(--line);border-radius:4px;font-size:12px;background:#fff}
+  .pal-btn.p-toki .pal-sym{background:#cfe8f7}
+  .pal-btn.p-kyu .pal-sym{background:#d9d9d9}
+  .pal-btn.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(31,78,121,.18);background:#eef4fa}
+  .name-cell{display:flex;align-items:center;gap:4px}
+  .name-cell .name-in{flex:1;min-width:0}
+  .row-fill{flex-shrink:0;border:1px solid var(--accent);color:var(--accent);background:#fff;border-radius:5px;padding:3px 6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  .row-fill:hover{background:#eef4fa}
 
   /* ---------- submissions ---------- */
   .sub-status{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700}
@@ -349,14 +363,13 @@
             <button data-month="3" onclick="setShiftMonth(3)">3月</button>
           </div>
         </div>
-        <div class="map-legend">
-          <span class="lg"><span class="sym-box">○</span>通常出勤（白）</span>
-          <span class="lg"><span class="sym-box toki">◎</span>出勤時のみ（水色）</span>
-          <span class="lg"><span class="sym-box kyu"></span>休（グレー）</span>
-        </div>
-        <p class="hint">セルをクリックすると 空欄→○通常出勤→◎出勤時のみ→休 の順に切り替わり自動保存されます。職員名は入力後に確定（Enter／フォーカス移動）で保存。右端「出勤」＝その職員の出勤日数（通＋時）、最下段「日計」＝各日の出勤人数。</p>
+        <p class="hint">上のパレットで入力する状態を選び、セルをクリックまたはドラッグでまとめて塗れます。行の「全部」ボタンでその職員の全日を一括入力。職員名は入力後に確定（Enter／フォーカス移動）で保存。右端「出勤」＝その職員の出勤日数（通＋時）、最下段「日計」＝各日の出勤人数。</p>
       </div>
       <div class="card">
+        <div class="shift-palette-wrap">
+          <span class="pal-caption">入力する状態：</span>
+          <div id="shift-palette" class="shift-palette"></div>
+        </div>
         <div id="shift-grid"></div>
       </div>
     </section>
@@ -458,24 +471,12 @@
     </div>
     <div class="form-grid">
       <div class="fld full">
-        <label>名称（町内会／区域）</label>
-        <input id="mp-name" placeholder="○○町内会">
-      </div>
-      <div class="fld">
-        <label>予定時期</label>
-        <input id="mp-plan" placeholder="例）1月中旬">
-      </div>
-      <div class="fld">
         <label>完了日</label>
         <input id="mp-done" type="date">
       </div>
       <div class="fld full">
-        <label>担当</label>
-        <input id="mp-manager" placeholder="担当者名">
-      </div>
-      <div class="fld full">
-        <label>備考</label>
-        <textarea id="mp-note" placeholder="備考"></textarea>
+        <label>名称（場所名・任意）</label>
+        <input id="mp-name" placeholder="○○町内会（任意）">
       </div>
     </div>
     <div class="row" style="margin-top:16px">
@@ -529,6 +530,9 @@ let editingMapXY = {x:50, y:50};   // 保存時に保持する地点座標
 let SHIFTS = [];                   // 勤務予定 [{row, ym, idx, name, days:[31]}]
 let SHIFT_NENDO = null;            // 選択中の年度（令和X の X）
 let SHIFT_MONTH = null;            // 選択中の月（11,12,1,2,3）
+let SHIFT_PAINT = '通';            // パレットで選択中の入力状態（''消去/'通'/'時'/'休'）
+let shiftDragging = false;         // ドラッグ塗り中
+let shiftChangedRows = {};         // ドラッグ中に変更された行 idx の集合（保存対象）
 let offline  = false;
 let editingRow = null; // 編集中の行番号（新規は null）
 
@@ -684,6 +688,9 @@ function mockApi(payload){
       mockStore.shifts.push(rec);
     }
     if(sh.name!==undefined && sh.name!==null) rec.name = sh.name;
+    if(Array.isArray(sh.days)){
+      for(let d=0; d<31; d++) rec.days[d] = sh.days[d] ? String(sh.days[d]) : '';
+    }
     if(sh.day!==undefined && sh.day!==null){ const d=Number(sh.day); if(d>=1 && d<=31) rec.days[d-1] = sh.code||''; }
     return {ok:true, row:rec.row};
   }
@@ -905,6 +912,12 @@ function mapImageUrl(){
 function tagMapStatus(status){
   return status==='完了' ? '<span class="tag ok">完了</span>' : '<span class="tag exp">未完了</span>';
 }
+// 完了日 iso → 'M月D日'
+function mapDoneLabel(iso){
+  const d = parseDate(iso);
+  if(!d) return '完了';
+  return '完了 '+(d.getMonth()+1)+'月'+d.getDate()+'日';
+}
 // 将来拡張：ズーム/パンは未実装（フィット表示）。必要なら map-stage に transform:scale を掛ける想定。
 function renderMap(){
   const wrap = document.getElementById('map-wrap');
@@ -916,9 +929,19 @@ function renderMap(){
 
   const url = mapImageUrl();
   const pins = pts.map(function(p){
-    const cls = p.status==='完了' ? 'done' : 'todo';
+    const isDone = p.status==='完了';
+    const cls = isDone ? 'done' : 'todo';
+    var label;
+    if(isDone){
+      // 完了ピン：緑＋「完了 M月D日」（名称があれば小さく併記）
+      label = '<span class="pin-label">'+esc(mapDoneLabel(p.doneDate))+'</span>'
+            + (p.name ? '<span class="pin-sub">'+esc(p.name)+'</span>' : '');
+    }else{
+      // 未完了ピン：赤＋名称（無ければ「未完了」）
+      label = '<span class="pin-label">'+esc(p.name || '未完了')+'</span>';
+    }
     return '<div class="map-pin '+cls+'" style="left:'+num(p.x)+'%;top:'+num(p.y)+'%" data-row="'+p.row+'" title="'+esc(p.name||'')+'">'
-      + '<span class="pin-dot"></span><span class="pin-label">'+esc(p.name||'')+'</span></div>';
+      + '<span class="pin-dot"></span>'+label+'</div>';
   }).join('');
   wrap.innerHTML = '<div class="map-stage'+(addingPoint?' adding':'')+'" id="map-stage">'
     + '<img class="map-img" id="map-img" src="'+esc(url)+'" alt="排雪マップ">'
@@ -945,14 +968,12 @@ function renderMapList(){
     return;
   }
   el.innerHTML = '<div class="tbl-wrap"><table><thead><tr>'
-    + '<th>名称</th><th>予定時期</th><th>状態</th><th>完了日</th><th>担当</th></tr></thead><tbody>'
+    + '<th>名称</th><th>完了日</th><th>状態</th></tr></thead><tbody>'
     + pts.map(function(p){
         return '<tr style="cursor:pointer" data-row="'+p.row+'">'
-          + '<td>'+esc(p.name||'')+'</td>'
-          + '<td>'+esc(p.plan||'')+'</td>'
-          + '<td>'+tagMapStatus(p.status)+'</td>'
+          + '<td>'+esc(p.name||'（名称なし）')+'</td>'
           + '<td class="mono">'+esc(p.doneDate||'—')+'</td>'
-          + '<td>'+esc(p.manager||'')+'</td>'
+          + '<td>'+tagMapStatus(p.status)+'</td>'
           + '</tr>';
       }).join('')
     + '</tbody></table></div>';
@@ -1000,11 +1021,8 @@ function openMapModal(row){
   }
   editingMapXY = { x: num(pt.x), y: num(pt.y) }; // 保存時に座標を保持
   document.getElementById('map-modal-title').textContent = (editingMapRow!=null) ? '地点を編集' : '地点を追加';
-  document.getElementById('mp-name').value    = pt.name||'';
-  document.getElementById('mp-plan').value    = pt.plan||'';
-  document.getElementById('mp-done').value    = (pt.doneDate||'').slice(0,10);
-  document.getElementById('mp-manager').value = pt.manager||'';
-  document.getElementById('mp-note').value    = pt.note||'';
+  document.getElementById('mp-name').value = pt.name||'';
+  document.getElementById('mp-done').value = (pt.doneDate||'').slice(0,10);
   document.getElementById('mp-del').style.display = (editingMapRow!=null) ? '' : 'none';
   document.getElementById('map-modal').classList.add('show');
 }
@@ -1014,13 +1032,15 @@ function closeMapModal(){
 }
 async function saveMapPoint(){
   const name = document.getElementById('mp-name').value.trim();
-  if(!name){ toast('名称を入力してください'); return; }
+  const doneDate = document.getElementById('mp-done').value;
+  if(!name && !doneDate){ toast('完了日を入力してください（名称は任意）'); return; }
+  // 予定時期・担当・備考はUIから外したため空で送信（GAS側 saveMapPoint はそのまま）
   const pt = {
     name: name,
-    plan: document.getElementById('mp-plan').value.trim(),
-    doneDate: document.getElementById('mp-done').value,
-    manager: document.getElementById('mp-manager').value.trim(),
-    note: document.getElementById('mp-note').value.trim(),
+    plan: '',
+    doneDate: doneDate,
+    manager: '',
+    note: '',
     x: editingMapXY.x, y: editingMapXY.y
   };
   if(editingMapRow!=null) pt.row = editingMapRow;
@@ -1130,7 +1150,10 @@ function renderShift(){
       cells += '<td class="cell '+cellCls(code)+'" data-idx="'+idx+'" data-day="'+d+'">'+cellSym(code)+'</td>';
     }
     body += '<tr>'
-      + '<td class="stick name-col"><input class="name-in" data-idx="'+idx+'" value="'+esc(name)+'" placeholder="職員名"></td>'
+      + '<td class="stick name-col"><div class="name-cell">'
+      +   '<input class="name-in" data-idx="'+idx+'" value="'+esc(name)+'" placeholder="職員名">'
+      +   '<button type="button" class="row-fill" data-idx="'+idx+'" title="選択中の状態で全日を塗る">全部</button>'
+      + '</div></td>'
       + cells
       + '<td class="sum-col" data-sumrow="'+idx+'">'+rowSum+'</td>'
       + '</tr>';
@@ -1145,11 +1168,103 @@ function renderShift(){
     '<div class="tbl-wrap"><table class="shift-tbl"><thead>'+head+'</thead><tbody>'+body+totals+'</tbody></table></div>';
 
   const grid = document.getElementById('shift-grid');
+  // セル：pointerdownで塗り開始（クリック＝1マス、ドラッグ＝連続塗り）
   Array.prototype.forEach.call(grid.querySelectorAll('td.cell'), function(td){
-    td.onclick = function(){ cycleShiftCell(Number(td.getAttribute('data-idx')), Number(td.getAttribute('data-day')), td); };
+    td.onpointerdown = function(e){
+      e.preventDefault();
+      shiftDragging = true;
+      shiftChangedRows = {};
+      paintShiftCell(td);
+    };
   });
   Array.prototype.forEach.call(grid.querySelectorAll('input.name-in'), function(inp){
     inp.onchange = function(){ saveShiftName(Number(inp.getAttribute('data-idx')), inp.value); };
+  });
+  Array.prototype.forEach.call(grid.querySelectorAll('button.row-fill'), function(b){
+    b.onclick = function(){ fillShiftRow(Number(b.getAttribute('data-idx'))); };
+  });
+  renderShiftPalette();
+  wireShiftGlobalListeners();
+}
+
+// 入力パレット（凡例も兼ねる）
+function renderShiftPalette(){
+  const el = document.getElementById('shift-palette');
+  if(!el) return;
+  const items = [
+    {code:'通', label:'通常出勤', sym:'○', cls:'p-tsu'},
+    {code:'時', label:'出勤時のみ', sym:'◎', cls:'p-toki'},
+    {code:'休', label:'休', sym:'', cls:'p-kyu'},
+    {code:'',  label:'消去', sym:'', cls:'p-none'}
+  ];
+  el.innerHTML = items.map(function(it){
+    return '<button type="button" class="pal-btn '+it.cls+(SHIFT_PAINT===it.code?' active':'')+'" data-code="'+it.code+'">'
+      + '<span class="pal-sym">'+it.sym+'</span>'+esc(it.label)+'</button>';
+  }).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('.pal-btn'), function(b){
+    b.onclick = function(){ SHIFT_PAINT = b.getAttribute('data-code'); renderShiftPalette(); };
+  });
+}
+// 1セルを選択中状態で塗る（変化がなければ何もしない）
+function paintShiftCell(td){
+  const idx = Number(td.getAttribute('data-idx'));
+  const day = Number(td.getAttribute('data-day'));
+  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  let rec = shiftRowFor(ym, idx);
+  if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
+  if((rec.days[day-1]||'') === SHIFT_PAINT) return;
+  rec.days[day-1] = SHIFT_PAINT;
+  td.className = 'cell '+cellCls(SHIFT_PAINT);
+  td.innerHTML = cellSym(SHIFT_PAINT);
+  shiftChangedRows[idx] = true;
+  updateShiftTotals();
+}
+// ドラッグ中の移動・終了を document で拾う（マウス／タッチ両対応、1回だけ登録）
+function wireShiftGlobalListeners(){
+  if(window.__shiftWired) return;
+  window.__shiftWired = true;
+  document.addEventListener('pointermove', function(e){
+    if(!shiftDragging) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if(el && el.classList && el.classList.contains('cell')) paintShiftCell(el);
+  });
+  document.addEventListener('pointerup', onShiftPointerUp);
+}
+// ドラッグ終了：変更のあった行ごとに days 一括保存
+async function onShiftPointerUp(){
+  if(!shiftDragging) return;
+  shiftDragging = false;
+  const rows = Object.keys(shiftChangedRows).map(Number);
+  shiftChangedRows = {};
+  if(!rows.length) return;
+  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  let okAll = true;
+  for(let i=0;i<rows.length;i++){
+    const rec = shiftRowFor(ym, rows[i]);
+    if(!rec) continue;
+    const res = await callApi({action:'saveShift', shift:{ym:ym, idx:rows[i], days:rec.days.slice(0,31)}});
+    if(res && res.ok){ if(res.row!=null) rec.row = res.row; }
+    else { okAll = false; }
+  }
+  toast(okAll ? ('シフトを保存しました'+(offline?'（サンプル）':'')) : 'シフトの保存に一部失敗しました');
+}
+// 行一括：その職員の全日を選択中状態で塗る→保存
+function fillShiftRow(idx){
+  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  const year = nendoToSeireki(SHIFT_NENDO, SHIFT_MONTH);
+  const ndays = new Date(year, SHIFT_MONTH, 0).getDate();
+  let rec = shiftRowFor(ym, idx);
+  if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
+  for(let d=1; d<=ndays; d++) rec.days[d-1] = SHIFT_PAINT;
+  const grid = document.getElementById('shift-grid');
+  Array.prototype.forEach.call(grid.querySelectorAll('td.cell[data-idx="'+idx+'"]'), function(td){
+    td.className = 'cell '+cellCls(SHIFT_PAINT);
+    td.innerHTML = cellSym(SHIFT_PAINT);
+  });
+  updateShiftTotals();
+  callApi({action:'saveShift', shift:{ym:ym, idx:idx, days:rec.days.slice(0,31)}}).then(function(res){
+    if(res && res.ok){ if(res.row!=null) rec.row = res.row; toast('行を一括保存しました'+(offline?'（サンプル）':'')); }
+    else toast('保存に失敗しました'+(res && res.error?'：'+res.error:''));
   });
 }
 
@@ -1189,21 +1304,6 @@ function onShiftYearChange(){
 function setShiftMonth(m){
   SHIFT_MONTH = Number(m);
   renderShift();
-}
-// セルクリック：''→通→時→休→'' を循環し即保存（該当セル＋集計のみ更新）
-async function cycleShiftCell(idx, day, td){
-  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
-  let rec = shiftRowFor(ym, idx);
-  const cur = rec ? (rec.days[day-1]||'') : '';
-  const code = nextCode(cur);
-  if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
-  rec.days[day-1] = code;
-  td.className = 'cell '+cellCls(code);
-  td.innerHTML = cellSym(code);
-  updateShiftTotals();
-  const res = await callApi({action:'saveShift', shift:{ym:ym, idx:idx, day:day, code:code}});
-  if(res && res.ok){ if(res.row!=null) rec.row = res.row; }
-  else { toast('シフトの保存に失敗しました' + (res && res.error ? '：'+res.error : '')); }
 }
 async function saveShiftName(idx, name){
   const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
