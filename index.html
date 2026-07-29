@@ -195,6 +195,9 @@
   .name-cell .name-in{flex:1;min-width:0}
   .row-fill{flex-shrink:0;border:1px solid var(--accent);color:var(--accent);background:#fff;border-radius:5px;padding:3px 6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
   .row-fill:hover{background:#eef4fa}
+  .shift-month{margin-bottom:22px}
+  .shift-month-title{font-size:14px;color:var(--accent);margin:0 0 8px;font-weight:800}
+  .shift-print-title{display:none}
 
   /* ---------- submissions ---------- */
   .sub-status{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700}
@@ -205,6 +208,32 @@
   #subs-table select:focus,#subs-table input:focus{outline:none;border-color:var(--accent2)}
 
   @media (max-width:520px){ .form-grid{grid-template-columns:1fr} .prog-name{width:100%} }
+
+  /* ---------- 印刷（勤務予定表） ---------- */
+  @media print{
+    @page{ size:A4 landscape; margin:8mm; }
+    body{ background:#fff; }
+    header, nav, .offline-badge, .no-print{ display:none !important; }
+    /* シフトタブの操作系（見出し行・ヒント・パレット・全部ボタン）は印刷しない */
+    #tab-shift .row, #tab-shift .hint, #tab-shift .shift-palette-wrap, .row-fill{ display:none !important; }
+    main{ max-width:none; margin:0; padding:0; }
+    .card{ border:none; box-shadow:none; padding:0; margin:0; background:#fff; }
+    /* 年度を紙面に表示 */
+    .shift-print-title{ display:block; font-size:15px; font-weight:800; color:#000; margin:0 0 10px; }
+    /* 月ごとに改ページ内で完結させる */
+    .shift-month{ page-break-inside:avoid; margin-bottom:14px; }
+    .shift-month-title{ font-size:13px; }
+    /* セル色分けを印刷でも維持 */
+    .shift-tbl, .shift-tbl th, .shift-tbl td{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    /* A4横に収まるよう縮小・stickyは解除 */
+    .shift-tbl{ font-size:9px; width:100%; }
+    .shift-tbl .stick, .shift-tbl thead th.stick{ position:static; }
+    .shift-tbl td.cell{ width:auto; height:20px; }
+    .shift-tbl th.day-col{ min-width:0; }
+    .shift-tbl .name-col{ min-width:64px; }
+    .shift-tbl .name-in{ border:none; background:transparent; font-size:9px; }
+    .tbl-wrap{ overflow:visible; border:none; }
+  }
 </style>
 </head>
 <body>
@@ -356,12 +385,13 @@
           <label for="shift-year" style="font-size:12px;color:var(--muted);font-weight:700">年度</label>
           <select id="shift-year" onchange="onShiftYearChange()" style="border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff;font-weight:700;color:var(--accent)"></select>
           <div id="shift-months" class="shift-months">
-            <button data-month="11" onclick="setShiftMonth(11)">11月</button>
-            <button data-month="12" onclick="setShiftMonth(12)">12月</button>
-            <button data-month="1" onclick="setShiftMonth(1)">1月</button>
-            <button data-month="2" onclick="setShiftMonth(2)">2月</button>
-            <button data-month="3" onclick="setShiftMonth(3)">3月</button>
+            <button type="button" data-month="11" onclick="jumpToShiftMonth(11)">11月</button>
+            <button type="button" data-month="12" onclick="jumpToShiftMonth(12)">12月</button>
+            <button type="button" data-month="1" onclick="jumpToShiftMonth(1)">1月</button>
+            <button type="button" data-month="2" onclick="jumpToShiftMonth(2)">2月</button>
+            <button type="button" data-month="3" onclick="jumpToShiftMonth(3)">3月</button>
           </div>
+          <button class="btn sec sm no-print" onclick="window.print()">🖨 印刷</button>
         </div>
         <p class="hint">上のパレットで入力する状態を選び、セルをクリックまたはドラッグでまとめて塗れます。行の「全部」ボタンでその職員の全日を一括入力。職員名は入力後に確定（Enter／フォーカス移動）で保存。右端「出勤」＝その職員の出勤日数（通＋時）、最下段「日計」＝各日の出勤人数。</p>
       </div>
@@ -532,6 +562,7 @@ let SHIFT_NENDO = null;            // 選択中の年度（令和X の X）
 let SHIFT_MONTH = null;            // 選択中の月（11,12,1,2,3）
 let SHIFT_PAINT = '通';            // パレットで選択中の入力状態（''消去/'通'/'時'/'休'）
 let shiftDragging = false;         // ドラッグ塗り中
+let shiftDragMonth = null;         // ドラッグ塗り対象の月（月をまたぐ塗りを防ぐ）
 let shiftChangedRows = {};         // ドラッグ中に変更された行 idx の集合（保存対象）
 let offline  = false;
 let editingRow = null; // 編集中の行番号（新規は null）
@@ -1108,7 +1139,6 @@ function renderShift(){
   const yearSel = document.getElementById('shift-year');
   if(!yearSel) return;
   if(SHIFT_NENDO==null) SHIFT_NENDO = nendoNum(CONFIG.year) || currentNendoNum();
-  if(SHIFT_MONTH==null) SHIFT_MONTH = defaultShiftMonth();
   // 年度セレクタ（現年度-1〜+2、選択中を含める）
   const cur = currentNendoNum();
   const yset = [];
@@ -1118,19 +1148,43 @@ function renderShift(){
   yearSel.innerHTML = yset.map(function(n){
     return '<option value="'+n+'"'+(n===SHIFT_NENDO?' selected':'')+'>令和'+n+'年度</option>';
   }).join('');
-  // 月ボタンのアクティブ表示
-  Array.prototype.forEach.call(document.querySelectorAll('#shift-months button'), function(b){
-    b.classList.toggle('active', Number(b.dataset.month)===SHIFT_MONTH);
-  });
 
-  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
-  const year = nendoToSeireki(SHIFT_NENDO, SHIFT_MONTH);
-  const ndays = new Date(year, SHIFT_MONTH, 0).getDate(); // 実際の日数（うるう年対応）
+  // 5か月ぶん（11,12,1,2,3）を縦に連続して描画。先頭に印刷用の年度見出し。
+  let html = '<div class="shift-print-title">令和'+SHIFT_NENDO+'年度 勤務予定表</div>';
+  SHIFT_MONTHS.forEach(function(month){ html += renderShiftMonthTable(month); });
+  document.getElementById('shift-grid').innerHTML = html;
+
+  const grid = document.getElementById('shift-grid');
+  // セル：pointerdownで塗り開始（クリック＝1マス、ドラッグ＝連続塗り）。data-monthで対象月を特定。
+  Array.prototype.forEach.call(grid.querySelectorAll('td.cell'), function(td){
+    td.onpointerdown = function(e){
+      e.preventDefault();
+      shiftDragging = true;
+      shiftDragMonth = Number(td.getAttribute('data-month'));
+      shiftChangedRows = {};
+      paintShiftCell(td);
+    };
+  });
+  Array.prototype.forEach.call(grid.querySelectorAll('input.name-in'), function(inp){
+    inp.onchange = function(){ saveShiftName(Number(inp.getAttribute('data-month')), Number(inp.getAttribute('data-idx')), inp.value); };
+  });
+  Array.prototype.forEach.call(grid.querySelectorAll('button.row-fill'), function(b){
+    b.onclick = function(){ fillShiftRow(Number(b.getAttribute('data-month')), Number(b.getAttribute('data-idx'))); };
+  });
+  renderShiftPalette();
+  wireShiftGlobalListeners();
+}
+
+// 1か月ぶんの表HTMLを返す（見出し＋表。セル等にdata-monthを持たせ対象月を識別できるようにする）
+function renderShiftMonthTable(month){
+  const ym = shiftYm(SHIFT_NENDO, month);
+  const year = nendoToSeireki(SHIFT_NENDO, month);
+  const ndays = new Date(year, month, 0).getDate(); // 実際の日数（うるう年対応）
 
   // ヘッダ（日番号＋曜日、土日色分け。曜日は実際の西暦日付から算出）
   let head = '<tr><th class="stick name-col">職員名</th>';
   for(let d=1; d<=ndays; d++){
-    const wd = new Date(year, SHIFT_MONTH-1, d).getDay();
+    const wd = new Date(year, month-1, d).getDay();
     const cls = wd===0?'sun':(wd===6?'sat':'');
     head += '<th class="day-col '+cls+'"><div class="dnum">'+d+'</div><div class="dwd">'+WD_JP[wd]+'</div></th>';
   }
@@ -1147,12 +1201,12 @@ function renderShift(){
     for(let d=1; d<=ndays; d++){
       const code = days[d-1] || '';
       if(code==='通' || code==='時'){ rowSum++; dayTotals[d-1]++; }
-      cells += '<td class="cell '+cellCls(code)+'" data-idx="'+idx+'" data-day="'+d+'">'+cellSym(code)+'</td>';
+      cells += '<td class="cell '+cellCls(code)+'" data-month="'+month+'" data-idx="'+idx+'" data-day="'+d+'">'+cellSym(code)+'</td>';
     }
     body += '<tr>'
       + '<td class="stick name-col"><div class="name-cell">'
-      +   '<input class="name-in" data-idx="'+idx+'" value="'+esc(name)+'" placeholder="職員名">'
-      +   '<button type="button" class="row-fill" data-idx="'+idx+'" title="選択中の状態で全日を塗る">全部</button>'
+      +   '<input class="name-in" data-month="'+month+'" data-idx="'+idx+'" value="'+esc(name)+'" placeholder="職員名">'
+      +   '<button type="button" class="row-fill" data-month="'+month+'" data-idx="'+idx+'" title="選択中の状態で全日を塗る">全部</button>'
       + '</div></td>'
       + cells
       + '<td class="sum-col" data-sumrow="'+idx+'">'+rowSum+'</td>'
@@ -1164,27 +1218,10 @@ function renderShift(){
   for(let d=1; d<=ndays; d++){ totals += '<td data-daytot="'+d+'">'+dayTotals[d-1]+'</td>'; grand += dayTotals[d-1]; }
   totals += '<td class="sum-col" data-grand="1">'+grand+'</td></tr>';
 
-  document.getElementById('shift-grid').innerHTML =
-    '<div class="tbl-wrap"><table class="shift-tbl"><thead>'+head+'</thead><tbody>'+body+totals+'</tbody></table></div>';
-
-  const grid = document.getElementById('shift-grid');
-  // セル：pointerdownで塗り開始（クリック＝1マス、ドラッグ＝連続塗り）
-  Array.prototype.forEach.call(grid.querySelectorAll('td.cell'), function(td){
-    td.onpointerdown = function(e){
-      e.preventDefault();
-      shiftDragging = true;
-      shiftChangedRows = {};
-      paintShiftCell(td);
-    };
-  });
-  Array.prototype.forEach.call(grid.querySelectorAll('input.name-in'), function(inp){
-    inp.onchange = function(){ saveShiftName(Number(inp.getAttribute('data-idx')), inp.value); };
-  });
-  Array.prototype.forEach.call(grid.querySelectorAll('button.row-fill'), function(b){
-    b.onclick = function(){ fillShiftRow(Number(b.getAttribute('data-idx'))); };
-  });
-  renderShiftPalette();
-  wireShiftGlobalListeners();
+  return '<div class="shift-month" id="shift-month-'+month+'" data-month="'+month+'">'
+    + '<h3 class="shift-month-title">令和'+SHIFT_NENDO+'年度 '+month+'月</h3>'
+    + '<div class="tbl-wrap"><table class="shift-tbl"><thead>'+head+'</thead><tbody>'+body+totals+'</tbody></table></div>'
+    + '</div>';
 }
 
 // 入力パレット（凡例も兼ねる）
@@ -1207,9 +1244,10 @@ function renderShiftPalette(){
 }
 // 1セルを選択中状態で塗る（変化がなければ何もしない）
 function paintShiftCell(td){
+  const month = Number(td.getAttribute('data-month'));
   const idx = Number(td.getAttribute('data-idx'));
   const day = Number(td.getAttribute('data-day'));
-  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  const ym = shiftYm(SHIFT_NENDO, month);
   let rec = shiftRowFor(ym, idx);
   if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
   if((rec.days[day-1]||'') === SHIFT_PAINT) return;
@@ -1217,7 +1255,7 @@ function paintShiftCell(td){
   td.className = 'cell '+cellCls(SHIFT_PAINT);
   td.innerHTML = cellSym(SHIFT_PAINT);
   shiftChangedRows[idx] = true;
-  updateShiftTotals();
+  updateShiftTotals(month);
 }
 // ドラッグ中の移動・終了を document で拾う（マウス／タッチ両対応、1回だけ登録）
 function wireShiftGlobalListeners(){
@@ -1226,7 +1264,8 @@ function wireShiftGlobalListeners(){
   document.addEventListener('pointermove', function(e){
     if(!shiftDragging) return;
     const el = document.elementFromPoint(e.clientX, e.clientY);
-    if(el && el.classList && el.classList.contains('cell')) paintShiftCell(el);
+    // 同一月の表内でのみ塗る（月をまたぐドラッグは無視）
+    if(el && el.classList && el.classList.contains('cell') && Number(el.getAttribute('data-month'))===shiftDragMonth) paintShiftCell(el);
   });
   document.addEventListener('pointerup', onShiftPointerUp);
 }
@@ -1234,10 +1273,11 @@ function wireShiftGlobalListeners(){
 async function onShiftPointerUp(){
   if(!shiftDragging) return;
   shiftDragging = false;
+  const month = shiftDragMonth;
   const rows = Object.keys(shiftChangedRows).map(Number);
   shiftChangedRows = {};
   if(!rows.length) return;
-  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+  const ym = shiftYm(SHIFT_NENDO, month);
   let okAll = true;
   for(let i=0;i<rows.length;i++){
     const rec = shiftRowFor(ym, rows[i]);
@@ -1249,19 +1289,19 @@ async function onShiftPointerUp(){
   toast(okAll ? ('シフトを保存しました'+(offline?'（サンプル）':'')) : 'シフトの保存に一部失敗しました');
 }
 // 行一括：その職員の全日を選択中状態で塗る→保存
-function fillShiftRow(idx){
-  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
-  const year = nendoToSeireki(SHIFT_NENDO, SHIFT_MONTH);
-  const ndays = new Date(year, SHIFT_MONTH, 0).getDate();
+function fillShiftRow(month, idx){
+  const ym = shiftYm(SHIFT_NENDO, month);
+  const year = nendoToSeireki(SHIFT_NENDO, month);
+  const ndays = new Date(year, month, 0).getDate();
   let rec = shiftRowFor(ym, idx);
   if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
   for(let d=1; d<=ndays; d++) rec.days[d-1] = SHIFT_PAINT;
-  const grid = document.getElementById('shift-grid');
-  Array.prototype.forEach.call(grid.querySelectorAll('td.cell[data-idx="'+idx+'"]'), function(td){
+  const container = document.getElementById('shift-month-'+month);
+  if(container) Array.prototype.forEach.call(container.querySelectorAll('td.cell[data-idx="'+idx+'"]'), function(td){
     td.className = 'cell '+cellCls(SHIFT_PAINT);
     td.innerHTML = cellSym(SHIFT_PAINT);
   });
-  updateShiftTotals();
+  updateShiftTotals(month);
   callApi({action:'saveShift', shift:{ym:ym, idx:idx, days:rec.days.slice(0,31)}}).then(function(res){
     if(res && res.ok){ if(res.row!=null) rec.row = res.row; toast('行を一括保存しました'+(offline?'（サンプル）':'')); }
     else toast('保存に失敗しました'+(res && res.error?'：'+res.error:''));
@@ -1269,12 +1309,12 @@ function fillShiftRow(idx){
 }
 
 // 集計だけ再計算して該当セルのテキストを更新（全再描画せずスクロール位置維持）
-function updateShiftTotals(){
-  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
-  const year = nendoToSeireki(SHIFT_NENDO, SHIFT_MONTH);
-  const ndays = new Date(year, SHIFT_MONTH, 0).getDate();
-  const grid = document.getElementById('shift-grid');
-  if(!grid) return;
+function updateShiftTotals(month){
+  const ym = shiftYm(SHIFT_NENDO, month);
+  const year = nendoToSeireki(SHIFT_NENDO, month);
+  const ndays = new Date(year, month, 0).getDate();
+  const container = document.getElementById('shift-month-'+month);
+  if(!container) return;
   const dayTotals = new Array(ndays).fill(0);
   let grand = 0;
   for(let idx=1; idx<=SHIFT_ROWS; idx++){
@@ -1284,15 +1324,15 @@ function updateShiftTotals(){
       const code = rec ? (rec.days[d-1]||'') : '';
       if(code==='通' || code==='時'){ rowSum++; dayTotals[d-1]++; }
     }
-    const el = grid.querySelector('td.sum-col[data-sumrow="'+idx+'"]');
+    const el = container.querySelector('td.sum-col[data-sumrow="'+idx+'"]');
     if(el) el.textContent = rowSum;
     grand += rowSum;
   }
   for(let d=1; d<=ndays; d++){
-    const el = grid.querySelector('td[data-daytot="'+d+'"]');
+    const el = container.querySelector('td[data-daytot="'+d+'"]');
     if(el) el.textContent = dayTotals[d-1];
   }
-  const gEl = grid.querySelector('td[data-grand]');
+  const gEl = container.querySelector('td[data-grand]');
   if(gEl) gEl.textContent = grand;
 }
 
@@ -1301,12 +1341,13 @@ function onShiftYearChange(){
   SHIFT_NENDO = Number(sel.value);
   renderShift();
 }
-function setShiftMonth(m){
-  SHIFT_MONTH = Number(m);
-  renderShift();
+// 月ジャンプ（月タブの代わり。該当月の表へスクロール）
+function jumpToShiftMonth(m){
+  const el = document.getElementById('shift-month-'+Number(m));
+  if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'});
 }
-async function saveShiftName(idx, name){
-  const ym = shiftYm(SHIFT_NENDO, SHIFT_MONTH);
+async function saveShiftName(month, idx, name){
+  const ym = shiftYm(SHIFT_NENDO, month);
   let rec = shiftRowFor(ym, idx);
   if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
   rec.name = name;
