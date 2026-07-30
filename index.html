@@ -158,6 +158,22 @@
   .map-legend .sym-box{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid var(--line);border-radius:4px;background:#fff;font-size:13px;font-weight:700}
   .map-legend .sym-box.toki{background:#cfe8f7}
   .map-legend .sym-box.kyu{background:#d9d9d9}
+  /* SVGオーバーレイ（多角形エリア） */
+  .map-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+  .map-svg .map-poly{pointer-events:auto;cursor:pointer}
+  .map-poly-label{position:absolute;transform:translate(-50%,-50%);z-index:3;text-align:center;line-height:1.2;cursor:pointer;pointer-events:auto}
+  .map-poly-label .ppl-name{display:block;font-size:10px;font-weight:700;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:4px;padding:0 4px;white-space:nowrap;color:#1a2430;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+  .map-poly-label .ppl-sub{display:block;font-size:9px;font-weight:700;background:rgba(255,255,255,.85);border-radius:3px;padding:0 3px;margin-top:1px;white-space:nowrap;color:#0f5c33}
+  /* 色パレット・モード切替 */
+  .mp-palette{display:inline-flex;gap:6px;flex-wrap:wrap}
+  .mp-palette .sw-btn{width:24px;height:24px;border-radius:6px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+  .mp-palette .sw-btn.active{box-shadow:0 0 0 2px var(--accent);transform:scale(1.1)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;background:#fff;padding:7px 12px;font-size:13px;font-family:inherit;font-weight:700;color:var(--muted);cursor:pointer}
+  .seg button.active{background:var(--accent);color:#fff}
+  .map-poly-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+  /* シフト保存ボタン（未保存強調） */
+  #shift-save-btn.dirty{background:var(--bad);border-color:var(--bad);color:#fff}
 
   /* ---------- shift schedule ---------- */
   .shift-months{display:inline-flex;gap:4px;flex-wrap:wrap}
@@ -358,7 +374,18 @@
           <h2 style="margin:0">排雪マップ</h2>
           <div class="spacer"></div>
           <span class="pill" id="map-count"></span>
+          <div class="seg" id="map-mode">
+            <button type="button" data-mode="pin" class="active" onclick="setMapMode('pin')">📍 ピン</button>
+            <button type="button" data-mode="poly" onclick="setMapMode('poly')">🔷 エリア</button>
+          </div>
           <button class="btn sec sm" id="map-add-btn" onclick="toggleAddPoint()">＋ 地点を追加</button>
+        </div>
+        <div class="map-poly-tools" id="map-poly-tools" style="display:none">
+          <span class="pal-caption" style="font-size:12px;color:var(--muted);font-weight:700">色：</span>
+          <div id="map-palette" class="mp-palette"></div>
+          <button class="btn sec sm" id="poly-add-btn" onclick="startPolyDraw()">エリア追加</button>
+          <button class="btn sm" id="poly-done-btn" style="display:none" onclick="finishPolyDraw()">確定</button>
+          <button class="btn sec sm" id="poly-cancel-btn" style="display:none" onclick="cancelPolyDraw()">取消</button>
         </div>
         <p class="hint" id="map-hint">地図上のピンをクリックすると各地点の予定・完了日を編集できます。緑＝完了 / 赤＝未完了。</p>
         <div class="map-legend">
@@ -391,6 +418,7 @@
             <button type="button" data-month="2" onclick="jumpToShiftMonth(2)">2月</button>
             <button type="button" data-month="3" onclick="jumpToShiftMonth(3)">3月</button>
           </div>
+          <button class="btn sm no-print" id="shift-save-btn" onclick="saveShiftDirty()">💾 保存</button>
           <button class="btn sec sm no-print" onclick="window.print()">🖨 印刷</button>
         </div>
         <p class="hint">上のパレットで入力する状態を選び、セルをクリックまたはドラッグでまとめて塗れます。行の「全部」ボタンでその職員の全日を一括入力。職員名は入力後に確定（Enter／フォーカス移動）で保存。右端「出勤」＝その職員の出勤日数（通＋時）、最下段「日計」＝各日の出勤人数。</p>
@@ -500,13 +528,25 @@
       <button class="btn sec sm" onclick="closeMapModal()">閉じる</button>
     </div>
     <div class="form-grid">
+      <div class="fld full" id="mp-color-fld" style="display:none">
+        <label>色（エリア）</label>
+        <div id="mp-palette" class="mp-palette"></div>
+      </div>
+      <div class="fld full">
+        <label>名称（場所名・任意）</label>
+        <input id="mp-name" placeholder="○○町内会（任意）">
+      </div>
+      <div class="fld full">
+        <label>予定日</label>
+        <input id="mp-plan" type="date">
+      </div>
       <div class="fld full">
         <label>完了日</label>
         <input id="mp-done" type="date">
       </div>
       <div class="fld full">
-        <label>名称（場所名・任意）</label>
-        <input id="mp-name" placeholder="○○町内会（任意）">
+        <label>備考</label>
+        <textarea id="mp-note" placeholder="備考（任意）"></textarea>
       </div>
     </div>
     <div class="row" style="margin-top:16px">
@@ -529,6 +569,15 @@ const DEMO = GAS_URL.indexOf('PASTE') >= 0;         // true ならGAS無しで�
 /*════════════════ 定数 ════════════════*/
 const CATEGORIES = ["除雪トラック","ロータリ除雪車","除雪ドーザ","小型ロータリ","タイヤショベル","歩道除雪車","ダンプトラック","その他"];
 const OWNERSHIP  = ["所有","リース","レンタル","市貸与"];
+// 排雪マップ エリア用カラーパレット
+const MAP_COLORS = [
+  {c:'#E91E63', n:'マゼンタ'},
+  {c:'#FFEB3B', n:'黄'},
+  {c:'#4CAF50', n:'緑'},
+  {c:'#2196F3', n:'青'},
+  {c:'#FF9800', n:'橙'},
+  {c:'#9C27B0', n:'紫'}
+];
 // 提出物のフォールバック既定値（GASの list が docs/subStatus を返せば上書き）
 const DEFAULT_DOCS = ['一般競争入札参加資格確認申請書','同種業務履行実績書','配置予定技術者経歴書','協定書','除雪機械所有調書','車検証の写し','機械使用調書'];
 const DEFAULT_SUB_STATUS = ['未提出','準備中','提出済','確認済'];
@@ -556,14 +605,22 @@ let MAPPOINTS = [];                // 排雪マップの地点 [{row,name,plan,d
 let addingPoint = false;           // 地点追加モード（地図クリックで配置）
 let pendingPoint = null;           // 新規配置中の {x,y}
 let editingMapRow = null;          // 編集中の地点row（新規はnull）
-let editingMapXY = {x:50, y:50};   // 保存時に保持する地点座標
+let editingMapXY = {x:50, y:50};   // 保存時に保持する地点座標（pin用）
+let MAP_MODE = 'pin';              // 'pin' | 'poly'（マップ操作モード）
+let MAP_POLY_COLOR = '#E91E63';    // エリア作図で選択中の色
+let drawingPoly = false;           // 多角形の作図中フラグ
+let polyVerts = [];                // 作図中の頂点 [{x,y}]（0〜100%）
+let editingMapType = 'pin';        // 編集中モーダルの種別
+let editingMapColor = '#E91E63';   // 編集中モーダルで選択中の色
+let editingPolyPoints = [];        // 編集/保存対象ポリゴンの頂点 [{x,y}]
 let SHIFTS = [];                   // 勤務予定 [{row, ym, idx, name, days:[31]}]
 let SHIFT_NENDO = null;            // 選択中の年度（令和X の X）
 let SHIFT_MONTH = null;            // 選択中の月（11,12,1,2,3）
 let SHIFT_PAINT = '通';            // パレットで選択中の入力状態（''消去/'通'/'時'/'休'）
 let shiftDragging = false;         // ドラッグ塗り中
 let shiftDragMonth = null;         // ドラッグ塗り対象の月（月をまたぐ塗りを防ぐ）
-let shiftChangedRows = {};         // ドラッグ中に変更された行 idx の集合（保存対象）
+let shiftChangedRows = {};         // ドラッグ中に変更された行 idx の集合（局所描画用）
+let SHIFT_DIRTY = new Set();        // 未保存の変更（キー = 'month:idx'）。💾保存で永続化
 let offline  = false;
 let editingRow = null; // 編集中の行番号（新規は null）
 
@@ -950,33 +1007,86 @@ function mapDoneLabel(iso){
   return '完了 '+(d.getMonth()+1)+'月'+d.getDate()+'日';
 }
 // 将来拡張：ズーム/パンは未実装（フィット表示）。必要なら map-stage に transform:scale を掛ける想定。
+// 種別・頂点の正規化（type 無し＝pin、points 無し＝[]）
+function ptType(p){ return (p && p.type==='poly') ? 'poly' : 'pin'; }
+function ptPoints(p){ return (p && Array.isArray(p.points)) ? p.points : []; }
+// ポリゴン重心（頂点の平均）
+function polyCentroid(points){
+  let sx=0, sy=0; points.forEach(function(v){ sx+=num(v.x); sy+=num(v.y); });
+  const n = points.length||1; return {x:sx/n, y:sy/n};
+}
+// エリアラベルの文言（完了日優先→予定日）
+function polyLabelSub(p){
+  if(p.doneDate){ const d=parseDate(p.doneDate); return d ? ('完了 '+(d.getMonth()+1)+'月'+d.getDate()+'日') : '完了'; }
+  if(p.planDate){ const d=parseDate(p.planDate); return d ? ('予定 '+(d.getMonth()+1)+'月'+d.getDate()+'日') : '予定'; }
+  return '';
+}
 function renderMap(){
+  renderMapPalette();
   const wrap = document.getElementById('map-wrap');
   if(!wrap) return;
   const pts = MAPPOINTS || [];
+  const pinPts  = pts.filter(function(p){ return ptType(p)==='pin'; });
+  const polyPts = pts.filter(function(p){ return ptType(p)==='poly'; });
   const done = pts.filter(function(p){ return p.status==='完了'; }).length;
   const countEl = document.getElementById('map-count');
   if(countEl) countEl.textContent = '完了 '+done+' / 全 '+pts.length;
 
   const url = mapImageUrl();
-  const pins = pts.map(function(p){
+  // ピン（HTML絶対配置）
+  const pins = pinPts.map(function(p){
     const isDone = p.status==='完了';
     const cls = isDone ? 'done' : 'todo';
     var label;
     if(isDone){
-      // 完了ピン：緑＋「完了 M月D日」（名称があれば小さく併記）
       label = '<span class="pin-label">'+esc(mapDoneLabel(p.doneDate))+'</span>'
             + (p.name ? '<span class="pin-sub">'+esc(p.name)+'</span>' : '');
     }else{
-      // 未完了ピン：赤＋名称（無ければ「未完了」）
       label = '<span class="pin-label">'+esc(p.name || '未完了')+'</span>';
     }
     return '<div class="map-pin '+cls+'" style="left:'+num(p.x)+'%;top:'+num(p.y)+'%" data-row="'+p.row+'" title="'+esc(p.name||'')+'">'
       + '<span class="pin-dot"></span>'+label+'</div>';
   }).join('');
-  wrap.innerHTML = '<div class="map-stage'+(addingPoint?' adding':'')+'" id="map-stage">'
+  // 多角形（SVGオーバーレイ）
+  const polySvg = polyPts.map(function(p){
+    const vs = ptPoints(p);
+    if(vs.length < 3) return '';
+    const attr = vs.map(function(v){ return num(v.x)+','+num(v.y); }).join(' ');
+    const color = p.color || '#E91E63';
+    return '<polygon class="map-poly" data-row="'+p.row+'" points="'+attr+'" fill="'+esc(color)
+      + '" fill-opacity="0.35" stroke="'+esc(color)+'" stroke-width="0.5" stroke-linejoin="round" />';
+  }).join('');
+  // 作図中プレビュー
+  let draft = '';
+  if(drawingPoly && polyVerts.length){
+    const attr = polyVerts.map(function(v){ return v.x+','+v.y; }).join(' ');
+    if(polyVerts.length >= 2){
+      draft += '<polyline points="'+attr+'" fill="'+esc(MAP_POLY_COLOR)+'" fill-opacity="0.15" stroke="'
+        + esc(MAP_POLY_COLOR)+'" stroke-width="0.6" stroke-dasharray="1.5,1" stroke-linejoin="round" />';
+    }
+    draft += polyVerts.map(function(v){
+      return '<circle cx="'+v.x+'" cy="'+v.y+'" r="1" fill="'+esc(MAP_POLY_COLOR)+'" stroke="#fff" stroke-width="0.3" />';
+    }).join('');
+  }
+  // エリアラベル（HTML絶対配置：重心付近）
+  const polyLabels = polyPts.map(function(p){
+    const vs = ptPoints(p);
+    if(vs.length < 3) return '';
+    const c = polyCentroid(vs);
+    const sub = polyLabelSub(p);
+    const nm = p.name || '';
+    if(!nm && !sub) return '';
+    return '<div class="map-poly-label" style="left:'+c.x+'%;top:'+c.y+'%" data-row="'+p.row+'">'
+      + (nm ? '<span class="ppl-name">'+esc(nm)+'</span>' : '')
+      + (sub ? '<span class="ppl-sub">'+esc(sub)+'</span>' : '')
+      + '</div>';
+  }).join('');
+
+  wrap.innerHTML = '<div class="map-stage'+((addingPoint||drawingPoly)?' adding':'')+'" id="map-stage">'
     + '<img class="map-img" id="map-img" src="'+esc(url)+'" alt="排雪マップ">'
+    + '<svg class="map-svg" id="map-svg" viewBox="0 0 100 100" preserveAspectRatio="none">'+polySvg+draft+'</svg>'
     + pins
+    + polyLabels
     + '</div>';
 
   const img = document.getElementById('map-img');
@@ -984,25 +1094,48 @@ function renderMap(){
     wrap.innerHTML = '<div class="empty">地図画像を用意してください（map.png をリポジトリにアップロード、または設定シートの「地図画像URL」にURLを設定）</div>';
   };
   const stage = document.getElementById('map-stage');
-  if(stage) stage.onclick = onMapClick;
+  if(stage){
+    stage.onclick = onMapClick;
+    stage.ondblclick = function(){ if(drawingPoly) finishPolyDraw(); };
+  }
   Array.prototype.forEach.call(wrap.querySelectorAll('.map-pin'), function(el){
     el.onclick = function(e){ e.stopPropagation(); openMapModal(Number(el.getAttribute('data-row'))); };
   });
+  Array.prototype.forEach.call(wrap.querySelectorAll('.map-poly'), function(el){
+    el.onclick = function(e){ if(drawingPoly) return; e.stopPropagation(); openMapModal(Number(el.getAttribute('data-row'))); };
+  });
+  Array.prototype.forEach.call(wrap.querySelectorAll('.map-poly-label'), function(el){
+    el.onclick = function(e){ if(drawingPoly) return; e.stopPropagation(); openMapModal(Number(el.getAttribute('data-row'))); };
+  });
   renderMapList();
+}
+// 色パレット（ヘッダ：作図色を選択）
+function renderMapPalette(){
+  const el = document.getElementById('map-palette');
+  if(!el) return;
+  el.innerHTML = MAP_COLORS.map(function(c){
+    return '<button type="button" class="sw-btn'+(MAP_POLY_COLOR===c.c?' active':'')+'" style="background:'+c.c+'" title="'+esc(c.n)+'" data-c="'+c.c+'"></button>';
+  }).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('.sw-btn'), function(b){
+    b.onclick = function(){ MAP_POLY_COLOR = b.getAttribute('data-c'); renderMapPalette(); if(drawingPoly) renderMap(); };
+  });
 }
 function renderMapList(){
   const el = document.getElementById('map-list');
   if(!el) return;
   const pts = MAPPOINTS || [];
   if(pts.length===0){
-    el.innerHTML = '<div class="empty">地点がありません。「＋ 地点を追加」で地図上に地点を配置してください。</div>';
+    el.innerHTML = '<div class="empty">地点がありません。「📍 ピン」または「🔷 エリア」で地図上に追加してください。</div>';
     return;
   }
   el.innerHTML = '<div class="tbl-wrap"><table><thead><tr>'
-    + '<th>名称</th><th>完了日</th><th>状態</th></tr></thead><tbody>'
+    + '<th>名称</th><th>種別</th><th>予定日</th><th>完了日</th><th>状態</th></tr></thead><tbody>'
     + pts.map(function(p){
+        const kind = ptType(p)==='poly' ? 'エリア' : 'ピン';
         return '<tr style="cursor:pointer" data-row="'+p.row+'">'
           + '<td>'+esc(p.name||'（名称なし）')+'</td>'
+          + '<td>'+kind+'</td>'
+          + '<td class="mono">'+esc(p.planDate||'—')+'</td>'
           + '<td class="mono">'+esc(p.doneDate||'—')+'</td>'
           + '<td>'+tagMapStatus(p.status)+'</td>'
           + '</tr>';
@@ -1022,57 +1155,153 @@ function updateAddBtn(){
   const btn = document.getElementById('map-add-btn');
   const hint = document.getElementById('map-hint');
   if(btn) btn.textContent = addingPoint ? '✕ 追加をやめる' : '＋ 地点を追加';
-  if(hint) hint.textContent = addingPoint
+  if(hint && MAP_MODE==='pin') hint.textContent = addingPoint
     ? '地図をクリックして地点を追加してください（もう一度ボタンを押すと解除）。'
     : '地図上のピンをクリックすると各地点の予定・完了日を編集できます。緑＝完了 / 赤＝未完了。';
 }
-// 追加モード中の地図クリック：クリック位置を x%,y% に変換して新規地点モーダルを開く
+// モード切替（ピン / エリア）
+function setMapMode(m){
+  MAP_MODE = m;
+  addingPoint = false; drawingPoly = false; polyVerts = [];
+  Array.prototype.forEach.call(document.querySelectorAll('#map-mode button'), function(b){
+    b.classList.toggle('active', b.getAttribute('data-mode')===m);
+  });
+  const addBtn = document.getElementById('map-add-btn');
+  const tools  = document.getElementById('map-poly-tools');
+  if(addBtn) addBtn.style.display = (m==='pin') ? '' : 'none';
+  if(tools)  tools.style.display  = (m==='poly') ? '' : 'none';
+  updateAddBtn();
+  updatePolyTools();
+  renderMap();
+}
+// 作図ツールの表示・ヒント更新
+function updatePolyTools(){
+  const add=document.getElementById('poly-add-btn'), done=document.getElementById('poly-done-btn'), cancel=document.getElementById('poly-cancel-btn');
+  if(add) add.style.display = drawingPoly ? 'none' : '';
+  if(done) done.style.display = drawingPoly ? '' : 'none';
+  if(cancel) cancel.style.display = drawingPoly ? '' : 'none';
+  const hint=document.getElementById('map-hint');
+  if(hint && MAP_MODE==='poly'){
+    hint.textContent = drawingPoly
+      ? '地図をクリックして頂点を追加 →「確定」またはダブルクリックで閉じます（3点以上）。「取消」で破棄。'
+      : 'エリア（多角形）モード：色を選び「エリア追加」→地図をクリックで範囲を囲みます。既存エリアをクリックで編集。';
+  }
+}
+function startPolyDraw(){
+  drawingPoly = true; polyVerts = [];
+  updatePolyTools(); renderMap();
+  toast('地図をクリックして頂点を追加してください（3点以上→確定）');
+}
+function finishPolyDraw(){
+  if(!drawingPoly) return;
+  if(polyVerts.length < 3){ toast('頂点が足りません（3点以上必要です）'); return; }
+  drawingPoly = false;
+  updatePolyTools();
+  openPolyModalNew();
+}
+function cancelPolyDraw(){
+  drawingPoly = false; polyVerts = [];
+  updatePolyTools(); renderMap();
+}
+// 地図クリック：作図中は頂点追加／ピン追加中は新規ピン
 function onMapClick(e){
-  if(!addingPoint) return;
   const img = document.getElementById('map-img');
   if(!img) return;
   const rect = img.getBoundingClientRect();
   if(!rect.width || !rect.height) return;
   const x = Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width  * 100));
   const y = Math.max(0, Math.min(100, (e.clientY - rect.top)  / rect.height * 100));
-  pendingPoint = { x: Math.round(x*10)/10, y: Math.round(y*10)/10 };
-  addingPoint = false;
-  updateAddBtn();
-  const stage = document.getElementById('map-stage');
-  if(stage) stage.classList.remove('adding');
-  openMapModal(null); // 新規（pendingPoint を座標に使う）
+  if(drawingPoly){
+    polyVerts.push({ x: Math.round(x*10)/10, y: Math.round(y*10)/10 });
+    renderMap();
+    return;
+  }
+  if(addingPoint){
+    pendingPoint = { x: Math.round(x*10)/10, y: Math.round(y*10)/10 };
+    addingPoint = false;
+    updateAddBtn();
+    const stage = document.getElementById('map-stage');
+    if(stage) stage.classList.remove('adding');
+    openMapModal(null); // 新規ピン（pendingPoint を座標に使う）
+  }
 }
 function openMapModal(row){
   editingMapRow = (row!=null) ? row : null;
-  let pt = {name:'', plan:'', doneDate:'', manager:'', note:'',
+  let pt = {name:'', plan:'', planDate:'', doneDate:'', manager:'', note:'', type:'pin', color:'', points:[],
             x:(pendingPoint?pendingPoint.x:50), y:(pendingPoint?pendingPoint.y:50)};
   if(editingMapRow!=null){
     const found = MAPPOINTS.find(function(p){ return p.row===editingMapRow; });
     if(found) pt = found;
   }
-  editingMapXY = { x: num(pt.x), y: num(pt.y) }; // 保存時に座標を保持
-  document.getElementById('map-modal-title').textContent = (editingMapRow!=null) ? '地点を編集' : '地点を追加';
+  editingMapType = ptType(pt);
+  editingMapXY = { x: num(pt.x), y: num(pt.y) };        // pin用に座標保持
+  editingPolyPoints = ptPoints(pt).map(function(v){ return {x:num(v.x), y:num(v.y)}; });
+  editingMapColor = pt.color || MAP_POLY_COLOR;
+  fillMapModal(pt);
+}
+// 新規エリア（作図した polyVerts を使う）
+function openPolyModalNew(){
+  editingMapRow = null;
+  editingMapType = 'poly';
+  editingMapXY = { x:0, y:0 };
+  editingPolyPoints = polyVerts.map(function(v){ return {x:v.x, y:v.y}; });
+  editingMapColor = MAP_POLY_COLOR;
+  fillMapModal({name:'', planDate:'', doneDate:'', note:'', type:'poly', color:MAP_POLY_COLOR});
+}
+function fillMapModal(pt){
+  const isPoly = editingMapType==='poly';
+  document.getElementById('map-modal-title').textContent = isPoly
+    ? (editingMapRow!=null ? 'エリアを編集' : 'エリアを追加')
+    : (editingMapRow!=null ? 'ピンを編集' : 'ピンを追加');
   document.getElementById('mp-name').value = pt.name||'';
+  document.getElementById('mp-plan').value = (pt.planDate||'').slice(0,10);
   document.getElementById('mp-done').value = (pt.doneDate||'').slice(0,10);
+  document.getElementById('mp-note').value = pt.note||'';
+  document.getElementById('mp-color-fld').style.display = isPoly ? '' : 'none';
+  renderModalPalette();
   document.getElementById('mp-del').style.display = (editingMapRow!=null) ? '' : 'none';
   document.getElementById('map-modal').classList.add('show');
+}
+// モーダル内の色パレット
+function renderModalPalette(){
+  const el = document.getElementById('mp-palette');
+  if(!el) return;
+  el.innerHTML = MAP_COLORS.map(function(c){
+    return '<button type="button" class="sw-btn'+(editingMapColor===c.c?' active':'')+'" style="background:'+c.c+'" title="'+esc(c.n)+'" data-c="'+c.c+'"></button>';
+  }).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('.sw-btn'), function(b){
+    b.onclick = function(){ editingMapColor = b.getAttribute('data-c'); renderModalPalette(); };
+  });
 }
 function closeMapModal(){
   document.getElementById('map-modal').classList.remove('show');
   editingMapRow = null; pendingPoint = null;
+  // 未保存の作図があれば破棄
+  if(drawingPoly || polyVerts.length){ drawingPoly = false; polyVerts = []; updatePolyTools(); }
+  renderMap();
 }
 async function saveMapPoint(){
+  const isPoly = editingMapType==='poly';
   const name = document.getElementById('mp-name').value.trim();
+  const planDate = document.getElementById('mp-plan').value;
   const doneDate = document.getElementById('mp-done').value;
-  if(!name && !doneDate){ toast('完了日を入力してください（名称は任意）'); return; }
-  // 予定時期・担当・備考はUIから外したため空で送信（GAS側 saveMapPoint はそのまま）
+  const note = document.getElementById('mp-note').value.trim();
+  if(isPoly){
+    if(editingPolyPoints.length < 3){ toast('多角形には3頂点以上が必要です'); return; }
+  }else{
+    if(!name && !doneDate){ toast('完了日を入力してください（名称は任意）'); return; }
+  }
+  // データ契約（GAS側と一致）：type/color/planDate/doneDate/note/x/y/points
   const pt = {
     name: name,
-    plan: '',
+    type: isPoly ? 'poly' : 'pin',
+    color: isPoly ? (editingMapColor || MAP_POLY_COLOR) : '',
+    planDate: planDate,
     doneDate: doneDate,
-    manager: '',
-    note: '',
-    x: editingMapXY.x, y: editingMapXY.y
+    note: note,
+    x: isPoly ? 0 : editingMapXY.x,
+    y: isPoly ? 0 : editingMapXY.y,
+    points: isPoly ? editingPolyPoints.map(function(v){ return {x:v.x, y:v.y}; }) : []
   };
   if(editingMapRow!=null) pt.row = editingMapRow;
   const btn = document.getElementById('mp-save');
@@ -1083,24 +1312,36 @@ async function saveMapPoint(){
     const rec = Object.assign({}, pt, {row: res.row, status: pt.doneDate ? '完了' : '未完了'});
     const idx = MAPPOINTS.findIndex(function(p){ return p.row===res.row; });
     if(idx>=0) MAPPOINTS[idx] = rec; else MAPPOINTS.push(rec);
-    closeMapModal();
+    // 作図状態をクリアしてから閉じる／再描画
+    drawingPoly = false; polyVerts = []; updatePolyTools();
+    document.getElementById('map-modal').classList.remove('show');
+    editingMapRow = null; pendingPoint = null;
     renderMap();
-    toast('地点を保存しました' + (offline?'（サンプル）':''));
+    if(offline){
+      toast('⚠️オフラインのため保存できていません。GASの再デプロイ（新バージョン）とアクセス＝全員をご確認ください');
+    }else{
+      toast(isPoly ? 'エリアを保存しました' : '地点を保存しました');
+    }
   }else{
-    toast('地点の保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+    toast('保存に失敗：' + (res && res.error ? res.error : '不明なエラー'));
   }
 }
 async function deleteMapPoint(){
   if(editingMapRow==null) return;
-  if(!confirm('この地点を削除しますか？')) return;
+  if(!confirm('この地点／エリアを削除しますか？')) return;
   const res = await callApi({action:'delMapPt', row:editingMapRow});
   if(res && res.ok){
     MAPPOINTS = MAPPOINTS.filter(function(p){ return p.row!==editingMapRow; });
-    closeMapModal();
+    document.getElementById('map-modal').classList.remove('show');
+    editingMapRow = null; pendingPoint = null;
     renderMap();
-    toast('削除しました' + (offline?'（サンプル）':''));
+    if(offline){
+      toast('⚠️オフラインのため削除できていません。GASの再デプロイとアクセス設定をご確認ください');
+    }else{
+      toast('削除しました');
+    }
   }else{
-    toast('削除に失敗しました' + (res && res.error ? '：'+res.error : ''));
+    toast('削除に失敗：' + (res && res.error ? res.error : '不明なエラー'));
   }
 }
 
@@ -1173,6 +1414,7 @@ function renderShift(){
   });
   renderShiftPalette();
   wireShiftGlobalListeners();
+  updateShiftDirty();
 }
 
 // 1か月ぶんの表HTMLを返す（見出し＋表。セル等にdata-monthを持たせ対象月を識別できるようにする）
@@ -1255,7 +1497,21 @@ function paintShiftCell(td){
   td.className = 'cell '+cellCls(SHIFT_PAINT);
   td.innerHTML = cellSym(SHIFT_PAINT);
   shiftChangedRows[idx] = true;
+  markShiftDirty(month, idx);   // ローカル更新のみ。保存は「💾 保存」で
   updateShiftTotals(month);
+}
+// 未保存マーク（キー = 'month:idx'）
+function markShiftDirty(month, idx){
+  SHIFT_DIRTY.add(month+':'+idx);
+  updateShiftDirty();
+}
+// 保存ボタンの見た目（未保存件数）を更新
+function updateShiftDirty(){
+  const btn = document.getElementById('shift-save-btn');
+  if(!btn) return;
+  const n = SHIFT_DIRTY.size;
+  if(n>0){ btn.textContent = '💾 保存（未保存'+n+'●）'; btn.classList.add('dirty'); }
+  else   { btn.textContent = '💾 保存'; btn.classList.remove('dirty'); }
 }
 // ドラッグ中の移動・終了を document で拾う（マウス／タッチ両対応、1回だけ登録）
 function wireShiftGlobalListeners(){
@@ -1269,26 +1525,13 @@ function wireShiftGlobalListeners(){
   });
   document.addEventListener('pointerup', onShiftPointerUp);
 }
-// ドラッグ終了：変更のあった行ごとに days 一括保存
-async function onShiftPointerUp(){
+// ドラッグ終了：ローカル更新のみ（保存は「💾 保存」ボタン）。塗った行は paintShiftCell で未保存登録済み
+function onShiftPointerUp(){
   if(!shiftDragging) return;
   shiftDragging = false;
-  const month = shiftDragMonth;
-  const rows = Object.keys(shiftChangedRows).map(Number);
   shiftChangedRows = {};
-  if(!rows.length) return;
-  const ym = shiftYm(SHIFT_NENDO, month);
-  let okAll = true;
-  for(let i=0;i<rows.length;i++){
-    const rec = shiftRowFor(ym, rows[i]);
-    if(!rec) continue;
-    const res = await callApi({action:'saveShift', shift:{ym:ym, idx:rows[i], days:rec.days.slice(0,31)}});
-    if(res && res.ok){ if(res.row!=null) rec.row = res.row; }
-    else { okAll = false; }
-  }
-  toast(okAll ? ('シフトを保存しました'+(offline?'（サンプル）':'')) : 'シフトの保存に一部失敗しました');
 }
-// 行一括：その職員の全日を選択中状態で塗る→保存
+// 行一括：その職員の全日を選択中状態で塗る（ローカルのみ・未保存登録）
 function fillShiftRow(month, idx){
   const ym = shiftYm(SHIFT_NENDO, month);
   const year = nendoToSeireki(SHIFT_NENDO, month);
@@ -1302,10 +1545,37 @@ function fillShiftRow(month, idx){
     td.innerHTML = cellSym(SHIFT_PAINT);
   });
   updateShiftTotals(month);
-  callApi({action:'saveShift', shift:{ym:ym, idx:idx, days:rec.days.slice(0,31)}}).then(function(res){
-    if(res && res.ok){ if(res.row!=null) rec.row = res.row; toast('行を一括保存しました'+(offline?'（サンプル）':'')); }
-    else toast('保存に失敗しました'+(res && res.error?'：'+res.error:''));
-  });
+  markShiftDirty(month, idx);
+}
+// 未保存の全行を保存（月×行キーごとに saveShift）
+async function saveShiftDirty(){
+  if(SHIFT_DIRTY.size===0){ toast('保存する変更はありません'); return; }
+  const btn = document.getElementById('shift-save-btn');
+  const keys = Array.from(SHIFT_DIRTY);
+  if(btn){ btn.disabled = true; btn.textContent = '保存中...'; }
+  let okCount = 0, failed = false, errText = '';
+  const savedKeys = [];
+  for(let i=0;i<keys.length;i++){
+    const parts = keys[i].split(':');
+    const month = Number(parts[0]), idx = Number(parts[1]);
+    const ym = shiftYm(SHIFT_NENDO, month);
+    const rec = shiftRowFor(ym, idx);
+    if(!rec){ savedKeys.push(keys[i]); continue; }
+    const res = await callApi({action:'saveShift', shift:{ym:ym, idx:idx, name:rec.name||'', days:rec.days.slice(0,31)}});
+    if(res && res.ok){ if(res.row!=null) rec.row = res.row; okCount++; savedKeys.push(keys[i]); }
+    else { failed = true; if(!errText) errText = (res && res.error) ? res.error : '不明なエラー'; }
+  }
+  if(btn) btn.disabled = false;
+  // オフライン時は永続化されていないので未保存を維持し、原因が分かる文言を出す
+  if(offline){
+    updateShiftDirty();
+    toast('⚠️オフラインのため保存できません。GASの再デプロイ（新バージョン）とアクセス＝全員をご確認ください');
+    return;
+  }
+  savedKeys.forEach(function(k){ SHIFT_DIRTY.delete(k); });
+  updateShiftDirty();
+  if(failed){ toast('保存に失敗：' + errText); return; }
+  toast('シフトを保存しました（'+okCount+'件）');
 }
 
 // 集計だけ再計算して該当セルのテキストを更新（全再描画せずスクロール位置維持）
@@ -1338,6 +1608,10 @@ function updateShiftTotals(month){
 
 function onShiftYearChange(){
   const sel = document.getElementById('shift-year');
+  if(SHIFT_DIRTY.size>0 && !confirm('未保存の変更があります。保存せずに年度を切り替えますか？（変更は破棄されます）')){
+    sel.value = SHIFT_NENDO; return;
+  }
+  SHIFT_DIRTY.clear();
   SHIFT_NENDO = Number(sel.value);
   renderShift();
 }
@@ -1346,14 +1620,13 @@ function jumpToShiftMonth(m){
   const el = document.getElementById('shift-month-'+Number(m));
   if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'});
 }
-async function saveShiftName(month, idx, name){
+// 職員名入力：ローカル更新のみ・未保存登録（保存は「💾 保存」ボタン）
+function saveShiftName(month, idx, name){
   const ym = shiftYm(SHIFT_NENDO, month);
   let rec = shiftRowFor(ym, idx);
   if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
   rec.name = name;
-  const res = await callApi({action:'saveShift', shift:{ym:ym, idx:idx, name:name}});
-  if(res && res.ok){ if(res.row!=null) rec.row = res.row; toast('職員名を保存しました' + (offline?'（サンプル）':'')); }
-  else { toast('職員名の保存に失敗しました' + (res && res.error ? '：'+res.error : '')); }
+  markShiftDirty(month, idx);
 }
 
 function renderHeader(){
