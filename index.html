@@ -536,9 +536,13 @@
         <label>名称（場所名・任意）</label>
         <input id="mp-name" placeholder="○○町内会（任意）">
       </div>
-      <div class="fld full">
-        <label>予定日</label>
-        <input id="mp-plan" type="date">
+      <div class="fld">
+        <label>予定（開始）</label>
+        <input id="mp-plan-start" type="date">
+      </div>
+      <div class="fld">
+        <label>予定（終了）</label>
+        <input id="mp-plan-end" type="date">
       </div>
       <div class="fld full">
         <label>完了日</label>
@@ -601,7 +605,7 @@ let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社
 let EXTRA_YEARS = [];              // 提出物管理で手動追加した年度
 let SELECTED_YEAR = '';            // 提出物管理で選択中の年度
 let EVENTS = {today:[], week:[]};  // Googleカレンダーの予定（list取得時に更新）
-let MAPPOINTS = [];                // 排雪マップの地点 [{row,name,plan,doneDate,manager,x,y,note,status}]
+let MAPPOINTS = [];                // 排雪マップの地点 [{row,name,planStart,planEnd,doneDate,manager,x,y,note,type,color,points,status}]
 let addingPoint = false;           // 地点追加モード（地図クリックで配置）
 let pendingPoint = null;           // 新規配置中の {x,y}
 let editingMapRow = null;          // 編集中の地点row（新規はnull）
@@ -716,9 +720,9 @@ const mockStore = {
     {row:5, year:'令和'+(nendoNum(mockCurrentNendo())-1)+'年度', company:'A建設（代表）', doc:'協定書', status:'確認済', date:isoFromToday(-380), link:'', note:'前年度分（履歴）'}
   ],
   mapPoints: [
-    {row:2, name:'中央町内会', plan:'1月中旬', doneDate:isoFromToday(-3), manager:'佐藤', x:32, y:24, note:''},
-    {row:3, name:'東地区',     plan:'1月下旬', doneDate:'',              manager:'田中', x:64, y:45, note:'幹線優先'},
-    {row:4, name:'南公園周辺', plan:'2月上旬', doneDate:'',              manager:'',     x:48, y:72, note:''}
+    {row:2, name:'中央町内会', plan:'1月中旬', planStart:isoFromToday(-6), planEnd:isoFromToday(-4), doneDate:isoFromToday(-3), manager:'佐藤', x:32, y:24, note:''},
+    {row:3, name:'東地区',     plan:'1月下旬', planStart:isoFromToday(2),  planEnd:isoFromToday(5),  doneDate:'',              manager:'田中', x:64, y:45, note:'幹線優先'},
+    {row:4, name:'南公園周辺', plan:'2月上旬', planStart:isoFromToday(8),  planEnd:'',               doneDate:'',              manager:'',     x:48, y:72, note:''}
   ],
   shifts: (function(){
     const ym = (nendoNum(mockCurrentNendo())+2018) + '-11'; // 現年度の11月
@@ -1000,11 +1004,32 @@ function mapImageUrl(){
 function tagMapStatus(status){
   return status==='完了' ? '<span class="tag ok">完了</span>' : '<span class="tag exp">未完了</span>';
 }
-// 完了日 iso → 'M月D日'
-function mapDoneLabel(iso){
+// iso → 'M月D日'（無効なら ''）
+function mdLabel(iso){
   const d = parseDate(iso);
-  if(!d) return '完了';
-  return '完了 '+(d.getMonth()+1)+'月'+d.getDate()+'日';
+  return d ? ((d.getMonth()+1)+'月'+d.getDate()+'日') : '';
+}
+// 予定行の文言：'予定 M月D日〜M月D日'（開始/終了の有無で調整）。両方無しなら ''
+function planLabel(p){
+  const s = mdLabel(p.planStart), e = mdLabel(p.planEnd);
+  if(s && e) return '予定 '+s+'〜'+e;
+  if(s)      return '予定 '+s+'〜';
+  if(e)      return '予定 〜'+e;
+  return '';
+}
+// 完了行の文言：'完了 M月D日'。完了日が無ければ ''
+function doneLabel(p){
+  const d = mdLabel(p.doneDate);
+  return d ? ('完了 '+d) : '';
+}
+// 地点一覧の予定期間（M/D〜M/D 短縮表記）。両方無しなら '—'
+function planRangeShort(p){
+  function md(iso){ const d=parseDate(iso); return d ? ((d.getMonth()+1)+'/'+d.getDate()) : ''; }
+  const s = md(p.planStart), e = md(p.planEnd);
+  if(s && e) return s+'〜'+e;
+  if(s)      return s+'〜';
+  if(e)      return '〜'+e;
+  return '—';
 }
 // 将来拡張：ズーム/パンは未実装（フィット表示）。必要なら map-stage に transform:scale を掛ける想定。
 // 種別・頂点の正規化（type 無し＝pin、points 無し＝[]）
@@ -1014,12 +1039,6 @@ function ptPoints(p){ return (p && Array.isArray(p.points)) ? p.points : []; }
 function polyCentroid(points){
   let sx=0, sy=0; points.forEach(function(v){ sx+=num(v.x); sy+=num(v.y); });
   const n = points.length||1; return {x:sx/n, y:sy/n};
-}
-// エリアラベルの文言（完了日優先→予定日）
-function polyLabelSub(p){
-  if(p.doneDate){ const d=parseDate(p.doneDate); return d ? ('完了 '+(d.getMonth()+1)+'月'+d.getDate()+'日') : '完了'; }
-  if(p.planDate){ const d=parseDate(p.planDate); return d ? ('予定 '+(d.getMonth()+1)+'月'+d.getDate()+'日') : '予定'; }
-  return '';
 }
 function renderMap(){
   renderMapPalette();
@@ -1037,13 +1056,12 @@ function renderMap(){
   const pins = pinPts.map(function(p){
     const isDone = p.status==='完了';
     const cls = isDone ? 'done' : 'todo';
-    var label;
-    if(isDone){
-      label = '<span class="pin-label">'+esc(mapDoneLabel(p.doneDate))+'</span>'
-            + (p.name ? '<span class="pin-sub">'+esc(p.name)+'</span>' : '');
-    }else{
-      label = '<span class="pin-label">'+esc(p.name || '未完了')+'</span>';
-    }
+    const planL = planLabel(p), doneL = doneLabel(p);
+    var label = '';
+    if(p.name) label += '<span class="pin-label">'+esc(p.name)+'</span>';
+    if(planL)  label += '<span class="pin-sub">'+esc(planL)+'</span>';   // 1行目：予定
+    if(doneL)  label += '<span class="pin-sub">'+esc(doneL)+'</span>';   // 2行目：完了
+    if(!label) label = '<span class="pin-label">'+(isDone?'完了':'未完了')+'</span>';
     return '<div class="map-pin '+cls+'" style="left:'+num(p.x)+'%;top:'+num(p.y)+'%" data-row="'+p.row+'" title="'+esc(p.name||'')+'">'
       + '<span class="pin-dot"></span>'+label+'</div>';
   }).join('');
@@ -1073,12 +1091,13 @@ function renderMap(){
     const vs = ptPoints(p);
     if(vs.length < 3) return '';
     const c = polyCentroid(vs);
-    const sub = polyLabelSub(p);
+    const planL = planLabel(p), doneL = doneLabel(p);
     const nm = p.name || '';
-    if(!nm && !sub) return '';
+    if(!nm && !planL && !doneL) return '';
     return '<div class="map-poly-label" style="left:'+c.x+'%;top:'+c.y+'%" data-row="'+p.row+'">'
       + (nm ? '<span class="ppl-name">'+esc(nm)+'</span>' : '')
-      + (sub ? '<span class="ppl-sub">'+esc(sub)+'</span>' : '')
+      + (planL ? '<span class="ppl-sub">'+esc(planL)+'</span>' : '')   // 1行目：予定
+      + (doneL ? '<span class="ppl-sub">'+esc(doneL)+'</span>' : '')   // 2行目：完了
       + '</div>';
   }).join('');
 
@@ -1129,13 +1148,13 @@ function renderMapList(){
     return;
   }
   el.innerHTML = '<div class="tbl-wrap"><table><thead><tr>'
-    + '<th>名称</th><th>種別</th><th>予定日</th><th>完了日</th><th>状態</th></tr></thead><tbody>'
+    + '<th>名称</th><th>種別</th><th>予定期間</th><th>完了日</th><th>状態</th></tr></thead><tbody>'
     + pts.map(function(p){
         const kind = ptType(p)==='poly' ? 'エリア' : 'ピン';
         return '<tr style="cursor:pointer" data-row="'+p.row+'">'
           + '<td>'+esc(p.name||'（名称なし）')+'</td>'
           + '<td>'+kind+'</td>'
-          + '<td class="mono">'+esc(p.planDate||'—')+'</td>'
+          + '<td class="mono">'+esc(planRangeShort(p))+'</td>'
           + '<td class="mono">'+esc(p.doneDate||'—')+'</td>'
           + '<td>'+tagMapStatus(p.status)+'</td>'
           + '</tr>';
@@ -1227,7 +1246,7 @@ function onMapClick(e){
 }
 function openMapModal(row){
   editingMapRow = (row!=null) ? row : null;
-  let pt = {name:'', plan:'', planDate:'', doneDate:'', manager:'', note:'', type:'pin', color:'', points:[],
+  let pt = {name:'', plan:'', planStart:'', planEnd:'', doneDate:'', manager:'', note:'', type:'pin', color:'', points:[],
             x:(pendingPoint?pendingPoint.x:50), y:(pendingPoint?pendingPoint.y:50)};
   if(editingMapRow!=null){
     const found = MAPPOINTS.find(function(p){ return p.row===editingMapRow; });
@@ -1246,7 +1265,7 @@ function openPolyModalNew(){
   editingMapXY = { x:0, y:0 };
   editingPolyPoints = polyVerts.map(function(v){ return {x:v.x, y:v.y}; });
   editingMapColor = MAP_POLY_COLOR;
-  fillMapModal({name:'', planDate:'', doneDate:'', note:'', type:'poly', color:MAP_POLY_COLOR});
+  fillMapModal({name:'', planStart:'', planEnd:'', doneDate:'', note:'', type:'poly', color:MAP_POLY_COLOR});
 }
 function fillMapModal(pt){
   const isPoly = editingMapType==='poly';
@@ -1254,7 +1273,8 @@ function fillMapModal(pt){
     ? (editingMapRow!=null ? 'エリアを編集' : 'エリアを追加')
     : (editingMapRow!=null ? 'ピンを編集' : 'ピンを追加');
   document.getElementById('mp-name').value = pt.name||'';
-  document.getElementById('mp-plan').value = (pt.planDate||'').slice(0,10);
+  document.getElementById('mp-plan-start').value = (pt.planStart||'').slice(0,10);
+  document.getElementById('mp-plan-end').value = (pt.planEnd||'').slice(0,10);
   document.getElementById('mp-done').value = (pt.doneDate||'').slice(0,10);
   document.getElementById('mp-note').value = pt.note||'';
   document.getElementById('mp-color-fld').style.display = isPoly ? '' : 'none';
@@ -1283,7 +1303,8 @@ function closeMapModal(){
 async function saveMapPoint(){
   const isPoly = editingMapType==='poly';
   const name = document.getElementById('mp-name').value.trim();
-  const planDate = document.getElementById('mp-plan').value;
+  const planStart = document.getElementById('mp-plan-start').value;
+  const planEnd = document.getElementById('mp-plan-end').value;
   const doneDate = document.getElementById('mp-done').value;
   const note = document.getElementById('mp-note').value.trim();
   if(isPoly){
@@ -1291,12 +1312,13 @@ async function saveMapPoint(){
   }else{
     if(!name && !doneDate){ toast('完了日を入力してください（名称は任意）'); return; }
   }
-  // データ契約（GAS側と一致）：type/color/planDate/doneDate/note/x/y/points
+  // データ契約（GAS側と一致）：type/color/planStart/planEnd/doneDate/note/x/y/points
   const pt = {
     name: name,
     type: isPoly ? 'poly' : 'pin',
     color: isPoly ? (editingMapColor || MAP_POLY_COLOR) : '',
-    planDate: planDate,
+    planStart: planStart,
+    planEnd: planEnd,
     doneDate: doneDate,
     note: note,
     x: isPoly ? 0 : editingMapXY.x,
