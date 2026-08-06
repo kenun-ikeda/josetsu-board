@@ -32,6 +32,14 @@
   header .spacer{flex:1}
   .offline-badge{display:none;background:#fff3e0;color:var(--warn);border:1px solid #f0c674;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;white-space:nowrap}
   .offline-badge.show{display:inline-block}
+  .view-badge{background:#e8f0fe;color:#1a3d7c;border:1px solid #9db8e8;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:800;white-space:nowrap;margin-right:8px}
+  /* 閲覧モード：編集系UI（追加/保存/削除ボタン・作図/ピンツール等）を隠す */
+  body.readonly .edit-only{display:none !important}
+  body.readonly .m-card{cursor:default}
+  /* 閲覧モードでは入力欄・シフトセルの見た目をロック（保存は各関数の READONLY ガードで最終ブロック） */
+  body.readonly #subs-table select, body.readonly #subs-table input,
+  body.readonly .shift-tbl .name-in{background:#f1f3f5 !important;cursor:default}
+  body.readonly .shift-tbl td.cell{cursor:default}
   header .logout{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600}
   header .logout:hover{background:rgba(255,255,255,.28)}
 
@@ -43,6 +51,20 @@
   .stat .n{font-size:28px;font-weight:800;color:var(--accent);font-family:"JetBrains Mono",monospace}
   .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
   .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)} .stat.ok .n{color:var(--ok)}
+
+  /* ---------- お知らせ・注意事項ボード ---------- */
+  .notice-form{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .notice-form .notice-name-in{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:14px;font-family:inherit;color:#1a2430;max-width:260px}
+  .notice-form textarea{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:14px;font-family:inherit;color:#1a2430;width:100%;resize:vertical;min-height:56px}
+  .notice-form .notice-name-in:focus,.notice-form textarea:focus{outline:none;border-color:var(--accent2)}
+  .notice-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#fbfdff}
+  .notice-item .ni-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px}
+  .notice-item .ni-ts{font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace}
+  .notice-item .ni-name{font-size:13px;font-weight:800;color:var(--accent)}
+  .notice-item .ni-spacer{flex:1}
+  .notice-item .ni-body{font-size:14px;color:#1a2430;word-break:break-word}
+  .notice-item .ni-del{border:1px solid #e6b4b0;background:#fff;color:var(--bad);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  .notice-item .ni-del:hover{background:#fbeceb}
 
   /* ---------- tabs ---------- */
   nav{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
@@ -249,34 +271,59 @@
   .rep-mgroup .rmg-item label{font-size:12px;color:#1a2430;font-weight:600;flex:1;min-width:0}
   .rep-mgroup .rmg-item input{width:56px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:13px;font-family:inherit;text-align:right}
   .rep-mgroup .rmg-item input:focus{outline:none;border-color:var(--accent2)}
-  /* 帳票プレビュー（A4縦・枠線あり） */
-  .report-sheet{background:#fff;color:#000;margin:0 auto;max-width:800px;font-size:12px;line-height:1.5}
+  /* ===== 帳票プレビュー（公式様式：A4横・枠組み1枚もの） ===== */
+  .report-sheet{background:#fff;color:#000;margin:0 auto;width:100%;max-width:1080px;font-size:12px;line-height:1.3;font-family:inherit}
   .report-sheet *{box-sizing:border-box}
-  .rep-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
-  .rep-title-block{flex:1;min-width:0}
-  .rep-title{font-size:19px;font-weight:800;letter-spacing:1px}
-  .rep-bizname{font-size:13px;font-weight:700;margin-top:4px}
-  .rep-sign{border-collapse:collapse;text-align:center;flex-shrink:0}
-  .rep-sign td{border:1px solid #000;padding:2px 8px;font-size:11px}
-  .rep-sign td.sbox{height:44px;width:66px}
-  table.rep-tbl{width:100%;border-collapse:collapse;margin-bottom:8px}
-  table.rep-tbl th,table.rep-tbl td{border:1px solid #000;padding:4px 6px;font-size:12px;text-align:left;vertical-align:top;white-space:normal}
-  table.rep-tbl th{background:#eef2f7;font-weight:700;text-align:center;white-space:nowrap}
-  table.rep-tbl td.c{text-align:center}
-  table.rep-tbl td.num{text-align:center;font-family:"JetBrains Mono",monospace}
-  .rep-sec-title{font-size:12px;font-weight:800;background:#eef2f7;border:1px solid #000;padding:3px 6px;margin-bottom:0}
-  .rep-machine-cols{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-  .rep-machine-cols .rmc{flex:1;min-width:200px}
-  .rep-members-box{min-height:44px}
-  .rep-ky-my td{background:#fffbe6}
+  /* 署名欄（右上・枠の上に配置） */
+  .rep-signwrap{display:flex;justify-content:flex-end;margin-bottom:-2px}
+  table.rep-sign{border-collapse:collapse;text-align:center}
+  table.rep-sign td{border:1.5px solid #000;padding:2px 6px;font-size:11px;background:#fff}
+  table.rep-sign td.sh{font-weight:700}
+  table.rep-sign td.sbox{height:46px}
+  /* 本体：太めの外枠テーブル */
+  table.rep-main{width:100%;border-collapse:collapse;table-layout:fixed;border:2.2px solid #000}
+  table.rep-main>tbody>tr>th,table.rep-main>tbody>tr>td{border:1px solid #000;padding:3px 6px;font-size:12px;vertical-align:middle;word-break:break-word}
+  table.rep-main>tbody>tr>th{background:#eef2f7;font-weight:700;text-align:center;white-space:nowrap}
+  .rep-lbl{background:#eef2f7;font-weight:700;text-align:center;white-space:nowrap}
+  /* タイトル：絶対に横書き・縦一列にしない */
+  .rep-title-cell{writing-mode:horizontal-tb !important;text-orientation:mixed;white-space:nowrap !important;text-align:center;font-size:24px;font-weight:800;letter-spacing:3px;padding:7px 4px !important;line-height:1.1}
+  .rep-day{white-space:nowrap;font-size:12px}
+  .rep-secbig{font-size:15px;font-weight:800;letter-spacing:6px;text-align:center}
+  /* 中段3列ブロック */
+  .rep-nopad{padding:0 !important}
+  table.rep-mid{width:100%;border-collapse:collapse;table-layout:fixed}
+  table.rep-mid>tbody>tr>td{border:1px solid #000;padding:0;vertical-align:top}
+  .rep-mid-order{padding:5px 6px;font-weight:700;background:#eef2f7;text-align:center;white-space:nowrap}
+  .rep-mid-free{min-height:210px}
+  /* 中段の入れ子テーブル（作業員数・使用機械） */
+  table.rep-inner{width:100%;height:100%;border-collapse:collapse}
+  table.rep-inner th,table.rep-inner td{border:1px solid #000;padding:3px 5px;font-size:11px;text-align:center;vertical-align:middle}
+  table.rep-inner th{background:#eef2f7;font-weight:700;white-space:nowrap}
+  table.rep-inner td.num{font-family:"JetBrains Mono",monospace}
+  table.rep-mac td.mgrp{background:#d9d9d9;font-weight:700;text-align:center;white-space:nowrap}
+  table.rep-mac td.ml{text-align:center;white-space:nowrap;font-size:11px}
+  table.rep-mac td.mv{height:22px;font-family:"JetBrains Mono",monospace}
+  /* 危険予知：自社記入＋参考リスト */
+  .rep-ky-hd{font-weight:700;margin-bottom:2px}
+  .rep-ky-danger,.rep-ky-action{min-height:38px}
+  .rep-free{min-height:36px}
+  table.rep-ref{width:100%;border-collapse:collapse}
+  table.rep-ref th,table.rep-ref td{border:1px solid #000;padding:2px 5px;font-size:10.5px;vertical-align:top;text-align:left}
+  table.rep-ref th{background:#eef2f7;font-weight:700;text-align:center;white-space:nowrap}
+  /* 参加者氏名グリッド */
+  .rep-names-lbl{font-size:18px;font-weight:800;letter-spacing:4px;text-align:center;white-space:nowrap;background:#fff !important}
+  table.rep-names{width:100%;border-collapse:collapse;table-layout:fixed}
+  table.rep-names td{border:1px solid #000;height:26px;font-size:12px;text-align:center;padding:2px 4px}
+  .rep-notes-cell{min-height:40px}
 
-  @media (max-width:520px){ .form-grid{grid-template-columns:1fr} .prog-name{width:100%} .rep-machine-cols .rmc{min-width:100%} }
+  @media (max-width:520px){ .form-grid{grid-template-columns:1fr} .prog-name{width:100%} }
 
   /* ---------- 印刷（モード指定方式：シフト / 地図） ---------- */
   /* 既定は縦(A4)。シフトのみ横向きの名前付きページを割り当てる。 */
   @media print{
     @page{ size:A4 portrait; margin:8mm; }
     @page shiftLandscape{ size:A4 landscape; margin:8mm; }
+    @page reportLandscape{ size:A4 landscape; margin:7mm; }
     body{ background:#fff; }
     header, nav, .offline-badge, .no-print{ display:none !important; }
     main{ max-width:none; margin:0; padding:0; }
@@ -328,24 +375,41 @@
     /* 地図1・地図2は改ページ配慮 */
     body.print-map .map-stage-head, body.print-map .map-stage{ page-break-inside:avoid; }
     body.print-map .map-stage-head.second{ page-break-before:auto; }
+    /* 地図2のURLが未設定（空／地図1と同じ）のときは、地図2ステージ（＝地図1の複製）を印刷しない。
+       これが印刷末尾に出る「余分な空白／重複ページ」の主因。画面表示は従来どおり両方表示する。 */
+    body.print-map.print-no-map2 #map-stage-2,
+    body.print-map.print-no-map2 .map-stage-head.second{ display:none !important; }
+    /* 末尾の余白で不要な改ページが生じないよう、余分な高さ・余白を詰める */
+    body.print-map #map-wrap{ margin:0 !important; padding:0 !important; }
+    body.print-map .map-stage{ margin-bottom:0 !important; }
+    body.print-map .map-stage-head{ margin:0 0 4px !important; }
+    body.print-map .map-stage-head.second{ margin-top:10px !important; }
+    body.print-map .map-img{ display:block; max-width:100%; }
 
-    /* ===== 安全日報 印刷モード（body.print-report） A4縦 ===== */
+    /* ===== 安全日報 印刷モード（body.print-report） A4横 ===== */
     body.print-report .tab{ display:none !important; }
-    body.print-report #tab-report{ display:block !important; page:auto; }
+    /* 帳票を横向き（reportLandscape）。print-shift/print-map と混線しない名前付きページ。 */
+    body.print-report #tab-report{ display:block !important; page:reportLandscape; }
     /* 入力フォーム（会社選択・機械台数・ボタン等）は印刷しない。帳票プレビューのみ。 */
     body.print-report #rep-form-card{ display:none !important; }
     body.print-report #rep-preview-card{ border:none; box-shadow:none; padding:0; margin:0; }
-    /* 枠線・背景色を紙でも維持 */
-    body.print-report .report-sheet, body.print-report .report-sheet *,
-    body.print-report .rep-sign, body.print-report .rep-sign td,
-    body.print-report table.rep-tbl, body.print-report table.rep-tbl th,
-    body.print-report table.rep-tbl td, body.print-report .rep-sec-title,
-    body.print-report .rep-ky-my td{
+    /* 枠線・網掛け（グレー等）を紙でも維持 */
+    body.print-report .report-sheet, body.print-report .report-sheet *{
       -webkit-print-color-adjust:exact; print-color-adjust:exact;
     }
-    body.print-report .report-sheet{ max-width:none; }
-    body.print-report table.rep-tbl{ page-break-inside:auto; }
-    body.print-report table.rep-tbl tr{ page-break-inside:avoid; }
+    /* 1枚に収まるよう横幅いっぱい＋やや縮小 */
+    body.print-report .report-sheet{ max-width:none; width:100%; font-size:10px; line-height:1.2; }
+    body.print-report table.rep-main>tbody>tr>th,
+    body.print-report table.rep-main>tbody>tr>td{ font-size:10px; padding:2px 4px; }
+    body.print-report table.rep-inner th, body.print-report table.rep-inner td{ font-size:9px; padding:2px 3px; }
+    body.print-report table.rep-ref th, body.print-report table.rep-ref td{ font-size:9px; padding:1px 3px; }
+    body.print-report .rep-title-cell{ font-size:22px; padding:5px 4px !important; }
+    body.print-report .rep-secbig{ font-size:14px; }
+    body.print-report .rep-names-lbl{ font-size:16px; }
+    body.print-report .rep-mid-free{ min-height:150px; }
+    /* 行の途中改ページを避ける */
+    body.print-report table.rep-main{ page-break-inside:auto; }
+    body.print-report table.rep-main>tbody>tr{ page-break-inside:avoid; }
   }
 </style>
 </head>
@@ -376,6 +440,7 @@
     </div>
     <div class="sub" id="hdr-sub"></div>
     <div class="spacer"></div>
+    <span class="view-badge" id="view-badge" style="display:none">閲覧モード（編集不可）</span>
     <span class="offline-badge" id="offline-badge">⚠️ オフライン（サンプルデータ）</span>
     <button class="logout" onclick="logout()">ログアウト</button>
   </header>
@@ -391,11 +456,24 @@
       <button data-tab="report">安全日報</button>
       <button data-tab="res">手順・資料</button>
       <button data-tab="contact">連絡先・設定</button>
+      <button data-tab="lunch">お昼</button>
     </nav>
 
     <!-- HOME -->
     <section class="tab active" id="tab-home">
-      <div class="stat-grid" id="summary"></div>
+      <div class="card" id="notice-card">
+        <h2>お知らせ・注意事項（みんなで共有）</h2>
+        <p class="hint">全員で共有できる連絡ボードです。記入者名（任意）と本文を書いて「投稿」を押すと、みんなが同じ内容を見られます。※投稿は閲覧モードでもできます。削除は編集モードのみ。</p>
+        <div class="notice-form">
+          <input id="notice-name" type="text" placeholder="記入者名（任意）" class="notice-name-in">
+          <textarea id="notice-body" rows="3" placeholder="お知らせ・注意事項を入力"></textarea>
+          <div class="row">
+            <div class="spacer"></div>
+            <button class="btn" onclick="postNotice()">投稿</button>
+          </div>
+        </div>
+        <div id="notice-list"></div>
+      </div>
       <div class="card">
         <h2>今日の予定</h2>
         <div id="home-today"></div>
@@ -420,7 +498,7 @@
         <div class="row">
           <h2 style="margin:0">構成会社ごとの機械</h2>
           <div class="spacer"></div>
-          <button class="btn sec sm" onclick="openModal(null,'')">＋ 機械を追加</button>
+          <button class="btn sec sm edit-only" onclick="openModal(null,'')">＋ 機械を追加</button>
         </div>
         <p class="hint">カードをクリックすると編集できます。会社名の横の「＋機械を追加」でその会社に機械を追加します。</p>
       </div>
@@ -433,8 +511,8 @@
         <div class="row">
           <h2 style="margin:0">車検アラート</h2>
           <div class="spacer"></div>
-          <button class="btn" onclick="makeDraft('exp')">✉ 車検切れの担当へ下書き</button>
-          <button class="btn sec" onclick="makeDraft('expsoon')">✉ 満了間近も含めて下書き</button>
+          <button class="btn edit-only" onclick="makeDraft('exp')">✉ 車検切れの担当へ下書き</button>
+          <button class="btn sec edit-only" onclick="makeDraft('expsoon')">✉ 満了間近も含めて下書き</button>
         </div>
         <p class="hint">車検満了日の近い順に並びます。ボタンを押すとGAS側で対象の担当あてにGmail下書きを作成します（自動送信はしません）。「満了間近も含めて」は車検切れ＋満了間近（残り日数がリード日数以内）が対象です。</p>
       </div>
@@ -458,8 +536,8 @@
           <div class="spacer"></div>
           <label for="sub-year" style="font-size:12px;color:var(--muted);font-weight:700">年度</label>
           <select id="sub-year" onchange="onSubYearChange()" style="border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff;font-weight:700;color:var(--accent)"></select>
-          <button class="btn sec sm" onclick="addSubYear()">＋ 新しい年度</button>
-          <button class="btn sec sm" onclick="addSubCompany()">＋ 会社を追加</button>
+          <button class="btn sec sm edit-only" onclick="addSubYear()">＋ 新しい年度</button>
+          <button class="btn sec sm edit-only" onclick="addSubCompany()">＋ 会社を追加</button>
         </div>
         <p class="hint">年度ごとに、会社ごとの必要書類の提出状況を管理します。状態・提出日・リンク・備考を変更すると自動で保存されます。年度を切り替えても過去の記録は履歴として残ります。「＋ 新しい年度」で年度を追加、「＋ 会社を追加」で機械未登録の会社も対象にできます。</p>
       </div>
@@ -473,14 +551,14 @@
           <h2 style="margin:0">排雪マップ</h2>
           <div class="spacer"></div>
           <span class="pill" id="map-count"></span>
-          <div class="seg" id="map-mode">
+          <div class="seg edit-only" id="map-mode">
             <button type="button" data-mode="pin" class="active" onclick="setMapMode('pin')">📍 ピン</button>
             <button type="button" data-mode="poly" onclick="setMapMode('poly')">🔷 エリア</button>
           </div>
-          <button class="btn sec sm" id="map-add-btn" onclick="toggleAddPoint()">＋ 地点を追加</button>
+          <button class="btn sec sm edit-only" id="map-add-btn" onclick="toggleAddPoint()">＋ 地点を追加</button>
           <button class="btn sec sm no-print" onclick="printMap()">🖨 地図を印刷</button>
         </div>
-        <div class="map-poly-tools" id="map-poly-tools" style="display:none">
+        <div class="map-poly-tools edit-only" id="map-poly-tools" style="display:none">
           <span class="pal-caption" style="font-size:12px;color:var(--muted);font-weight:700">色：</span>
           <div id="map-palette" class="mp-palette"></div>
           <button class="btn sec sm" id="poly-add-btn" onclick="startPolyDraw()">エリア追加</button>
@@ -518,7 +596,7 @@
             <button type="button" data-month="2" onclick="jumpToShiftMonth(2)">2月</button>
             <button type="button" data-month="3" onclick="jumpToShiftMonth(3)">3月</button>
           </div>
-          <button class="btn sm no-print" id="shift-save-btn" onclick="saveShiftDirty()">💾 保存</button>
+          <button class="btn sm no-print edit-only" id="shift-save-btn" onclick="saveShiftDirty()">💾 保存</button>
           <button class="btn sec sm no-print" onclick="printShift()">🖨 印刷</button>
         </div>
         <p class="hint">上のパレットで入力する状態を選び、セルをクリックまたはドラッグでまとめて塗れます。行の「全部」ボタンでその職員の全日を一括入力。職員名は入力後に確定（Enter／フォーカス移動）で保存。右端「出勤」＝その職員の出勤日数（通＋時）、最下段「日計」＝各日の出勤人数。</p>
@@ -664,6 +742,20 @@
         </ol>
       </div>
     </section>
+
+    <!-- LUNCH（お昼：ほっともっと メニュー埋め込み＋リンク） -->
+    <section class="tab" id="tab-lunch">
+      <div class="card">
+        <h2>お昼</h2>
+        <div class="row" style="margin-bottom:8px">
+          <a class="btn" href="https://store.hottomotto.com/b/hottomotto/info/63475/" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">店舗情報（ほっともっと）を開く</a>
+          <a class="btn sec" href="https://www.hottomotto.com/menu_list/index/1" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">メニューを別タブで開く</a>
+        </div>
+        <p class="hint">下にメニューを埋め込み表示しています。サイト側の埋め込み制限などで表示されない場合は、下部の「メニューが表示されない場合はこちら」から別タブで開いてください。</p>
+        <iframe src="https://www.hottomotto.com/menu_list/index/1" title="ほっともっと メニュー" loading="lazy" style="width:100%;height:75vh;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:8px"></iframe>
+        <p class="hint" style="margin-top:8px">メニューが表示されない場合はこちら：<a href="https://www.hottomotto.com/menu_list/index/1" target="_blank" rel="noopener">https://www.hottomotto.com/menu_list/index/1</a></p>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -736,8 +828,8 @@
       </div>
     </div>
     <div class="row" style="margin-top:16px">
-      <button class="btn" id="modal-save" onclick="saveMachine()">保存</button>
-      <button class="btn danger sm" id="modal-del" style="display:none" onclick="deleteMachine()">削除</button>
+      <button class="btn edit-only" id="modal-save" onclick="saveMachine()">保存</button>
+      <button class="btn danger sm edit-only" id="modal-del" style="display:none" onclick="deleteMachine()">削除</button>
       <div class="spacer"></div>
     </div>
   </div>
@@ -778,8 +870,8 @@
       </div>
     </div>
     <div class="row" style="margin-top:16px">
-      <button class="btn" id="mp-save" onclick="saveMapPoint()">保存</button>
-      <button class="btn danger sm" id="mp-del" style="display:none" onclick="deleteMapPoint()">削除</button>
+      <button class="btn edit-only" id="mp-save" onclick="saveMapPoint()">保存</button>
+      <button class="btn danger sm edit-only" id="mp-del" style="display:none" onclick="deleteMapPoint()">削除</button>
       <div class="spacer"></div>
     </div>
   </div>
@@ -794,7 +886,9 @@
 /*════════════════ 設定定数（ここだけ書き換えれば動きます） ════════════════*/
 const GAS_URL   = 'https://script.google.com/macros/s/AKfycbx7DtBGTk_QGYsHK7mGNxigC2FhTM-ZZds8O33pziuErRTv2tH-ab6MvjfjOBeK7_Z_Pg/exec'; // GASのウェブアプリURL
 const API_TOKEN = 'kenun-josetsu-2026';             // GAS側 API_TOKEN と一致必須（機械管理_AppsScript.gs で確認済み）
-const APP_PASSWORD = 'Kitamaruchi';                  // ログインパスワード（ユーザーが任意に変更）
+const APP_PASSWORD = 'kITAMARUCHI';                  // 編集用ログインパスワード（ユーザーが任意に変更）
+const VIEW_PASSWORD = 'Kitamaruchi';                 // 閲覧用ログインパスワード（READONLY＝編集不可で全タブ閲覧）
+let READONLY = false;                                // 閲覧モードか（VIEW_PASSWORD でログインすると true）
 const DEMO = GAS_URL.indexOf('PASTE') >= 0;         // true ならGAS無しでもメモリ内サンプルで動作
 
 /*════════════════ 定数 ════════════════*/
@@ -832,6 +926,7 @@ let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社
 let EXTRA_YEARS = [];              // 提出物管理で手動追加した年度
 let SELECTED_YEAR = '';            // 提出物管理で選択中の年度
 let EVENTS = {today:[], week:[]};  // Googleカレンダーの予定（list取得時に更新）
+let NOTICES = [];                  // お知らせ・注意事項ボード [{row, ts, name, body}]（新しい順で描画）
 let MAPPOINTS = [];                // 排雪マップの地点 [{row,name,planStart,planEnd,doneDate,manager,x,y,note,type,color,points,status}]
 let addingPoint = false;           // 地点追加モード（地図クリックで配置）
 let pendingPoint = null;           // 新規配置中の {x,y}
@@ -954,7 +1049,7 @@ const mockStore = {
     {row:4, name:'南公園周辺', plan:'2月上旬', planStart:isoFromToday(8),  planEnd:'',               doneDate:'',              manager:'',     x:48, y:72, note:'', map:2}
   ],
   shifts: (function(){
-    const ym = (nendoNum(mockCurrentNendo())+2018) + '-11'; // 現年度の11月
+    const ym = 'Y' + (nendoNum(mockCurrentNendo())+2018) + 'M11'; // 現年度の11月（日付化しないキー）
     function mk(idx, name, pairs){
       const days = new Array(31).fill('');
       pairs.forEach(function(p){ days[p[0]-1] = p[1]; });
@@ -965,8 +1060,18 @@ const mockStore = {
       mk(2, '鈴木', [[1,'時'],[2,'通'],[3,'通'],[5,'休']]),
       mk(3, '高橋', [[1,'休'],[2,'時'],[4,'通']])
     ];
-  })()
+  })(),
+  notices: [
+    {row:3, ts:'2026-01-05 08:30', name:'管理部', body:'今週は寒波の予報です。除雪機械の点検・燃料補給を早めにお願いします。'},
+    {row:2, ts:'2026-01-04 17:10', name:'佐藤', body:'排雪作業の予定は排雪マップを確認してください。\n完了したら完了日を入力お願いします。'}
+  ]
 };
+// mock用：現在時刻を 'YYYY-MM-DD HH:mm' で返す
+function mockNoticeTs(){
+  const d = new Date();
+  function p(n){ return (n<10?'0':'')+n; }
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
 function mockWithStatus(m){
   const days = isoDaysLeft(m.inspection);
   let status = 'none';
@@ -996,7 +1101,20 @@ function mockApi(payload){
             submissions: mockStore.submissions.map(function(x){ return Object.assign({}, x); }),
             docs: DEFAULT_DOCS.slice(), subStatus: DEFAULT_SUB_STATUS.slice(), events: mockEvents(),
             mapPoints: mockStore.mapPoints.map(function(p){ return Object.assign({}, p, {status: p.doneDate ? '完了' : '未完了'}); }),
-            shifts: mockStore.shifts.map(function(s){ return Object.assign({}, s, {days: s.days.slice()}); })};
+            shifts: mockStore.shifts.map(function(s){ return Object.assign({}, s, {days: s.days.slice()}); }),
+            notices: mockStore.notices.map(function(n){ return Object.assign({}, n); })};
+  }
+  if(a==='saveNotice'){
+    const n = payload.notice || {};
+    const row = mockStore.notices.reduce(function(mx,x){ return Math.max(mx, x.row||1); }, 1) + 1;
+    const ts = mockNoticeTs();
+    const rec = {row:row, ts:ts, name:n.name||'', body:n.body||''};
+    mockStore.notices.push(rec);
+    return {ok:true, row:row, ts:ts};
+  }
+  if(a==='delNotice'){
+    mockStore.notices = mockStore.notices.filter(function(x){ return Number(x.row)!==Number(payload.row); });
+    return {ok:true};
   }
   if(a==='saveShift'){
     const sh = payload.shift || {};
@@ -1093,6 +1211,7 @@ async function loadData(){
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
     EVENTS = (res.events && typeof res.events==='object') ? res.events : {today:[], week:[]};
+    NOTICES = Array.isArray(res.notices) ? res.notices : [];
     MAPPOINTS = Array.isArray(res.mapPoints) ? res.mapPoints : [];
     SHIFTS = Array.isArray(res.shifts) ? res.shifts : [];
     // 勤務予定表の初期選択（年度＝config.yearから解析、月＝今日が対象月ならその月、外なら11月）
@@ -1148,6 +1267,7 @@ function allYears(){
 function renderAll(){
   renderHeader();
   renderSummary();
+  renderNotices();
   renderHome();
   renderCalendar();
   renderResources();
@@ -1573,6 +1693,7 @@ function closeMapModal(){
   renderMap();
 }
 async function saveMapPoint(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   const isPoly = editingMapType==='poly';
   const name = document.getElementById('mp-name').value.trim();
   const planStart = document.getElementById('mp-plan-start').value;
@@ -1622,6 +1743,7 @@ async function saveMapPoint(){
   }
 }
 async function deleteMapPoint(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   if(editingMapRow==null) return;
   if(!confirm('この地点／エリアを削除しますか？')) return;
   const res = await callApi({action:'delMapPt', row:editingMapRow});
@@ -1664,7 +1786,9 @@ function nendoToSeireki(nendoNum, month){
 }
 // 'YYYY-MM' キー
 function shiftYm(nendoNum, month){
-  return nendoToSeireki(nendoNum, month) + '-' + (month<10?'0':'') + month;
+  // 'Y2026M11' 形式。'2026-11' だとスプレッドシートが日付に自動変換してしまい
+  // 保存できても読み戻し時にキーが一致せず消えるため、日付化しない形式にする。
+  return 'Y' + nendoToSeireki(nendoNum, month) + 'M' + (month<10?'0':'') + month;
 }
 function cellCls(code){ return code==='通'?'c-tsu':(code==='時'?'c-toki':(code==='休'?'c-kyu':'c-none')); }
 function cellSym(code){ return code==='通'?'○':(code==='時'?'○':''); }
@@ -1743,7 +1867,7 @@ function renderShiftMonthTable(month){
     body += '<tr>'
       + '<td class="stick name-col"><div class="name-cell">'
       +   '<input class="name-in" data-month="'+month+'" data-idx="'+idx+'" value="'+esc(name)+'" placeholder="職員名">'
-      +   '<button type="button" class="row-fill" data-month="'+month+'" data-idx="'+idx+'" title="選択中の状態で全日を塗る">全部</button>'
+      +   '<button type="button" class="row-fill edit-only" data-month="'+month+'" data-idx="'+idx+'" title="選択中の状態で全日を塗る">全部</button>'
       + '</div></td>'
       + cells
       + '<td class="sum-col" data-sumrow="'+idx+'">'+rowSum+'</td>'
@@ -1781,6 +1905,7 @@ function renderShiftPalette(){
 }
 // 1セルを選択中状態で塗る（変化がなければ何もしない）
 function paintShiftCell(td){
+  if(READONLY){ return; }
   const month = Number(td.getAttribute('data-month'));
   const idx = Number(td.getAttribute('data-idx'));
   const day = Number(td.getAttribute('data-day'));
@@ -1844,6 +1969,7 @@ function fillShiftRow(month, idx){
 }
 // 未保存の全行を保存（月×行キーごとに saveShift）
 async function saveShiftDirty(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   if(SHIFT_DIRTY.size===0){ toast('保存する変更はありません'); return; }
   const btn = document.getElementById('shift-save-btn');
   const keys = Array.from(SHIFT_DIRTY);
@@ -1917,6 +2043,7 @@ function jumpToShiftMonth(m){
 }
 // 職員名入力：ローカル更新のみ・未保存登録（保存は「💾 保存」ボタン）
 function saveShiftName(month, idx, name){
+  if(READONLY){ return; }
   const ym = shiftYm(SHIFT_NENDO, month);
   let rec = shiftRowFor(ym, idx);
   if(!rec){ rec = {row:null, ym:ym, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
@@ -1943,13 +2070,76 @@ function renderSummary(){
     {n:exp,  l:'車検切れ', cls:exp>0?'bad':''},
     {n:soon, l:'満了間近', cls:soon>0?'warn':''}
   ];
-  document.getElementById('summary').innerHTML = tiles.map(function(t){
-    return '<div class="stat '+(t.cls||'')+'"><div class="n">'+t.n+'</div><div class="l">'+t.l+'</div></div>';
-  }).join('');
+  // ホーム上部の集計タイルはお知らせボードに置換済み。#summary が残る場合のみ描画（後方互換）。
+  const sumEl = document.getElementById('summary');
+  if(sumEl){
+    sumEl.innerHTML = tiles.map(function(t){
+      return '<div class="stat '+(t.cls||'')+'"><div class="n">'+t.n+'</div><div class="l">'+t.l+'</div></div>';
+    }).join('');
+  }
 
   const badge = document.getElementById('nav-badge');
   const cnt = exp + soon;
   if(cnt>0){ badge.style.display=''; badge.textContent=cnt; } else { badge.style.display='none'; }
+}
+
+/*════════════════ お知らせ・注意事項ボード（全員で共有） ════════════════*/
+// 新しい順に描画。各件：日時／記入者／本文（改行保持）。削除ボタンは編集モードのみ。
+function renderNotices(){
+  const box = document.getElementById('notice-list');
+  if(!box) return;
+  // ts の新しい順にソート（ts は 'YYYY-MM-DD HH:mm' 文字列なので文字列比較で降順にできる）
+  const list = (NOTICES || []).slice().sort(function(a,b){
+    return String(b.ts||'').localeCompare(String(a.ts||''));
+  });
+  if(list.length===0){ box.innerHTML = '<div class="empty">お知らせはまだありません。上のフォームから投稿できます。</div>'; return; }
+  box.innerHTML = list.map(function(n){
+    const bodyHtml = esc(n.body||'').replace(/\r?\n/g, '<br>');
+    const nameHtml = (n.name && String(n.name).trim()) ? esc(n.name) : '（名前なし）';
+    const delBtn = READONLY ? '' :
+      '<button class="ni-del" onclick="delNotice('+Number(n.row)+')">削除</button>';
+    return '<div class="notice-item">'
+      + '<div class="ni-head">'
+      +   '<span class="ni-ts">'+esc(n.ts||'')+'</span>'
+      +   '<span class="ni-name">'+nameHtml+'</span>'
+      +   '<span class="ni-spacer"></span>'
+      +   delBtn
+      + '</div>'
+      + '<div class="ni-body">'+bodyHtml+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+// 投稿：READONLYガードは入れない（誰もが入力できる共有ボードのため）。
+async function postNotice(){
+  const nameEl = document.getElementById('notice-name');
+  const bodyEl = document.getElementById('notice-body');
+  const name = nameEl ? nameEl.value.trim() : '';
+  const body = bodyEl ? bodyEl.value.trim() : '';
+  if(!body){ toast('本文を入力してください'); return; }
+  const res = await callApi({action:'saveNotice', notice:{name:name, body:body}});
+  if(res && res.ok){
+    NOTICES.unshift({row:res.row, ts:res.ts, name:name, body:body});
+    if(bodyEl) bodyEl.value = '';
+    renderNotices();
+    toast(offline ? '投稿しました（オフライン：この端末のみ・共有されていません）' : '投稿しました');
+  }else{
+    toast('投稿に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+
+// 削除：編集モードのみ（閲覧モードはガードでブロック）。
+async function delNotice(row){
+  if(READONLY) return;
+  if(!confirm('このお知らせを削除しますか？')) return;
+  const res = await callApi({action:'delNotice', row:row});
+  if(res && res.ok){
+    NOTICES = NOTICES.filter(function(n){ return Number(n.row)!==Number(row); });
+    renderNotices();
+    toast(offline ? '削除しました（オフライン：この端末のみ）' : '削除しました');
+  }else{
+    toast('削除に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
 }
 
 function tagHtml(status){
@@ -1992,7 +2182,7 @@ function renderList(){
       +   '<span class="cname">'+esc(comp)+'</span>'
       +   '<span class="pill">機械 '+list.length+' 種 / 計 '+qty+' 台</span>'
       +   '<div class="spacer"></div>'
-      +   '<button class="btn sec sm" onclick="openModal(null,\''+esc(comp).replace(/'/g,"\\'")+'\')">＋ 機械を追加</button>'
+      +   '<button class="btn sec sm edit-only" onclick="openModal(null,\''+esc(comp).replace(/'/g,"\\'")+'\')">＋ 機械を追加</button>'
       + '</div>'
       + '<div class="m-grid">'+cards+'</div>'
       + '</div>';
@@ -2054,6 +2244,7 @@ function onSubYearChange(){
 }
 // 新しい年度を追加してその年度へ切替（過去の記録は履歴として残る）
 function addSubYear(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   const name = (prompt('追加する年度名を入力してください（例：令和9年度）') || '').trim();
   if(!name) return;
   if(allYears().indexOf(name) < 0) EXTRA_YEARS.push(name);
@@ -2077,7 +2268,7 @@ function renderSubs(){
       const opts = SUB_STATUS.map(function(o){ return '<option '+(o===rec.status?'selected':'')+'>'+esc(o)+'</option>'; }).join('');
       const idp = 'sub-'+ci+'-'+di;
       const delBtn = (rec.row!=null)
-        ? '<button class="btn danger sm" title="この記録を削除" onclick="delSubRow('+rec.row+')">×</button>'
+        ? '<button class="btn danger sm edit-only" title="この記録を削除" onclick="delSubRow('+rec.row+')">×</button>'
         : '';
       return '<tr>'
         + '<td>'+esc(doc)+'</td>'
@@ -2102,6 +2293,7 @@ function renderSubs(){
 }
 // 会社を手動追加（機械が無い会社も対象にする）
 function addSubCompany(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   const name = (prompt('追加する会社名を入力してください') || '').trim();
   if(!name) return;
   if(companiesForYear(SELECTED_YEAR).indexOf(name) >= 0){ toast('その会社は既に一覧にあります'); return; }
@@ -2120,6 +2312,7 @@ function refreshSubRowCosmetics(ci, di, comp){
 }
 // 1行の入力値を集めて saveSub を呼ぶ（成功後はローカル配列のみ更新し、全再取得・全再描画はしない）
 async function saveSubField(ci, di){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   const comp = companiesForYear(SELECTED_YEAR)[ci];
   const doc  = DOCS[di];
   if(comp==null || doc==null) return;
@@ -2158,6 +2351,7 @@ async function saveSubField(ci, di){
   }
 }
 async function delSubRow(row){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   if(row==null) return;
   if(!confirm('この提出記録を削除しますか？（状態は未提出に戻ります）')) return;
   const res = await callApi({action:'delSub', row:row});
@@ -2234,6 +2428,7 @@ function readForm(){
   return m;
 }
 async function saveMachine(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   const m = readForm();
   if(!m.company){ toast('会社名を入力してください'); return; }
   const btn = document.getElementById('modal-save');
@@ -2249,6 +2444,7 @@ async function saveMachine(){
   }
 }
 async function deleteMachine(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   if(editingRow==null) return;
   if(!confirm('この機械を削除しますか？')) return;
   const res = await callApi({action:'delete', row:editingRow});
@@ -2263,6 +2459,7 @@ async function deleteMachine(){
 
 /*════════════════ 車検アラート：メール下書き作成 ════════════════*/
 async function makeDraft(scope){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   scope = scope || 'exp'; // 'exp'=車検切れのみ / それ以外(例 'expsoon')=切れ＋満了間近
   const res = await callApi({action:'draft', scope:scope});
   if(res && res.ok){
@@ -2395,62 +2592,124 @@ function reportDateLabel(d){
   return '令和'+reiwa+'年'+m+'月'+day+'日（'+wd+'）　［'+y+'年'+m+'月'+day+'日］';
 }
 
-// 帳票プレビューを再描画
+// 帳票用の日付ラベル（令和・曜日）。例：令和8年　7月　31日　　金曜日
+function reportDateLabelSheet(d){
+  if(!d) return '';
+  const y=d.getFullYear(), m=d.getMonth()+1, day=d.getDate(), wd=WD_JP[d.getDay()];
+  const reiwa = y - 2018;
+  return '令和'+reiwa+'年　'+m+'月　'+day+'日　　'+wd+'曜日';
+}
+
+// 中段：作業員数（入れ子テーブル）
+function repWorkerTable(g){
+  return '<table class="rep-inner">'+
+    '<tr><th colspan="3">作業員数</th></tr>'+
+    '<tr><th>オペ</th><th>助手・作業員</th><th>誘導員</th></tr>'+
+    '<tr><td class="num">'+g.ope+'</td><td class="num">'+g.asst+'</td><td class="num">'+g.guide+'</td></tr>'+
+    '<tr><td>&nbsp;</td><td></td><td></td></tr>'+
+    '<tr><td>&nbsp;</td><td></td><td></td></tr>'+
+    '<tr><td>&nbsp;</td><td></td><td></td></tr>'+
+  '</table>';
+}
+
+// 中段：使用機械名・台数（3グループ／各項目名の下に台数。2列並び）
+function repMachineTable(g){
+  let h = '<table class="rep-inner rep-mac"><tr><th colspan="2">使用機械名・台数</th></tr>';
+  REPORT_MGROUPS.forEach(function(grp){
+    h += '<tr><td class="mgrp" colspan="2">'+esc(grp.label)+'</td></tr>';
+    for(let i=0; i<grp.items.length; i+=2){
+      const a = grp.items[i], b = grp.items[i+1];
+      h += '<tr><td class="ml">'+esc(a.label)+'</td><td class="ml">'+(b?esc(b.label):'')+'</td></tr>';
+      const av = g.machines[grp.key][a.key] || 0;
+      const bv = b ? (g.machines[grp.key][b.key] || 0) : '';
+      h += '<tr><td class="mv">'+av+'</td><td class="mv">'+bv+'</td></tr>';
+    }
+  });
+  h += '</table>';
+  return h;
+}
+
+// 参加者氏名グリッド（入力を1名ずつセルへ。空セルで枠を埋める）
+function repNamesGrid(members){
+  const cols = 6;
+  const cells = members.slice();
+  const rowsNeeded = Math.max(2, Math.ceil(cells.length / cols) || 0);
+  const total = rowsNeeded * cols;
+  while(cells.length < total) cells.push('');
+  let h = '<table class="rep-names">';
+  for(let i=0; i<cells.length; i+=cols){
+    h += '<tr>';
+    for(let j=0; j<cols; j++){ h += '<td>'+esc(cells[i+j]||'')+'</td>'; }
+    h += '</tr>';
+  }
+  h += '</table>';
+  return h;
+}
+
+// 帳票プレビューを再描画（公式様式：A4横・枠組み1枚もの）
 function renderReportPreview(){
   const el = document.getElementById('rep-preview');
   if(!el) return;
   const g = reportGather();
-  const dlabel = reportDateLabel(g.date);
+  const dlabel = reportDateLabelSheet(g.date);
 
-  // 機械テーブル（3分類を横並び）
-  function machineCol(grp){
-    let rows = '';
-    grp.items.forEach(function(it){
-      const v = g.machines[grp.key][it.key] || 0;
-      rows += '<tr><td>'+esc(it.label)+'</td><td class="num">'+v+'</td></tr>';
-    });
-    return '<div class="rmc"><table class="rep-tbl"><thead><tr><th colspan="2">'+esc(grp.label)+'</th></tr>'+
-           '<tr><th>機械</th><th>台数</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
-  }
-  let machineHtml = '<div class="rep-machine-cols">';
-  REPORT_MGROUPS.forEach(function(grp){ machineHtml += machineCol(grp); });
-  machineHtml += '</div>';
-
-  // 危険予知（参考リスト・固定）
-  let kyRows = '';
-  REPORT_KY_LIST.forEach(function(p, i){
-    kyRows += '<tr><td class="c">'+(i+1)+'</td><td>'+esc(p[0])+'</td><td>'+esc(p[1])+'</td></tr>';
+  // 危険予知活動記録（参考リスト・固定10項目）
+  let refRows = '';
+  REPORT_KY_LIST.forEach(function(p){
+    refRows += '<tr><td>'+esc(p[0])+'</td><td>'+esc(p[1])+'</td></tr>';
   });
-
-  const membersHtml = g.members.length ? esc(g.members.join('　／　')) : '';
+  const refTable =
+    '<table class="rep-ref"><tr><th>◎どんな危険がありますか</th><th>◎私たちはこうする</th></tr>'+refRows+'</table>';
 
   const h =
   '<div class="report-sheet">'+
-    '<div class="rep-top">'+
-      '<div class="rep-title-block">'+
-        '<div class="rep-title">'+esc(REPORT_TITLE)+'</div>'+
-        '<div class="rep-bizname">業務名：'+esc(REPORT_BIZNAME)+'</div>'+
-      '</div>'+
-      '<table class="rep-sign"><tr><td>センター長</td><td>副センター長</td><td>副センター長</td></tr>'+
-      '<tr><td class="sbox"></td><td class="sbox"></td><td class="sbox"></td></tr></table>'+
-    '</div>'+
-    '<table class="rep-tbl">'+
-      '<tr><th style="width:110px">会社名</th><td>'+esc(g.company)+'</td>'+
-          '<th style="width:110px">業務指示日</th><td>'+esc(dlabel)+'</td></tr>'+
-      '<tr><th>リーダー</th><td>'+esc(g.leader)+'</td>'+
-          '<th>担当者</th><td>'+esc(g.tanto)+'</td></tr>'+
-      '<tr><th>作業員数</th><td colspan="3">オペ '+g.ope+' 名　／　助手・作業員 '+g.asst+' 名　／　誘導員 '+g.guide+' 名</td></tr>'+
+    // 署名欄（右上）
+    '<div class="rep-signwrap"><table class="rep-sign">'+
+      '<tr><td class="sh">センター長</td><td class="sh">副センター長</td><td class="sh">副センター長</td></tr>'+
+      '<tr><td class="sbox"></td><td class="sbox"></td><td class="sbox"></td></tr>'+
+    '</table></div>'+
+    // 本体（外枠テーブル）
+    '<table class="rep-main">'+
+      '<colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup>'+
+      // タイトル（横書き固定）
+      '<tr><td class="rep-title-cell" colspan="4">'+esc(REPORT_TITLE)+'</td></tr>'+
+      // 業務名 / 構成員会社名 / 業務指示日＋リーダー名
+      '<tr><th class="rep-lbl">業　務　名</th><td colspan="3">'+esc(REPORT_BIZNAME)+'</td></tr>'+
+      '<tr><th class="rep-lbl">構成員会社名</th><td colspan="3">'+esc(g.company)+'</td></tr>'+
+      '<tr><th class="rep-lbl">業務指示日</th><td class="rep-day">'+esc(dlabel)+'</td>'+
+          '<th class="rep-lbl">リーダー名</th><td>'+esc(g.leader)+'</td></tr>'+
+      // 中段3列（業務指示事項｜作業員数｜使用機械名・台数）
+      '<tr><td class="rep-nopad" colspan="4">'+
+        '<table class="rep-mid">'+
+          '<colgroup><col style="width:22%"><col style="width:28%"><col style="width:50%"></colgroup>'+
+          '<tr>'+
+            '<td><div class="rep-mid-order">業務指示事項</div><div class="rep-mid-free"></div></td>'+
+            '<td>'+repWorkerTable(g)+'</td>'+
+            '<td>'+repMachineTable(g)+'</td>'+
+          '</tr>'+
+        '</table>'+
+      '</td></tr>'+
+      // 除雪センターからの安全指示事項 ｜ 担当者
+      '<tr><th class="rep-lbl" colspan="2">除雪センターからの安全指示事項</th>'+
+          '<th class="rep-lbl">担当者</th><td>'+esc(g.tanto)+'</td></tr>'+
+      '<tr><td class="rep-free" colspan="4">'+esc(g.safety).replace(/\n/g,'<br>')+'</td></tr>'+
+      // 危険予知活動記録（見出し）
+      '<tr><th class="rep-lbl rep-secbig" colspan="4">危 険 予 知 活 動 記 録</th></tr>'+
+      // 左：自社どんな危険 ／ 右：参考リスト
+      '<tr><td colspan="2" style="vertical-align:top">'+
+            '<div class="rep-ky-hd">◎どんな危険がありますか</div>'+
+            '<div class="rep-ky-danger">'+esc(g.kyDanger)+'</div></td>'+
+          '<td class="rep-nopad" colspan="2">'+refTable+'</td></tr>'+
+      // 私たちはこうします
+      '<tr><td colspan="4"><div class="rep-ky-hd">◎私たちはこうします</div>'+
+            '<div class="rep-ky-action">'+esc(g.kyAction)+'</div></td></tr>'+
+      // 参加者氏名
+      '<tr><td class="rep-names-lbl">参加者氏名</td>'+
+          '<td class="rep-nopad" colspan="3">'+repNamesGrid(g.members)+'</td></tr>'+
+      // 特記事項
+      '<tr><th class="rep-lbl">特　記　事　項</th>'+
+          '<td class="rep-notes-cell" colspan="3">'+esc(g.notes).replace(/\n/g,'<br>')+'</td></tr>'+
     '</table>'+
-    '<div class="rep-sec-title">使用機械名・台数</div>'+
-    machineHtml+
-    '<table class="rep-tbl"><tr><th style="width:200px">除雪センターからの<br>安全指示事項</th><td>'+esc(g.safety).replace(/\n/g,'<br>')+'</td></tr></table>'+
-    '<div class="rep-sec-title">危険予知活動（自社）</div>'+
-    '<table class="rep-tbl rep-ky-my"><tr><th style="width:200px">◎どんな危険がありますか</th><td>'+esc(g.kyDanger)+'</td></tr>'+
-      '<tr><th>◎私たちはこうします</th><td>'+esc(g.kyAction)+'</td></tr></table>'+
-    '<div class="rep-sec-title">危険予知活動記録（参考）</div>'+
-    '<table class="rep-tbl"><thead><tr><th style="width:36px">No</th><th>◎どんな危険がありますか</th><th>◎私たちはこうする</th></tr></thead><tbody>'+kyRows+'</tbody></table>'+
-    '<table class="rep-tbl"><tr><th style="width:110px">参加者氏名</th><td class="rep-members-box">'+membersHtml+'</td></tr></table>'+
-    '<table class="rep-tbl"><tr><th style="width:110px">特記事項</th><td class="rep-members-box">'+esc(g.notes).replace(/\n/g,'<br>')+'</td></tr></table>'+
   '</div>';
   el.innerHTML = h;
 }
@@ -2580,6 +2839,11 @@ initReportTab();
 function printMap(){
   document.body.classList.remove('print-shift');
   document.body.classList.remove('print-report');
+  // 地図2のURLが未設定（空／地図1と同じ）なら、地図2ステージ（地図1の複製）を印刷対象から外す＝末尾の空白/重複ページ防止。
+  const u1 = (CONFIG.mapUrl  || '').trim();
+  const u2 = (CONFIG.mapUrl2 || '').trim();
+  const hasMap2 = !!u2 && u2 !== u1;
+  document.body.classList.toggle('print-no-map2', !hasMap2);
   document.body.classList.add('print-map');
   window.print();
 }
@@ -2600,6 +2864,7 @@ window.addEventListener('afterprint', function(){
   document.body.classList.remove('print-map');
   document.body.classList.remove('print-shift');
   document.body.classList.remove('print-report');
+  document.body.classList.remove('print-no-map2');
 });
 
 /*════════════════ タブ切替 ════════════════*/
@@ -2614,15 +2879,24 @@ document.querySelectorAll('nav button').forEach(function(b){
 
 /*════════════════ ログイン ════════════════*/
 function logout(){
+  READONLY = false;
+  document.body.classList.remove('readonly');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login').style.display = 'flex';
   document.getElementById('login-pw').value = '';
   document.getElementById('login-err').textContent = '';
   document.getElementById('login-pw').focus();
 }
+function applyReadonlyUi(){
+  document.body.classList.toggle('readonly', READONLY);
+  const badge = document.getElementById('view-badge');
+  if(badge) badge.style.display = READONLY ? '' : 'none';
+}
 function tryLogin(){
   const pw = document.getElementById('login-pw').value;
-  if(pw === APP_PASSWORD){
+  if(pw === APP_PASSWORD || pw === VIEW_PASSWORD){
+    READONLY = (pw === VIEW_PASSWORD);
+    applyReadonlyUi();
     document.getElementById('login').style.display = 'none';
     document.getElementById('app').style.display = '';
     loadData();
