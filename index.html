@@ -53,10 +53,8 @@
   .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)} .stat.ok .n{color:var(--ok)}
 
   /* ---------- お知らせ・注意事項ボード ---------- */
-  .notice-form{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-  .notice-form .notice-name-in{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:14px;font-family:inherit;color:#1a2430;max-width:260px}
-  .notice-form textarea{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:14px;font-family:inherit;color:#1a2430;width:100%;resize:vertical;min-height:56px}
-  .notice-form .notice-name-in:focus,.notice-form textarea:focus{outline:none;border-color:var(--accent2)}
+  #notice-board{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;color:#1a2430;resize:vertical;min-height:190px;line-height:1.7;box-sizing:border-box}
+  #notice-board:focus{outline:none;border-color:var(--accent2)}
   .notice-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#fbfdff}
   .notice-item .ni-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px}
   .notice-item .ni-ts{font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace}
@@ -462,17 +460,13 @@
     <!-- HOME -->
     <section class="tab active" id="tab-home">
       <div class="card" id="notice-card">
-        <h2>お知らせ・注意事項（みんなで共有）</h2>
-        <p class="hint">全員で共有できる連絡ボードです。記入者名（任意）と本文を書いて「投稿」を押すと、みんなが同じ内容を見られます。※投稿は閲覧モードでもできます。削除は編集モードのみ。</p>
-        <div class="notice-form">
-          <input id="notice-name" type="text" placeholder="記入者名（任意）" class="notice-name-in">
-          <textarea id="notice-body" rows="3" placeholder="お知らせ・注意事項を入力"></textarea>
-          <div class="row">
-            <div class="spacer"></div>
-            <button class="btn" onclick="postNotice()">投稿</button>
-          </div>
+        <div class="row" style="align-items:center;margin-bottom:8px">
+          <h2 style="margin:0">お知らせ・注意事項（みんなで共有）</h2>
+          <div class="spacer"></div>
+          <span id="notice-updated" class="hint" style="margin:0"></span>
+          <button class="btn" onclick="saveNoticeBoard()" style="margin-left:12px">保存</button>
         </div>
-        <div id="notice-list"></div>
+        <textarea id="notice-board" placeholder="ここに注意事項などを書き込んで「保存」を押すと、みんなで共有できます。"></textarea>
       </div>
       <div class="card">
         <h2>今日の予定</h2>
@@ -2083,62 +2077,39 @@ function renderSummary(){
   if(cnt>0){ badge.style.display=''; badge.textContent=cnt; } else { badge.style.display='none'; }
 }
 
-/*════════════════ お知らせ・注意事項ボード（全員で共有） ════════════════*/
-// 新しい順に描画。各件：日時／記入者／本文（改行保持）。削除ボタンは編集モードのみ。
-function renderNotices(){
-  const box = document.getElementById('notice-list');
-  if(!box) return;
-  // ts の新しい順にソート（ts は 'YYYY-MM-DD HH:mm' 文字列なので文字列比較で降順にできる）
+/*════════════════ お知らせ・注意事項ボード（全員で共有・1枚の書き込みボード） ════════════════*/
+// 最新の共有テキストをそのまま1つのボードに表示。保存で全員に反映（保存は閲覧モードでも可）。
+function latestNotice(){
   const list = (NOTICES || []).slice().sort(function(a,b){
     return String(b.ts||'').localeCompare(String(a.ts||''));
   });
-  if(list.length===0){ box.innerHTML = '<div class="empty">お知らせはまだありません。上のフォームから投稿できます。</div>'; return; }
-  box.innerHTML = list.map(function(n){
-    const bodyHtml = esc(n.body||'').replace(/\r?\n/g, '<br>');
-    const nameHtml = (n.name && String(n.name).trim()) ? esc(n.name) : '（名前なし）';
-    const delBtn = READONLY ? '' :
-      '<button class="ni-del" onclick="delNotice('+Number(n.row)+')">削除</button>';
-    return '<div class="notice-item">'
-      + '<div class="ni-head">'
-      +   '<span class="ni-ts">'+esc(n.ts||'')+'</span>'
-      +   '<span class="ni-name">'+nameHtml+'</span>'
-      +   '<span class="ni-spacer"></span>'
-      +   delBtn
-      + '</div>'
-      + '<div class="ni-body">'+bodyHtml+'</div>'
-      + '</div>';
-  }).join('');
+  return list.length ? list[0] : null;
 }
-
-// 投稿：READONLYガードは入れない（誰もが入力できる共有ボードのため）。
-async function postNotice(){
-  const nameEl = document.getElementById('notice-name');
-  const bodyEl = document.getElementById('notice-body');
-  const name = nameEl ? nameEl.value.trim() : '';
-  const body = bodyEl ? bodyEl.value.trim() : '';
-  if(!body){ toast('本文を入力してください'); return; }
-  const res = await callApi({action:'saveNotice', notice:{name:name, body:body}});
-  if(res && res.ok){
-    NOTICES.unshift({row:res.row, ts:res.ts, name:name, body:body});
-    if(bodyEl) bodyEl.value = '';
-    renderNotices();
-    toast(offline ? '投稿しました（オフライン：この端末のみ・共有されていません）' : '投稿しました');
-  }else{
-    toast('投稿に失敗しました' + (res && res.error ? '：'+res.error : ''));
+function renderNotices(){
+  const board = document.getElementById('notice-board');
+  if(!board) return;
+  const latest = latestNotice();
+  // 入力中（フォーカス中）は上書きしない＝打ち込み中の内容を消さない
+  if(document.activeElement !== board){
+    board.value = latest ? (latest.body || '') : '';
   }
+  const up = document.getElementById('notice-updated');
+  if(up) up.textContent = latest ? ('最終更新: ' + (latest.ts || '')) : '';
 }
 
-// 削除：編集モードのみ（閲覧モードはガードでブロック）。
-async function delNotice(row){
-  if(READONLY) return;
-  if(!confirm('このお知らせを削除しますか？')) return;
-  const res = await callApi({action:'delNotice', row:row});
+// 保存：READONLYガードは入れない（誰もが書き込める共有ボードのため）。最新テキストを追記し全員に反映。
+async function saveNoticeBoard(){
+  const board = document.getElementById('notice-board');
+  if(!board) return;
+  const body = board.value;
+  const res = await callApi({action:'saveNotice', notice:{name:'', body:body}});
   if(res && res.ok){
-    NOTICES = NOTICES.filter(function(n){ return Number(n.row)!==Number(row); });
-    renderNotices();
-    toast(offline ? '削除しました（オフライン：この端末のみ）' : '削除しました');
+    NOTICES.unshift({row:res.row, ts:res.ts, name:'', body:body});
+    const up = document.getElementById('notice-updated');
+    if(up) up.textContent = '最終更新: ' + (res.ts || '');
+    toast(offline ? '保存しました（オフライン：この端末のみ・共有されていません）' : '保存しました');
   }else{
-    toast('削除に失敗しました' + (res && res.error ? '：'+res.error : ''));
+    toast('保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
   }
 }
 
