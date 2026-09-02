@@ -614,7 +614,7 @@
           <button class="btn sm no-print" onclick="exportReportExcel()">⬇ Excel出力</button>
           <button class="btn sec sm no-print" onclick="exportReportExcelAll()">⬇ 全社Excel出力</button>
         </div>
-        <p class="hint">会社を選んで内容を入力すると、下の帳票プレビューに反映されます。データは保存されません（都度入力→印刷／Excel出力）。会社を選ぶと機械台数の既定値が入ります（編集可）。</p>
+        <p class="hint">会社を選ぶと機械台数が入ります。安全指示・危険予知はプルダウンから選択（自由入力も可）。参加者氏名は印刷後に手書きします。🖨印刷でその会社の日報を出力（データは保存されません）。</p>
         <div class="form-grid rep-form">
           <div class="fld">
             <label>会社</label>
@@ -647,6 +647,10 @@
           <div class="fld full">
             <label>使用機械台数（会社選択で既定値。編集可）</label>
             <div id="rep-machine-grid" class="rep-mgrid"></div>
+            <div class="row" style="margin-top:6px">
+              <div class="spacer"></div>
+              <button class="btn sec sm edit-only" onclick="saveRepMach()">💾 この会社の台数を保存（全員共有）</button>
+            </div>
           </div>
           <div class="fld full">
             <label>参加者氏名（改行区切り）</label>
@@ -658,14 +662,17 @@
           </div>
           <div class="fld full">
             <label>除雪センターからの安全指示事項</label>
+            <select id="rep-safety-pick" class="no-print" onchange="document.getElementById('rep-safety').value = this.value; renderReportPreview();"></select>
             <textarea id="rep-safety" oninput="renderReportPreview()"></textarea>
           </div>
           <div class="fld">
             <label>自社の危険予知：どんな危険がありますか</label>
+            <select id="rep-ky-danger-pick" class="no-print" onchange="document.getElementById('rep-ky-danger').value = this.value; renderReportPreview();"></select>
             <input id="rep-ky-danger" oninput="renderReportPreview()">
           </div>
           <div class="fld">
             <label>自社の危険予知：私たちはこうします</label>
+            <select id="rep-ky-action-pick" class="no-print" onchange="document.getElementById('rep-ky-action').value = this.value; renderReportPreview();"></select>
             <input id="rep-ky-action" oninput="renderReportPreview()">
           </div>
         </div>
@@ -914,6 +921,7 @@ const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 let CONFIG   = {lead:30, jv:'', district:'', year:'', defaultEmail:'', signature:'', calendarUrl:'', mapUrl:'', mapUrl2:''};
 let MACHINES = [];
 let SUBMISSIONS = [];              // [{row, year, company, doc, status, date, link, note}]
+let REPMACH_SAVED = {};            // 安全日報：会社別 機械台数の保存値 { 会社名: {'group.item':台数} }（提出物の仕組みを流用して保存）
 let DOCS = DEFAULT_DOCS.slice();   // 必要書類マスタ
 let SUB_STATUS = DEFAULT_SUB_STATUS.slice();
 let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社（機械なし）
@@ -1201,7 +1209,18 @@ async function loadData(){
   if(res && res.ok){
     CONFIG   = res.config || CONFIG;
     MACHINES = Array.isArray(res.machines) ? res.machines : [];
-    SUBMISSIONS = Array.isArray(res.submissions) ? res.submissions : [];
+    {
+      // 提出物の中に紛れ込む「安全日報の台数」レコード（年度='__REPMACH__'）を分離
+      const rawSubs = Array.isArray(res.submissions) ? res.submissions : [];
+      REPMACH_SAVED = {};
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__REPMACH__' && s.company){
+          try{ const o = JSON.parse(s.note||'{}'); if(o && typeof o==='object') REPMACH_SAVED[s.company] = o; }catch(e){}
+        }
+      });
+      // 提出物タブには __REPMACH__ を出さない
+      SUBMISSIONS = rawSubs.filter(function(s){ return (s.year||'') !== '__REPMACH__'; });
+    }
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
     EVENTS = (res.events && typeof res.events==='object') ? res.events : {today:[], week:[]};
@@ -2473,6 +2492,17 @@ const REPORT_COMPANIES = [
   {name:'㈱北海メンテナンス',   preset:{'gyo.shovel':1}}
 ];
 const REPORT_SAFETY_DEFAULT = '前後左右の確認を怠らず、補助者との合図をしっかり行ってください。';
+// 除雪センターからの安全指示事項の選択肢（自由入力も可。既定は最後の項目＝REPORT_SAFETY_DEFAULT）
+const REPORT_SAFETY_PICKS = [
+  '後進するときは、必ず後方を確認し、ゆっくり走行してください。',
+  '補助者と共同作業をおこなうときは、合図をし、安全を確認してください。',
+  '視界不良時は、一旦作業を中止してください。',
+  '走行スピードを抑え、無理な作業はしないようにしてください。',
+  '作業時の路面状況を把握し、走行スピードを抑えてください。',
+  '視界に気をつけ、走行スピードを抑えてください。',
+  '誘導者・歩行者に十分に気をつけて作業を行ってください。',
+  '前後左右の確認を怠らず、補助者との合図をしっかり行ってください。'
+];
 const REPORT_KY_DANGER_DEFAULT = '歩行者との接触事故。';
 const REPORT_KY_ACTION_DEFAULT = '各パートナーとの声掛け作業を心掛ける。';
 // 危険予知活動記録（参考リスト・固定）：[どんな危険がありますか, 私たちはこうする]
@@ -2512,10 +2542,26 @@ function buildReportMachineGrid(){
 }
 
 // 会社選択で機械台数の既定値をプリセット
+// 安全指示・危険予知の選択プルダウンを生成（先頭は空option。選ぶと各入力欄へ反映）
+function buildReportPickers(){
+  const blank = '<option value="">（選択してください）</option>';
+  const opts = function(arr){
+    return blank + arr.map(function(t){ return '<option value="'+esc(t)+'">'+esc(t)+'</option>'; }).join('');
+  };
+  const sp = document.getElementById('rep-safety-pick');
+  if(sp) sp.innerHTML = opts(REPORT_SAFETY_PICKS);
+  const dp = document.getElementById('rep-ky-danger-pick');
+  if(dp) dp.innerHTML = opts(REPORT_KY_LIST.map(function(p){ return p[0]; }));
+  const ap = document.getElementById('rep-ky-action-pick');
+  if(ap) ap.innerHTML = opts(REPORT_KY_LIST.map(function(p){ return p[1]; }));
+}
+
 function onRepCompanyChange(){
   const sel = document.getElementById('rep-company');
   const comp = REPORT_COMPANIES.find(function(c){ return c.name === sel.value; });
-  const preset = comp ? comp.preset : {};
+  // 保存済みの台数があればそれを優先。無ければハードコードの既定値。
+  const saved = REPMACH_SAVED[sel.value];
+  const preset = saved || (comp ? comp.preset : {});
   REPORT_MGROUPS.forEach(function(g){
     g.items.forEach(function(it){
       const el = document.getElementById(repMachineInputId(g.key, it.key));
@@ -2523,6 +2569,29 @@ function onRepCompanyChange(){
     });
   });
   renderReportPreview();
+}
+
+// 選択中の会社の機械台数を保存（全員共有）。既存の提出物保存(saveSub)を流用するのでGAS変更不要。
+async function saveRepMach(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const sel = document.getElementById('rep-company');
+  const company = sel ? sel.value : '';
+  if(!company){ toast('先に会社を選んでください'); return; }
+  const counts = {};
+  REPORT_MGROUPS.forEach(function(g){
+    g.items.forEach(function(it){
+      const el = document.getElementById(repMachineInputId(g.key, it.key));
+      const n = el ? num(el.value) : 0;
+      if(n) counts[g.key+'.'+it.key] = n; // 0以外のみ保存
+    });
+  });
+  const res = await callApi({action:'saveSub', sub:{year:'__REPMACH__', company:company, doc:'台数', status:'', date:'', link:'', note: JSON.stringify(counts)}});
+  if(res && res.ok){
+    REPMACH_SAVED[company] = counts;
+    toast(offline ? '保存しました（オフライン：この端末のみ・共有されていません）' : 'この会社の台数を保存しました（全員共有）');
+  }else{
+    toast('台数の保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
 }
 
 // 入力値を収集
@@ -2603,8 +2672,10 @@ function repMachineTable(g){
 // 参加者氏名グリッド（入力を1名ずつセルへ。空セルで枠を埋める）
 function repNamesGrid(members){
   const cols = 6;
+  const minRows = 2; // 手書き用に最低2行（＝12マス）を常時確保
   const cells = members.slice();
-  const rowsNeeded = Math.max(2, Math.ceil(cells.length / cols) || 0);
+  // 入力氏名を先頭に置き、その後ろに必ず手書き用の空マスが残るよう1行ぶん余白を足す
+  const rowsNeeded = Math.max(minRows, Math.floor(cells.length / cols) + 1);
   const total = rowsNeeded * cols;
   while(cells.length < total) cells.push('');
   let h = '<table class="rep-names">';
@@ -2791,6 +2862,7 @@ function initReportTab(){
   sel.innerHTML = '<option value="">（会社を選択）</option>' +
     REPORT_COMPANIES.map(function(c){ return '<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>'; }).join('');
   buildReportMachineGrid();
+  buildReportPickers();
   const safety = document.getElementById('rep-safety');
   if(safety && !safety.value) safety.value = REPORT_SAFETY_DEFAULT;
   const kd = document.getElementById('rep-ky-danger');
