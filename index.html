@@ -314,6 +314,24 @@
   table.rep-names td{border:1px solid #000;height:26px;font-size:12px;text-align:center;padding:2px 4px}
   .rep-notes-cell{min-height:40px}
 
+  /* ---------- 安全日報：タブ式UI（印刷する会社／共通カード／会社サブタブ／各社パネル） ---------- */
+  .rep-printpicks-wrap{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0 4px;background:#fbfdff}
+  .rep-printpicks-wrap .rep-pp-label{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px}
+  .rep-print-picks{display:flex;flex-wrap:wrap;gap:6px 14px}
+  .rep-print-picks label{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a2430;cursor:pointer}
+  .rep-print-picks input[type=checkbox]{width:16px;height:16px;cursor:pointer}
+  .rep-common-card{border:1px solid var(--accent2);border-radius:8px;padding:10px 12px;margin:8px 0;background:#f4f9fd}
+  .rep-common-title{font-size:13px;font-weight:800;color:var(--accent);margin-bottom:8px}
+  .rep-common-title .rep-common-note{font-size:11px;font-weight:600;color:var(--bad)}
+  .rep-subtabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 8px}
+  .rep-subtabs button{border:1px solid var(--line);background:#fff;padding:6px 12px;font-size:13px;font-family:inherit;font-weight:700;color:var(--muted);cursor:pointer;border-radius:7px}
+  .rep-subtabs button:hover{background:#eef4fa}
+  .rep-subtabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .rep-panel{display:none}
+  .rep-panel.active{display:block}
+  .rep-panel-head{font-size:14px;font-weight:800;color:var(--accent);margin:4px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--accent2)}
+  #rep-print{display:none}
+
   @media (max-width:520px){ .form-grid{grid-template-columns:1fr} .prog-name{width:100%} }
 
   /* ---------- 印刷（モード指定方式：シフト / 地図） ---------- */
@@ -388,9 +406,13 @@
     body.print-report .tab{ display:none !important; }
     /* 帳票を横向き（reportLandscape）。print-shift/print-map と混線しない名前付きページ。 */
     body.print-report #tab-report{ display:block !important; page:reportLandscape; }
-    /* 入力フォーム（会社選択・機械台数・ボタン等）は印刷しない。帳票プレビューのみ。 */
+    /* 入力フォーム（会社チェック・共通カード・会社タブ・各社パネル等）とプレビューは印刷しない。 */
     body.print-report #rep-form-card{ display:none !important; }
-    body.print-report #rep-preview-card{ border:none; box-shadow:none; padding:0; margin:0; }
+    body.print-report #rep-preview-card{ display:none !important; }
+    /* 印刷はチェック各社ぶんの帳票を連結した #rep-print のみ。会社の変わり目で改ページ（最後は不要）。 */
+    body.print-report #rep-print{ display:block !important; }
+    body.print-report .rep-sheet{ page-break-after:always; }
+    body.print-report .rep-sheet:last-child{ page-break-after:auto; }
     /* 枠線・網掛け（グレー等）を紙でも維持 */
     body.print-report .report-sheet, body.print-report .report-sheet *{
       -webkit-print-color-adjust:exact; print-color-adjust:exact;
@@ -610,77 +632,55 @@
         <div class="row">
           <h2 style="margin:0">安全日報（作業指示・安全ミーティング日報）</h2>
           <div class="spacer"></div>
-          <button class="btn sec sm no-print" onclick="printReport()">🖨 印刷</button>
-          <button class="btn sm no-print" onclick="exportReportExcel()">⬇ Excel出力</button>
-          <button class="btn sec sm no-print" onclick="exportReportExcelAll()">⬇ 全社Excel出力</button>
+          <button class="btn sec sm no-print" onclick="printReport()">🖨 印刷（選択した会社）</button>
+          <button class="btn sm no-print" onclick="exportReportExcel()">⬇ Excel出力（選択した会社）</button>
         </div>
-        <p class="hint">会社を選ぶと機械台数が入ります。安全指示・危険予知はプルダウンから選択（自由入力も可）。参加者氏名は印刷後に手書きします。🖨印刷でその会社の日報を出力（データは保存されません）。</p>
-        <div class="form-grid rep-form">
-          <div class="fld">
-            <label>会社</label>
-            <select id="rep-company" onchange="onRepCompanyChange()"></select>
-          </div>
-          <div class="fld">
-            <label>業務指示日</label>
-            <input id="rep-date" type="date" oninput="renderReportPreview()">
-          </div>
-          <div class="fld">
-            <label>リーダー名</label>
-            <input id="rep-leader" placeholder="リーダー名" oninput="renderReportPreview()">
-          </div>
-          <div class="fld">
-            <label>担当者（任意）</label>
-            <input id="rep-tanto" placeholder="担当者名" oninput="renderReportPreview()">
-          </div>
-          <div class="fld">
-            <label>オペレーター（人）</label>
-            <input id="rep-ope" type="number" min="0" step="1" value="0" oninput="renderReportPreview()">
-          </div>
-          <div class="fld">
-            <label>助手・作業員（人）</label>
-            <input id="rep-asst" type="number" min="0" step="1" value="0" oninput="renderReportPreview()">
-          </div>
-          <div class="fld">
-            <label>誘導員（人）</label>
-            <input id="rep-guide" type="number" min="0" step="1" value="0" oninput="renderReportPreview()">
-          </div>
-          <div class="fld full">
-            <label>使用機械台数（会社選択で既定値。編集可）</label>
-            <div id="rep-machine-grid" class="rep-mgrid"></div>
-            <div class="row" style="margin-top:6px">
-              <div class="spacer"></div>
-              <button class="btn sec sm edit-only" onclick="saveRepMach()">💾 この会社の台数を保存（全員共有）</button>
+        <p class="hint">共通項目（業務指示日・安全指示・危険予知）は全社共通で出力されます。各社タブでリーダー・人数・機械台数・特記事項を入力。印刷する会社にチェックを入れて🖨印刷すると、チェックした各社を1社1ページで出力します。参加者氏名は印刷後に手書き。データは保存されません（台数の保存ボタンを除く）。</p>
+
+        <!-- 印刷する会社（チェックボックス。既定は全ON） -->
+        <div class="rep-printpicks-wrap no-print">
+          <div class="rep-pp-label">印刷する会社（チェックした会社を印刷／Excel出力します）</div>
+          <div id="rep-print-picks" class="rep-print-picks"></div>
+        </div>
+
+        <!-- 全社共通カード -->
+        <div class="rep-common-card">
+          <div class="rep-common-title">全社共通項目 <span class="rep-common-note">※この内容は全社共通で出力されます</span></div>
+          <div class="form-grid">
+            <div class="fld">
+              <label>業務指示日</label>
+              <input id="rep-date" type="date" oninput="renderReportPreview()">
+            </div>
+            <div class="fld full">
+              <label>除雪センターからの安全指示事項</label>
+              <select id="rep-safety-pick" class="no-print" onchange="document.getElementById('rep-safety').value = this.value; renderReportPreview();"></select>
+              <textarea id="rep-safety" oninput="renderReportPreview()"></textarea>
+            </div>
+            <div class="fld">
+              <label>危険予知：どんな危険がありますか</label>
+              <select id="rep-ky-danger-pick" class="no-print" onchange="document.getElementById('rep-ky-danger').value = this.value; renderReportPreview();"></select>
+              <input id="rep-ky-danger" oninput="renderReportPreview()">
+            </div>
+            <div class="fld">
+              <label>危険予知：私たちはこうします</label>
+              <select id="rep-ky-action-pick" class="no-print" onchange="document.getElementById('rep-ky-action').value = this.value; renderReportPreview();"></select>
+              <input id="rep-ky-action" oninput="renderReportPreview()">
             </div>
           </div>
-          <div class="fld full">
-            <label>参加者氏名（改行区切り）</label>
-            <textarea id="rep-members" rows="4" placeholder="1名ずつ改行で入力" oninput="renderReportPreview()"></textarea>
-          </div>
-          <div class="fld full">
-            <label>特記事項</label>
-            <textarea id="rep-notes" placeholder="特記事項" oninput="renderReportPreview()"></textarea>
-          </div>
-          <div class="fld full">
-            <label>除雪センターからの安全指示事項</label>
-            <select id="rep-safety-pick" class="no-print" onchange="document.getElementById('rep-safety').value = this.value; renderReportPreview();"></select>
-            <textarea id="rep-safety" oninput="renderReportPreview()"></textarea>
-          </div>
-          <div class="fld">
-            <label>自社の危険予知：どんな危険がありますか</label>
-            <select id="rep-ky-danger-pick" class="no-print" onchange="document.getElementById('rep-ky-danger').value = this.value; renderReportPreview();"></select>
-            <input id="rep-ky-danger" oninput="renderReportPreview()">
-          </div>
-          <div class="fld">
-            <label>自社の危険予知：私たちはこうします</label>
-            <select id="rep-ky-action-pick" class="no-print" onchange="document.getElementById('rep-ky-action').value = this.value; renderReportPreview();"></select>
-            <input id="rep-ky-action" oninput="renderReportPreview()">
-          </div>
         </div>
+
+        <!-- 会社サブタブ -->
+        <div class="rep-subtabs no-print" id="rep-subtabs"></div>
+        <!-- 各社パネル（8社ぶんDOMに存在。表示/非表示で切替） -->
+        <div id="rep-panels"></div>
       </div>
 
       <div class="card" id="rep-preview-card">
         <div id="rep-preview"></div>
       </div>
+
+      <!-- 印刷用コンテナ（通常は非表示。印刷時にチェック各社の帳票を連結） -->
+      <div id="rep-print"></div>
     </section>
 
     <!-- RESOURCES（手順・資料） -->
@@ -1290,6 +1290,8 @@ function renderAll(){
   renderMap();
   renderShift();
   renderCompanyDatalist();
+  repApplyPresets();   // 安全日報：保存済み台数(REPMACH_SAVED)を各社パネルへ反映
+  renderReportPreview();
 }
 
 /* ホーム：提出進捗バー＋資料リンク（year指定でその年度のみ集計） */
@@ -2522,23 +2524,110 @@ const REPORT_TITLE = '作業指示・安全ミーティング日報';
 const REPORT_BIZNAME = '厚別区北地区道路維持除雪業務';
 // 曜日配列 WD_JP は既存（勤務予定表）と共用
 
-function repMachineInputId(gk, ik){ return 'rep-m-' + gk + '-' + ik; }
+// 会社別タブ式：現在アクティブな会社インデックス
+let REP_ACTIVE = 0;
+// 会社ごとの機械台数入力ID（会社インデックスを含めてID衝突を防ぐ） 例：rep-c0-m-gyo-shovel
+function repMachId(i, gk, ik){ return 'rep-c' + i + '-m-' + gk + '-' + ik; }
+// 会社ごとの入力欄ID 例：rep-c0-leader
+function repFldId(i, name){ return 'rep-c' + i + '-' + name; }
 
-// 機械台数入力グリッドを生成
-function buildReportMachineGrid(){
-  const wrap = document.getElementById('rep-machine-grid');
-  if(!wrap) return;
+// 1社ぶんの機械台数入力グリッドHTML（会社インデックス i）
+function buildRepPanelMachineGrid(i){
   let h = '';
   REPORT_MGROUPS.forEach(function(g){
     h += '<div class="rep-mgroup"><div class="rmg-title">'+esc(g.label)+'</div><div class="rmg-items">';
     g.items.forEach(function(it){
-      const id = repMachineInputId(g.key, it.key);
+      const id = repMachId(i, g.key, it.key);
       h += '<div class="rmg-item"><label for="'+id+'">'+esc(it.label)+'</label>'+
            '<input id="'+id+'" type="number" min="0" step="1" value="0" oninput="renderReportPreview()"></div>';
     });
     h += '</div></div>';
   });
-  wrap.innerHTML = h;
+  return h;
+}
+
+// 印刷する会社のチェックボックス行（既定は全ON）
+function buildRepPrintPicks(){
+  const wrap = document.getElementById('rep-print-picks');
+  if(!wrap) return;
+  wrap.innerHTML = REPORT_COMPANIES.map(function(c, i){
+    return '<label><input type="checkbox" id="rep-print-'+i+'" checked>'+esc(c.name)+'</label>';
+  }).join('');
+}
+
+// 会社サブタブ（ボタン）を生成
+function buildRepSubtabs(){
+  const wrap = document.getElementById('rep-subtabs');
+  if(!wrap) return;
+  wrap.innerHTML = REPORT_COMPANIES.map(function(c, i){
+    return '<button type="button" onclick="repShowCompany('+i+')">'+esc(c.name)+'</button>';
+  }).join('');
+}
+
+// 各社パネル（8社ぶんDOMに存在。表示/非表示で切替。値は保持される）
+function buildRepPanels(){
+  const wrap = document.getElementById('rep-panels');
+  if(!wrap) return;
+  wrap.innerHTML = REPORT_COMPANIES.map(function(c, i){
+    return '<div class="rep-panel" id="rep-panel-'+i+'">'+
+      '<div class="rep-panel-head">'+esc(c.name)+'</div>'+
+      '<div class="form-grid">'+
+        '<div class="fld"><label>リーダー名</label>'+
+          '<input id="'+repFldId(i,'leader')+'" placeholder="リーダー名" oninput="renderReportPreview()"></div>'+
+        '<div class="fld"><label>担当者（任意）</label>'+
+          '<input id="'+repFldId(i,'tanto')+'" placeholder="担当者名" oninput="renderReportPreview()"></div>'+
+        '<div class="fld"><label>オペレーター（人）</label>'+
+          '<input id="'+repFldId(i,'ope')+'" type="number" min="0" step="1" value="0" oninput="renderReportPreview()"></div>'+
+        '<div class="fld"><label>助手・作業員（人）</label>'+
+          '<input id="'+repFldId(i,'asst')+'" type="number" min="0" step="1" value="0" oninput="renderReportPreview()"></div>'+
+        '<div class="fld"><label>誘導員（人）</label>'+
+          '<input id="'+repFldId(i,'guide')+'" type="number" min="0" step="1" value="0" oninput="renderReportPreview()"></div>'+
+        '<div class="fld"></div>'+
+        '<div class="fld full"><label>使用機械台数（会社選択で既定値。編集可）</label>'+
+          '<div class="rep-mgrid">'+buildRepPanelMachineGrid(i)+'</div>'+
+          '<div class="row" style="margin-top:6px"><div class="spacer"></div>'+
+            '<button class="btn sec sm edit-only" onclick="saveRepMach('+i+')">💾 この会社の台数を保存（全員共有）</button>'+
+          '</div></div>'+
+        '<div class="fld full"><label>特記事項（任意）</label>'+
+          '<input id="'+repFldId(i,'notes')+'" placeholder="特記事項" oninput="renderReportPreview()"></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// 会社ごとの機械台数プリセットを反映（保存済み REPMACH_SAVED を優先、無ければ preset）。
+// init 時と、データ読込後（renderAll）に呼ぶ。
+function repApplyPresets(){
+  REPORT_COMPANIES.forEach(function(c, i){
+    const saved = REPMACH_SAVED[c.name];
+    const preset = saved || c.preset || {};
+    REPORT_MGROUPS.forEach(function(g){
+      g.items.forEach(function(it){
+        const el = document.getElementById(repMachId(i, g.key, it.key));
+        if(el) el.value = preset[g.key+'.'+it.key] || 0;
+      });
+    });
+  });
+}
+
+// 会社サブタブ切替
+function repShowCompany(i){
+  REP_ACTIVE = i;
+  const tabs = document.querySelectorAll('#rep-subtabs button');
+  tabs.forEach(function(b, idx){ b.classList.toggle('active', idx === i); });
+  const panels = document.querySelectorAll('#rep-panels .rep-panel');
+  panels.forEach(function(p, idx){ p.classList.toggle('active', idx === i); });
+  renderReportPreview();
+}
+
+// 印刷／Excel対象＝チェックされた会社インデックス配列
+function repCheckedIndices(){
+  const out = [];
+  REPORT_COMPANIES.forEach(function(c, i){
+    const cb = document.getElementById('rep-print-'+i);
+    if(cb && cb.checked) out.push(i);
+  });
+  return out;
 }
 
 // 会社選択で機械台数の既定値をプリセット
@@ -2556,31 +2645,16 @@ function buildReportPickers(){
   if(ap) ap.innerHTML = opts(REPORT_KY_LIST.map(function(p){ return p[1]; }));
 }
 
-function onRepCompanyChange(){
-  const sel = document.getElementById('rep-company');
-  const comp = REPORT_COMPANIES.find(function(c){ return c.name === sel.value; });
-  // 保存済みの台数があればそれを優先。無ければハードコードの既定値。
-  const saved = REPMACH_SAVED[sel.value];
-  const preset = saved || (comp ? comp.preset : {});
-  REPORT_MGROUPS.forEach(function(g){
-    g.items.forEach(function(it){
-      const el = document.getElementById(repMachineInputId(g.key, it.key));
-      if(el) el.value = preset[g.key+'.'+it.key] || 0;
-    });
-  });
-  renderReportPreview();
-}
-
-// 選択中の会社の機械台数を保存（全員共有）。既存の提出物保存(saveSub)を流用するのでGAS変更不要。
-async function saveRepMach(){
+// 指定会社（インデックス i）の機械台数を保存（全員共有）。既存の提出物保存(saveSub)を流用するのでGAS変更不要。
+async function saveRepMach(i){
   if(READONLY){ toast('閲覧モードのため編集できません'); return; }
-  const sel = document.getElementById('rep-company');
-  const company = sel ? sel.value : '';
-  if(!company){ toast('先に会社を選んでください'); return; }
+  const comp = REPORT_COMPANIES[i];
+  if(!comp){ toast('会社が特定できません'); return; }
+  const company = comp.name;
   const counts = {};
   REPORT_MGROUPS.forEach(function(g){
     g.items.forEach(function(it){
-      const el = document.getElementById(repMachineInputId(g.key, it.key));
+      const el = document.getElementById(repMachId(i, g.key, it.key));
       const n = el ? num(el.value) : 0;
       if(n) counts[g.key+'.'+it.key] = n; // 0以外のみ保存
     });
@@ -2594,33 +2668,48 @@ async function saveRepMach(){
   }
 }
 
-// 入力値を収集
-function reportGather(){
+// 全社共通の入力値（業務指示日・安全指示・危険予知）
+function repGatherCommon(){
+  const val = function(id){ const e=document.getElementById(id); return e ? e.value : ''; };
+  const dateStr = val('rep-date');
+  return {
+    dateStr: dateStr,
+    date: parseDate(dateStr),
+    safety: val('rep-safety'),
+    kyDanger: val('rep-ky-danger'),
+    kyAction: val('rep-ky-action')
+  };
+}
+
+// 指定会社（インデックス i）の入力値＋全社共通項目をまとめて収集
+// → buildReportSheetHTML / reportBuildAoA に渡せる形（company, date, safety, kyDanger, kyAction,
+//    leader, tanto, ope, asst, guide, machines(グループ別台数), notes, members[]）
+function repGatherCompany(i){
+  const comp = REPORT_COMPANIES[i] || {name:''};
   const val = function(id){ const e=document.getElementById(id); return e ? e.value : ''; };
   const machines = {};
   REPORT_MGROUPS.forEach(function(g){
     machines[g.key] = {};
     g.items.forEach(function(it){
-      machines[g.key][it.key] = num(val(repMachineInputId(g.key, it.key)));
+      machines[g.key][it.key] = num(val(repMachId(i, g.key, it.key)));
     });
   });
-  const dateStr = val('rep-date');
-  const d = parseDate(dateStr);
+  const common = repGatherCommon();
   return {
-    company: val('rep-company'),
-    dateStr: dateStr,
-    date: d,
-    leader: val('rep-leader'),
-    tanto: val('rep-tanto'),
-    ope: num(val('rep-ope')),
-    asst: num(val('rep-asst')),
-    guide: num(val('rep-guide')),
+    company: comp.name,
+    dateStr: common.dateStr,
+    date: common.date,
+    leader: val(repFldId(i,'leader')),
+    tanto: val(repFldId(i,'tanto')),
+    ope: num(val(repFldId(i,'ope'))),
+    asst: num(val(repFldId(i,'asst'))),
+    guide: num(val(repFldId(i,'guide'))),
     machines: machines,
-    members: val('rep-members').split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean),
-    notes: val('rep-notes'),
-    safety: val('rep-safety'),
-    kyDanger: val('rep-ky-danger'),
-    kyAction: val('rep-ky-action')
+    members: [], // 参加者氏名は帳票の空マスに印刷後手書き
+    notes: val(repFldId(i,'notes')),
+    safety: common.safety,
+    kyDanger: common.kyDanger,
+    kyAction: common.kyAction
   };
 }
 
@@ -2688,11 +2777,10 @@ function repNamesGrid(members){
   return h;
 }
 
-// 帳票プレビューを再描画（公式様式：A4横・枠組み1枚もの）
-function renderReportPreview(){
-  const el = document.getElementById('rep-preview');
-  if(!el) return;
-  const g = reportGather();
+// 1社ぶんの帳票HTML（公式様式：A4横・枠組み1枚もの）を生成して返す。
+// data = {company, date, safety, kyDanger, kyAction, leader, tanto, ope, asst, guide, machines, notes, members[]}
+// プレビュー・印刷（チェック各社）・共通で使い回す。
+function buildReportSheetHTML(g){
   const dlabel = reportDateLabelSheet(g.date);
 
   // 危険予知活動記録（参考リスト・固定10項目）
@@ -2703,7 +2791,7 @@ function renderReportPreview(){
   const refTable =
     '<table class="rep-ref"><tr><th>◎どんな危険がありますか</th><th>◎私たちはこうする</th></tr>'+refRows+'</table>';
 
-  const h =
+  return (
   '<div class="report-sheet">'+
     // 署名欄（右上）
     '<div class="rep-signwrap"><table class="rep-sign">'+
@@ -2752,8 +2840,15 @@ function renderReportPreview(){
       '<tr><th class="rep-lbl">特　記　事　項</th>'+
           '<td class="rep-notes-cell" colspan="3">'+esc(g.notes).replace(/\n/g,'<br>')+'</td></tr>'+
     '</table>'+
-  '</div>';
-  el.innerHTML = h;
+  '</div>'
+  );
+}
+
+// 帳票プレビューを再描画（現在アクティブな会社＋全社共通項目）
+function renderReportPreview(){
+  const el = document.getElementById('rep-preview');
+  if(!el) return;
+  el.innerHTML = buildReportSheetHTML(repGatherCompany(REP_ACTIVE));
 }
 
 // Excel出力用：1社ぶんの2次元配列＋結合セルを生成
@@ -2812,57 +2907,36 @@ function reportSheetName(name){
   return (name || 'シート').replace(/[\\\/\?\*\[\]:]/g, '').slice(0,31) || 'シート';
 }
 
-// Excel出力（選択中の会社）
+// Excel出力（チェックした会社ぶんを各シートに入れた1ファイル）
 function exportReportExcel(){
   if(typeof XLSX === 'undefined'){ toast('Excel出力ライブラリを読み込めませんでした（オンライン環境でお試しください）'); return; }
-  const g = reportGather();
-  if(!g.company){ toast('会社を選択してください'); return; }
-  const built = reportBuildAoA(g);
-  const ws = XLSX.utils.aoa_to_sheet(built.aoa);
-  ws['!merges'] = built.merges;
-  ws['!cols'] = [{wch:22},{wch:26},{wch:22},{wch:22}];
+  const idx = repCheckedIndices();
+  if(!idx.length){ toast('Excel出力する会社を選んでください'); return; }
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, reportSheetName(g.company));
-  XLSX.writeFile(wb, '安全ミーティング日報_'+g.company+'_'+reportDateStamp(g)+'.xlsx');
-  toast('Excelを出力しました');
-}
-
-// 全社Excel出力（8社を各シートに。入力中の変動値は選択会社ぶんのみ反映、他社は機械台数プリセットのみ）
-function exportReportExcelAll(){
-  if(typeof XLSX === 'undefined'){ toast('Excel出力ライブラリを読み込めませんでした（オンライン環境でお試しください）'); return; }
-  const cur = reportGather();
-  const wb = XLSX.utils.book_new();
-  REPORT_COMPANIES.forEach(function(comp){
-    let g;
-    if(comp.name === cur.company){
-      g = cur;
-    }else{
-      // 他社：共通の変動値を引き継ぎ、機械台数はその社のプリセット
-      const machines = {};
-      REPORT_MGROUPS.forEach(function(grp){
-        machines[grp.key] = {};
-        grp.items.forEach(function(it){ machines[grp.key][it.key] = comp.preset[grp.key+'.'+it.key] || 0; });
-      });
-      g = Object.assign({}, cur, {company: comp.name, machines: machines});
-    }
+  idx.forEach(function(i){
+    const g = repGatherCompany(i);
     const built = reportBuildAoA(g);
     const ws = XLSX.utils.aoa_to_sheet(built.aoa);
     ws['!merges'] = built.merges;
     ws['!cols'] = [{wch:22},{wch:26},{wch:22},{wch:22}];
-    XLSX.utils.book_append_sheet(wb, ws, reportSheetName(comp.name));
+    XLSX.utils.book_append_sheet(wb, ws, reportSheetName(g.company));
   });
-  XLSX.writeFile(wb, '安全ミーティング日報_全社_'+reportDateStamp(cur)+'.xlsx');
-  toast('全社Excelを出力しました');
+  const stampG = repGatherCompany(idx[0]);
+  const fname = (idx.length === 1)
+    ? '安全ミーティング日報_'+stampG.company+'_'+reportDateStamp(stampG)+'.xlsx'
+    : '安全ミーティング日報_選択'+idx.length+'社_'+reportDateStamp(stampG)+'.xlsx';
+  XLSX.writeFile(wb, fname);
+  toast('Excelを出力しました（'+idx.length+'社）');
 }
 
-// 初期化（会社セレクト・機械グリッド・既定値・プレビュー）
+// 初期化（チェック行・共通ピッカー・会社サブタブ・各社パネル・既定値・プレビュー）
 function initReportTab(){
-  const sel = document.getElementById('rep-company');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">（会社を選択）</option>' +
-    REPORT_COMPANIES.map(function(c){ return '<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>'; }).join('');
-  buildReportMachineGrid();
+  if(!document.getElementById('rep-panels')) return;
+  buildRepPrintPicks();
+  buildRepSubtabs();
+  buildRepPanels();
   buildReportPickers();
+  repApplyPresets();
   const safety = document.getElementById('rep-safety');
   if(safety && !safety.value) safety.value = REPORT_SAFETY_DEFAULT;
   const kd = document.getElementById('rep-ky-danger');
@@ -2872,7 +2946,7 @@ function initReportTab(){
   // 既定の業務指示日＝今日
   const dt = document.getElementById('rep-date');
   if(dt && !dt.value){ const t=new Date(); dt.value = t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2); }
-  renderReportPreview();
+  repShowCompany(0);
 }
 initReportTab();
 
@@ -2897,7 +2971,15 @@ function printShift(){
   window.print();
 }
 function printReport(){
-  renderReportPreview();
+  const idx = repCheckedIndices();
+  if(!idx.length){ toast('印刷する会社を選んでください'); return; }
+  // チェック各社の帳票を生成し #rep-print に連結（会社の変わり目で改ページ）。
+  const cont = document.getElementById('rep-print');
+  if(cont){
+    cont.innerHTML = idx.map(function(i){
+      return '<div class="rep-sheet">'+buildReportSheetHTML(repGatherCompany(i))+'</div>';
+    }).join('');
+  }
   document.body.classList.remove('print-map');
   document.body.classList.remove('print-shift');
   document.body.classList.add('print-report');
