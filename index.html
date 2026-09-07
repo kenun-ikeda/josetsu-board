@@ -299,8 +299,8 @@
   table.rep-inner th{background:#eef2f7;font-weight:700;white-space:nowrap}
   table.rep-inner td.num{font-family:"JetBrains Mono",monospace}
   table.rep-mac td.mgrp{background:#d9d9d9;font-weight:700;text-align:center;white-space:nowrap}
-  table.rep-mac td.ml{text-align:center;white-space:nowrap;font-size:11px}
-  table.rep-mac td.mv{height:22px;font-family:"JetBrains Mono",monospace}
+  table.rep-mac td.ml{text-align:left;white-space:nowrap;font-size:11px}
+  table.rep-mac td.mv{height:20px;text-align:center;font-family:"JetBrains Mono",monospace}
   /* 危険予知：自社記入＋参考リスト */
   .rep-ky-hd{font-weight:700;margin-bottom:2px}
   .rep-ky-danger,.rep-ky-action{min-height:38px}
@@ -339,7 +339,7 @@
   @media print{
     @page{ size:A4 portrait; margin:8mm; }
     @page shiftLandscape{ size:A4 landscape; margin:8mm; }
-    @page reportLandscape{ size:A4 landscape; margin:7mm; }
+    /* 安全日報は縦(A4 portrait)＝既定 @page を使用（名前付きの横ページ reportLandscape は廃止）。 */
     body{ background:#fff; }
     header, nav, .offline-badge, .no-print{ display:none !important; }
     main{ max-width:none; margin:0; padding:0; }
@@ -402,31 +402,45 @@
     body.print-map .map-stage-head.second{ margin-top:10px !important; }
     body.print-map .map-img{ display:block; max-width:100%; }
 
-    /* ===== 安全日報 印刷モード（body.print-report） A4横 ===== */
+    /* ===== 安全日報 印刷モード（body.print-report） A4縦・1社1ページ ===== */
     body.print-report .tab{ display:none !important; }
-    /* 帳票を横向き（reportLandscape）。print-shift/print-map と混線しない名前付きページ。 */
-    body.print-report #tab-report{ display:block !important; page:reportLandscape; }
+    /* 帳票は既定の縦(A4 portrait)。名前付きの横ページは割り当てない（shift=横 / map=縦 と排他）。 */
+    body.print-report #tab-report{ display:block !important; }
     /* 入力フォーム（会社チェック・共通カード・会社タブ・各社パネル等）とプレビューは印刷しない。 */
     body.print-report #rep-form-card{ display:none !important; }
     body.print-report #rep-preview-card{ display:none !important; }
-    /* 印刷はチェック各社ぶんの帳票を連結した #rep-print のみ。会社の変わり目で改ページ（最後は不要）。 */
+    /* 印刷はチェック各社ぶんの帳票を連結した #rep-print のみ。1社＝1ページ、変わり目で改ページ（最後は不要＝末尾の余白ページを出さない）。 */
     body.print-report #rep-print{ display:block !important; }
-    body.print-report .rep-sheet{ page-break-after:always; }
-    body.print-report .rep-sheet:last-child{ page-break-after:auto; }
+    body.print-report .rep-sheet{ page-break-after:always; break-after:page; page-break-inside:avoid; overflow:hidden; }
+    body.print-report .rep-sheet:last-child{ page-break-after:auto; break-after:auto; }
     /* 枠線・網掛け（グレー等）を紙でも維持 */
     body.print-report .report-sheet, body.print-report .report-sheet *{
       -webkit-print-color-adjust:exact; print-color-adjust:exact;
     }
-    /* 1枚に収まるよう横幅いっぱい＋やや縮小 */
-    body.print-report .report-sheet{ max-width:none; width:100%; font-size:10px; line-height:1.2; }
+    /* ---- A4縦1枚に収めるための圧縮（フォント／行高／余白／最小高さ／機械2列化） ---- */
+    body.print-report .report-sheet{ max-width:none; width:100%; font-size:9px; line-height:1.15; }
+    body.print-report .rep-signwrap{ margin-bottom:0; }
+    body.print-report table.rep-sign td{ padding:1px 5px; font-size:9px; }
+    body.print-report table.rep-sign td.sh{ font-size:8.5px; }
+    body.print-report table.rep-sign td.sbox{ height:28px; }
     body.print-report table.rep-main>tbody>tr>th,
-    body.print-report table.rep-main>tbody>tr>td{ font-size:10px; padding:2px 4px; }
-    body.print-report table.rep-inner th, body.print-report table.rep-inner td{ font-size:9px; padding:2px 3px; }
-    body.print-report table.rep-ref th, body.print-report table.rep-ref td{ font-size:9px; padding:1px 3px; }
-    body.print-report .rep-title-cell{ font-size:22px; padding:5px 4px !important; }
-    body.print-report .rep-secbig{ font-size:14px; }
-    body.print-report .rep-names-lbl{ font-size:16px; }
-    body.print-report .rep-mid-free{ min-height:150px; }
+    body.print-report table.rep-main>tbody>tr>td{ font-size:9px; padding:1px 4px; }
+    body.print-report .rep-title-cell{ font-size:17px; padding:3px 4px !important; letter-spacing:2px; }
+    body.print-report .rep-day{ font-size:9px; }
+    body.print-report .rep-secbig{ font-size:11px; letter-spacing:4px; }
+    body.print-report .rep-mid-order{ padding:3px 4px; }
+    body.print-report .rep-mid-free{ min-height:80px; }
+    body.print-report table.rep-inner th, body.print-report table.rep-inner td{ font-size:8px; padding:1px 2px; }
+    body.print-report table.rep-mac td.mgrp{ font-size:8.5px; }
+    body.print-report table.rep-mac td.ml{ font-size:8px; }
+    body.print-report table.rep-mac td.mv{ height:13px; }
+    body.print-report table.rep-ref th, body.print-report table.rep-ref td{ font-size:7.5px; padding:0 2px; line-height:1.12; }
+    body.print-report .rep-ky-hd{ margin-bottom:1px; font-size:9px; }
+    body.print-report .rep-ky-danger, body.print-report .rep-ky-action{ min-height:22px; }
+    body.print-report .rep-free{ min-height:20px; }
+    body.print-report .rep-names-lbl{ font-size:13px; letter-spacing:3px; }
+    body.print-report table.rep-names td{ height:19px; font-size:9px; }
+    body.print-report .rep-notes-cell{ min-height:24px; }
     /* 行の途中改ページを避ける */
     body.print-report table.rep-main{ page-break-inside:auto; }
     body.print-report table.rep-main>tbody>tr{ page-break-inside:avoid; }
@@ -633,9 +647,10 @@
           <h2 style="margin:0">安全日報（作業指示・安全ミーティング日報）</h2>
           <div class="spacer"></div>
           <button class="btn sec sm no-print" onclick="printReport()">🖨 印刷（選択した会社）</button>
+          <button class="btn sec sm no-print" onclick="exportReportPdf()">⬇ PDF出力（選択した会社）</button>
           <button class="btn sm no-print" onclick="exportReportExcel()">⬇ Excel出力（選択した会社）</button>
         </div>
-        <p class="hint">共通項目（業務指示日・安全指示・危険予知）は全社共通で出力されます。各社タブでリーダー・人数・機械台数・特記事項を入力。印刷する会社にチェックを入れて🖨印刷すると、チェックした各社を1社1ページで出力します。参加者氏名は印刷後に手書き。データは保存されません（台数の保存ボタンを除く）。</p>
+        <p class="hint">共通項目（業務指示日・安全指示・危険予知）は全社共通で出力されます。各社タブでリーダー・人数・機械台数・特記事項を入力。印刷する会社にチェックを入れて🖨印刷すると、チェックした各社を1社1ページ（A4縦）で出力します。きれいに1枚で印刷したいときは「PDF出力」からPDFにして印刷すると、どのプリンタでも同じ向き・サイズで出せます。参加者氏名は印刷後に手書き。データは保存されません（台数の保存ボタンを除く）。</p>
 
         <!-- 印刷する会社（チェックボックス。既定は全ON） -->
         <div class="rep-printpicks-wrap no-print">
@@ -882,6 +897,9 @@
 
 <!-- SheetJS（Excel出力用。CDNから読めない環境では Excel出力をガード） -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- PDF出力用（jsPDF + html2canvas）。向き/サイズ固定のPDFを生成。CDNから読めない環境では PDF出力をガード。 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 /*════════════════ 設定定数（ここだけ書き換えれば動きます） ════════════════*/
@@ -2741,17 +2759,21 @@ function repWorkerTable(g){
   '</table>';
 }
 
-// 中段：使用機械名・台数（3グループ／各項目名の下に台数。2列並び）
+// 中段：使用機械名・台数（3グループ／「項目名｜台数」を横並びにし、2組を1行に＝コンパクト2列）
 function repMachineTable(g){
-  let h = '<table class="rep-inner rep-mac"><tr><th colspan="2">使用機械名・台数</th></tr>';
+  let h = '<table class="rep-inner rep-mac">'+
+    '<colgroup><col style="width:34%"><col style="width:16%"><col style="width:34%"><col style="width:16%"></colgroup>'+
+    '<tr><th colspan="4">使用機械名・台数</th></tr>';
   REPORT_MGROUPS.forEach(function(grp){
-    h += '<tr><td class="mgrp" colspan="2">'+esc(grp.label)+'</td></tr>';
+    h += '<tr><td class="mgrp" colspan="4">'+esc(grp.label)+'</td></tr>';
     for(let i=0; i<grp.items.length; i+=2){
       const a = grp.items[i], b = grp.items[i+1];
-      h += '<tr><td class="ml">'+esc(a.label)+'</td><td class="ml">'+(b?esc(b.label):'')+'</td></tr>';
       const av = g.machines[grp.key][a.key] || 0;
       const bv = b ? (g.machines[grp.key][b.key] || 0) : '';
-      h += '<tr><td class="mv">'+av+'</td><td class="mv">'+bv+'</td></tr>';
+      h += '<tr>'+
+        '<td class="ml">'+esc(a.label)+'</td><td class="mv num">'+av+'</td>'+
+        '<td class="ml">'+(b?esc(b.label):'')+'</td><td class="mv num">'+(b?bv:'')+'</td>'+
+      '</tr>';
     }
   });
   h += '</table>';
@@ -2927,6 +2949,54 @@ function exportReportExcel(){
     : '安全ミーティング日報_選択'+idx.length+'社_'+reportDateStamp(stampG)+'.xlsx';
   XLSX.writeFile(wb, fname);
   toast('Excelを出力しました（'+idx.length+'社）');
+}
+
+// PDF出力（チェックした会社ぶんを A4縦・1社1ページで生成）。
+// ブラウザ/プリンタの印刷ダイアログ（向き・サイズ・カラー）依存を避け、確実に同じ結果で出す。
+// buildReportSheetHTML の帳票を画面外コンテナに描画→html2canvasで画像化→A4縦に等比縮小して1ページに収める。
+// READONLY（閲覧モード）でも出力可。
+async function exportReportPdf(){
+  const idx = repCheckedIndices();
+  if(!idx.length){ toast('会社を選んでください'); return; }
+  if(typeof window.jspdf === 'undefined' || typeof html2canvas === 'undefined'){
+    toast('PDF出力ライブラリを読み込めませんでした（オンライン環境でお試しください）'); return;
+  }
+  const btns = Array.prototype.slice.call(document.querySelectorAll('button[onclick^="exportReportPdf"]'));
+  btns.forEach(function(b){ b.disabled = true; });
+  try{
+    const jsPDF = window.jspdf.jsPDF;
+    const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+    const PW = 210, PH = 297, M = 7;          // A4縦・余白7mm
+    const availW = PW - 2*M, availH = PH - 2*M;
+    for(let k=0; k<idx.length; k++){
+      const g = repGatherCompany(idx[k]);
+      // 画面外の一時コンテナ（A4縦の見かけ幅≒794px、背景白）に帳票を描画
+      const holder = document.createElement('div');
+      holder.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;background:#ffffff;padding:10px;box-sizing:border-box;';
+      holder.innerHTML = buildReportSheetHTML(g);
+      document.body.appendChild(holder);
+      let canvas;
+      try{
+        canvas = await html2canvas(holder, {scale:2, backgroundColor:'#ffffff', useCORS:true});
+      } finally {
+        if(holder.parentNode) holder.parentNode.removeChild(holder);
+      }
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      // 幅に合わせて等比縮小。高さがページ内(283mm)を超えるなら高さに合わせて縮小＝必ず1ページに収める。
+      let w = availW, h = availW * canvas.height / canvas.width;
+      if(h > availH){ h = availH; w = availH * canvas.width / canvas.height; }
+      const x = M + (availW - w)/2, y = M;
+      if(k > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', x, y, w, h);
+    }
+    const stampG = repGatherCompany(idx[0]);
+    pdf.save('安全ミーティング日報_'+reportDateStamp(stampG)+'.pdf');
+    toast('PDFを出力しました（'+idx.length+'社）');
+  } catch(e){
+    toast('PDF出力に失敗しました：'+(e && e.message ? e.message : e));
+  } finally {
+    btns.forEach(function(b){ b.disabled = false; });
+  }
 }
 
 // 初期化（チェック行・共通ピッカー・会社サブタブ・各社パネル・既定値・プレビュー）
