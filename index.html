@@ -158,6 +158,10 @@
   .net-steps{margin:0;padding-left:22px;font-size:14px;line-height:2}
   .net-steps li{margin-bottom:6px}
   .net-code{display:inline-block;background:#eef2f7;border:1px solid var(--line);border-radius:5px;padding:1px 8px;font-weight:700;color:var(--accent)}
+  .settings-text{white-space:pre-wrap;font-size:15px;line-height:1.9;color:var(--text,#1a1a1a);word-break:break-word}
+  .settings-text a[href^="tel:"]{color:#0f5c33;font-weight:800;text-decoration:underline;letter-spacing:.3px}
+  .settings-text a[href^="tel:"]:hover{color:#0a3d22}
+  .settings-ta{width:100%;min-height:180px;font-size:15px;line-height:1.8;font-family:inherit;box-sizing:border-box}
 
   /* ---------- progress bars (home) ---------- */
   .prog-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
@@ -499,7 +503,6 @@
       <button data-tab="map">排雪マップ</button>
       <button data-tab="shift">勤務予定表</button>
       <button data-tab="report">安全日報</button>
-      <button data-tab="res">手順・資料</button>
       <button data-tab="contact">連絡先・設定</button>
       <button data-tab="lunch">お昼</button>
     </nav>
@@ -526,10 +529,6 @@
       <div class="card">
         <h2>予定カレンダー</h2>
         <div id="home-calendar"></div>
-      </div>
-      <div class="card">
-        <h2>手順・資料</h2>
-        <div class="link-grid" id="home-links"></div>
       </div>
     </section>
 
@@ -708,64 +707,42 @@
       <div id="rep-print"></div>
     </section>
 
-    <!-- RESOURCES（手順・資料） -->
-    <section class="tab" id="tab-res">
-      <div class="card">
-        <h2>手順・資料</h2>
-        <p class="hint">道路維持除雪業務の資料・フォルダを新規タブで開きます。</p>
-        <div class="link-grid" id="res-links"></div>
-      </div>
-    </section>
-
     <!-- CONTACT（連絡先・ネット設定） -->
     <section class="tab" id="tab-contact">
+      <!-- 連絡先一覧 -->
       <div class="card">
-        <h2>何かあった時の連絡先一覧</h2>
+        <div class="row" style="align-items:center;margin-bottom:6px">
+          <h2 style="margin:0">何かあった時の連絡先一覧</h2>
+          <div class="spacer"></div>
+          <button class="btn sec sm edit-only" id="contact-edit-btn" onclick="editContact('contact')">✏ 編集</button>
+        </div>
         <p class="hint">トラブル時の連絡先です。緊急度に応じてご連絡ください。</p>
-        <div class="contact-grid">
-          <div class="contact-card">
-            <div class="cc-cat">💧 水道凍結</div>
-            <div class="cc-name">畑中さん</div>
-            <div class="cc-lines"><a href="tel:09020762081" class="cc-tel mono">090-2076-2081</a></div>
-          </div>
-          <div class="contact-card">
-            <div class="cc-cat">⚡ 配線・電気関係</div>
-            <div class="cc-name">北立技建　野替様</div>
-            <div class="cc-lines"><a href="tel:09059582743" class="cc-tel mono">090-5958-2743</a></div>
-          </div>
-          <div class="contact-card">
-            <div class="cc-cat">🏠 屋根雨漏り</div>
-            <div class="cc-name">セフテック　大橋様</div>
-            <div class="cc-lines">
-              <a href="tel:08011929645" class="cc-tel mono">080-1192-9645</a>
-              <span class="cc-tel-sub">会社 <a href="tel:0118728810" class="mono">011-872-8810</a></span>
-            </div>
-          </div>
-          <div class="contact-card">
-            <div class="cc-cat">📻 無線機に関して</div>
-            <div class="cc-name">サツム通信　砂田様</div>
-            <div class="cc-lines"><a href="tel:0112992201" class="cc-tel mono">011-299-2201</a></div>
-          </div>
-          <div class="contact-card">
-            <div class="cc-cat">☎ 電話機に関して</div>
-            <div class="cc-name">キョーリツ事務機　後藤様</div>
-            <div class="cc-lines">
-              <a href="tel:09068747483" class="cc-tel mono">090-6874-7483</a>
-              <span class="cc-tel-sub">会社 <a href="tel:0118719020" class="mono">011-871-9020</a></span>
-            </div>
+        <div id="contact-view" class="settings-text"></div>
+        <div id="contact-edit" style="display:none">
+          <textarea id="contact-ta" class="settings-ta"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button class="btn" onclick="saveContact('contact')">💾 保存</button>
+            <button class="btn sec" onclick="cancelContact('contact')">キャンセル</button>
           </div>
         </div>
       </div>
 
+      <!-- ネット設定手順 -->
       <div class="card">
-        <h2>ネット設定手順</h2>
+        <div class="row" style="align-items:center;margin-bottom:6px">
+          <h2 style="margin:0">ネット設定手順</h2>
+          <div class="spacer"></div>
+          <button class="btn sec sm edit-only" id="netset-edit-btn" onclick="editContact('netset')">✏ 編集</button>
+        </div>
         <p class="hint">インターネット接続が切れた・繋がらないときの再設定手順です。</p>
-        <ol class="net-steps">
-          <li>インターネットを開く（ブラウザはなんでも良し）</li>
-          <li>アドレスバーに「<span class="net-code mono">192.168.11.1</span>」を入力</li>
-          <li>出てきた画面に　ユーザ名「<span class="net-code mono">admin</span>」／パスワード「<span class="net-code mono">tx3d5mg4</span>」を入力 → 画面が出てくる</li>
-          <li>画面の赤枠をクリックしてしばらく待つ（接続設定された後、終了）</li>
-        </ol>
+        <div id="netset-view" class="settings-text"></div>
+        <div id="netset-edit" style="display:none">
+          <textarea id="netset-ta" class="settings-ta"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button class="btn" onclick="saveContact('netset')">💾 保存</button>
+            <button class="btn sec" onclick="cancelContact('netset')">キャンセル</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -948,6 +925,19 @@ let CONFIG   = {lead:30, jv:'', district:'', year:'', defaultEmail:'', signature
 let MACHINES = [];
 let SUBMISSIONS = [];              // [{row, year, company, doc, status, date, link, note}]
 let REPMACH_SAVED = {};            // 安全日報：会社別 機械台数の保存値 { 会社名: {'group.item':台数} }（提出物の仕組みを流用して保存）
+let SETTINGS_SAVED = null;         // 連絡先・ネット設定の保存値 {contact, netset}（未保存時は null → 既定値）。提出物保存(saveSub)を流用して全員共有
+// 連絡先・ネット設定の既定テキスト（未保存時に表示）
+const DEFAULT_CONTACT_TEXT =
+  '💧 水道凍結：畑中さん　090-2076-2081\n'
++ '⚡ 配線・電気関係：北立技建 野替様　090-5958-2743\n'
++ '🏠 屋根雨漏り：セフテック 大橋様　080-1192-9645（会社 011-872-8810）\n'
++ '📻 無線機に関して：サツム通信 砂田様　011-299-2201\n'
++ '☎ 電話機に関して：キョーリツ事務機 後藤様　090-6874-7483（会社 011-871-9020）';
+const DEFAULT_NETSET_TEXT =
+  '1. インターネットを開く（ブラウザはなんでも良し）\n'
++ '2. アドレスバーに「192.168.11.1」を入力\n'
++ '3. 出てきた画面に ユーザ名「admin」／パスワード「tx3d5mg4」を入力 → 画面が出てくる\n'
++ '4. 画面の赤枠をクリックしてしばらく待つ（接続設定された後、終了）';
 let DOCS = DEFAULT_DOCS.slice();   // 必要書類マスタ
 let SUB_STATUS = DEFAULT_SUB_STATUS.slice();
 let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社（機械なし）
@@ -1244,8 +1234,23 @@ async function loadData(){
           try{ const o = JSON.parse(s.note||'{}'); if(o && typeof o==='object') REPMACH_SAVED[s.company] = o; }catch(e){}
         }
       });
-      // 提出物タブには __REPMACH__ を出さない
-      SUBMISSIONS = rawSubs.filter(function(s){ return (s.year||'') !== '__REPMACH__'; });
+      // 連絡先・ネット設定レコード（年度='__SETTINGS__'）を分離
+      SETTINGS_SAVED = null;
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__SETTINGS__'){
+          try{
+            const o = JSON.parse(s.note||'{}');
+            if(o && typeof o==='object'){
+              SETTINGS_SAVED = {
+                contact: (typeof o.contact==='string') ? o.contact : DEFAULT_CONTACT_TEXT,
+                netset:  (typeof o.netset ==='string') ? o.netset  : DEFAULT_NETSET_TEXT
+              };
+            }
+          }catch(e){}
+        }
+      });
+      // 提出物タブには __REPMACH__ / __SETTINGS__ を出さない
+      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__'; });
     }
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
@@ -1309,7 +1314,7 @@ function renderAll(){
   renderNotices();
   renderHome();
   renderCalendar();
-  renderResources();
+  renderContact();
   renderList();
   renderAlert();
   renderSubs();
@@ -1358,10 +1363,68 @@ function renderHome(){
     if(today) today.innerHTML = eventRowsHtml(ev.today);
     if(week)  week.innerHTML  = eventRowsHtml(ev.week);
   }
-  document.getElementById('home-links').innerHTML = RESOURCES.map(linkCardHtml).join('');
 }
-function renderResources(){
-  document.getElementById('res-links').innerHTML = RESOURCES.map(linkCardHtml).join('');
+
+/* 連絡先・ネット設定：編集モードのみ編集可・保存は全員共有（提出物保存 saveSub を流用） */
+// 現在の設定値を返す（未保存時は既定テキスト）
+function settingsContactText(){ return (SETTINGS_SAVED && typeof SETTINGS_SAVED.contact==='string') ? SETTINGS_SAVED.contact : DEFAULT_CONTACT_TEXT; }
+function settingsNetsetText(){  return (SETTINGS_SAVED && typeof SETTINGS_SAVED.netset ==='string') ? SETTINGS_SAVED.netset  : DEFAULT_NETSET_TEXT; }
+// esc 済みテキスト中の電話番号を tel: リンク化（数字とハイフンのみ対象＝XSS安全）
+function telLinkify(escapedText){
+  return escapedText.replace(/(0\d{1,3}-\d{1,4}-\d{3,4}|0\d{9,10})/g, function(m){
+    const digits = m.replace(/[^0-9]/g, '');
+    return '<a href="tel:'+digits+'">'+m+'</a>';
+  });
+}
+// 表示用HTML（改行維持は CSS pre-wrap、電話番号はタップ発信リンク）
+function settingsDisplayHtml(text){ return telLinkify(esc(text)); }
+function renderContact(){
+  const cv = document.getElementById('contact-view');
+  const nv = document.getElementById('netset-view');
+  if(cv) cv.innerHTML = settingsDisplayHtml(settingsContactText());
+  if(nv) nv.innerHTML = settingsDisplayHtml(settingsNetsetText());
+  // 念のため編集欄は閉じた状態に
+  ['contact','netset'].forEach(function(key){
+    const ed = document.getElementById(key+'-edit');
+    const vw = document.getElementById(key+'-view');
+    if(ed) ed.style.display = 'none';
+    if(vw) vw.style.display = '';
+  });
+}
+// 編集開始（表示→textarea）
+function editContact(key){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const ta = document.getElementById(key+'-ta');
+  const ed = document.getElementById(key+'-edit');
+  const vw = document.getElementById(key+'-view');
+  if(ta) ta.value = (key==='contact') ? settingsContactText() : settingsNetsetText();
+  if(vw) vw.style.display = 'none';
+  if(ed) ed.style.display = '';
+}
+// 編集キャンセル
+function cancelContact(key){
+  const ed = document.getElementById(key+'-edit');
+  const vw = document.getElementById(key+'-view');
+  if(ed) ed.style.display = 'none';
+  if(vw) vw.style.display = '';
+}
+// 保存（連絡先・ネット設定の両方を1レコード __SETTINGS__ にまとめて保存）
+async function saveContact(key){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const ta = document.getElementById(key+'-ta');
+  const newText = ta ? ta.value : '';
+  // 変更していない側は現在値を維持
+  const contact = (key==='contact') ? newText : settingsContactText();
+  const netset  = (key==='netset')  ? newText : settingsNetsetText();
+  const res = await callApi({action:'saveSub', sub:{year:'__SETTINGS__', company:'連絡先設定', doc:'本文', status:'', date:'', link:'', note: JSON.stringify({contact:contact, netset:netset})}});
+  if(res && res.ok){
+    SETTINGS_SAVED = {contact:contact, netset:netset};
+    cancelContact(key);
+    renderContact();
+    toast(offline ? '保存しました（オフライン：この端末のみ・共有されていません）' : '保存しました（全員共有）');
+  }else{
+    toast('保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
 }
 
 /* ホーム：Googleカレンダー埋め込み */
