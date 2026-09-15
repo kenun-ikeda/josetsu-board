@@ -256,6 +256,14 @@
   .shift-month-title{font-size:14px;color:var(--accent);margin:0 0 8px;font-weight:800}
   .shift-print-title{display:none}
 
+  /* ---------- site links ---------- */
+  .site-links{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px}
+  .site-link{display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;
+    padding:18px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--accent);
+    font-weight:800;font-size:14px;line-height:1.4;min-height:64px;box-shadow:0 1px 2px rgba(0,0,0,.05);
+    transition:background .12s,box-shadow .12s,transform .12s}
+  .site-link:hover{background:var(--accent);color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15);transform:translateY(-1px)}
+
   /* ---------- submissions ---------- */
   .sub-status{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700}
   .sub-status.done{background:#e7f5ec;color:var(--ok)}
@@ -505,6 +513,7 @@
       <button data-tab="report">安全日報</button>
       <button data-tab="contact">連絡先・設定</button>
       <button data-tab="lunch">お昼</button>
+      <button data-tab="sites">各サイト</button>
     </nav>
 
     <!-- HOME -->
@@ -646,6 +655,26 @@
           <span class="pal-caption">入力する状態：</span>
           <div id="shift-palette" class="shift-palette"></div>
         </div>
+        <div class="shift-copy-wrap edit-only no-print" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)">
+          <span class="pal-caption">月コピー：</span>
+          <select id="shift-copy-src" style="border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:13px;font-family:inherit;background:#fff;font-weight:700;color:var(--accent)">
+            <option value="11">11月</option>
+            <option value="12">12月</option>
+            <option value="1">1月</option>
+            <option value="2">2月</option>
+            <option value="3">3月</option>
+          </select>
+          <span style="font-size:12px;color:var(--muted);font-weight:700">→ コピー先</span>
+          <span id="shift-copy-dst" style="display:inline-flex;gap:10px;flex-wrap:wrap">
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:13px"><input type="checkbox" value="11">11月</label>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:13px"><input type="checkbox" value="12">12月</label>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:13px"><input type="checkbox" value="1">1月</label>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:13px"><input type="checkbox" value="2">2月</label>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:13px"><input type="checkbox" value="3">3月</label>
+          </span>
+          <button type="button" class="btn sm" onclick="copyShiftMonth()">コピー実行</button>
+        </div>
+        <p class="hint edit-only no-print" style="margin-top:6px">「月コピー」＝コピー元の月の職員名と入力内容を、選んだコピー先の月へまとめて複製します（コピー先の既存入力は上書き）。複製後は内容を確認して「💾 保存」してください。</p>
         <div id="shift-grid"></div>
       </div>
     </section>
@@ -757,6 +786,23 @@
         <p class="hint">下にメニューを埋め込み表示しています。サイト側の埋め込み制限などで表示されない場合は、下部の「メニューが表示されない場合はこちら」から別タブで開いてください。</p>
         <iframe src="https://www.hottomotto.com/menu_list/index/1" title="ほっともっと メニュー" loading="lazy" style="width:100%;height:75vh;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:8px"></iframe>
         <p class="hint" style="margin-top:8px">メニューが表示されない場合はこちら：<a href="https://www.hottomotto.com/menu_list/index/1" target="_blank" rel="noopener">https://www.hottomotto.com/menu_list/index/1</a></p>
+      </div>
+    </section>
+
+    <!-- SITES（各サイト：よく使う外部サイトへのリンク集） -->
+    <section class="tab" id="tab-sites">
+      <div class="card">
+        <h2>各サイト</h2>
+        <p class="hint">よく使う外部サイトへのリンク集です。各ボタンを押すと別タブで開きます。</p>
+        <div class="site-links">
+          <a class="site-link" href="https://sasu.zip-site.com/manager/" target="_blank" rel="noopener">ゼンリン</a>
+          <a class="site-link" href="https://www4.city.sapporo.jp/cgi-bin/kensetsu/yuki/jyosetsu.cgi" target="_blank" rel="noopener">札幌市雪対策</a>
+          <a class="site-link" href="https://sapporo-yukivms.com/yuki/index.php" target="_blank" rel="noopener">札幌市雪対策施設車両管理システム</a>
+          <a class="site-link" href="https://www.city.sapporo.jp/atsubetsu/doboku/josetsu.html" target="_blank" rel="noopener">札幌市厚別区</a>
+          <a class="site-link" href="https://www.google.com/maps/d/u/4/viewer?ll=43.03952514930254%2C141.497839297318&z=18&mid=1H6tNQGTptwmDk_6SooaygfR0MvFUJrA" target="_blank" rel="noopener">砂箱位置・路線図</a>
+          <a class="site-link" href="https://icom.navitime.biz/login" target="_blank" rel="noopener">ICOM（無線機マップ）</a>
+          <a class="site-link" href="https://web.yuki-sapporo.jp/r7/#/Login/" target="_blank" rel="noopener">札幌市除雪作業日報作成支援システム</a>
+        </div>
       </div>
     </section>
   </main>
@@ -1995,7 +2041,7 @@ function renderShiftPalette(){
   if(!el) return;
   const items = [
     {code:'通', label:'通常出勤', sym:'○', cls:'p-tsu'},
-    {code:'時', label:'出勤時のみ', sym:'○', cls:'p-toki'},
+    {code:'時', label:'出動時出勤', sym:'○', cls:'p-toki'},
     {code:'休', label:'休', sym:'', cls:'p-kyu'},
     {code:'',  label:'消去', sym:'', cls:'p-none'}
   ];
@@ -2144,6 +2190,40 @@ function onShiftYearChange(){
 function jumpToShiftMonth(m){
   const el = document.getElementById('shift-month-'+Number(m));
   if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+// 月コピー：コピー元の月の職員名＋入力内容を、選んだコピー先の月へ複製
+function copyShiftMonth(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const srcSel = document.getElementById('shift-copy-src');
+  if(!srcSel) return;
+  const srcMonth = Number(srcSel.value);
+  const dsts = Array.prototype.map.call(
+    document.querySelectorAll('#shift-copy-dst input:checked'),
+    function(c){ return Number(c.value); }
+  ).filter(function(m){ return m!==srcMonth; });
+  if(dsts.length===0){ toast('コピー先の月を選んでください（コピー元と別の月）'); return; }
+  // コピー元の各行（職員名＋日別入力）を取得
+  const srcYm = shiftYm(SHIFT_NENDO, srcMonth);
+  const srcRows = [];
+  for(let idx=1; idx<=SHIFT_ROWS; idx++){
+    const rec = shiftRowFor(srcYm, idx);
+    srcRows.push(rec ? {name:rec.name||'', days:(rec.days||[]).slice(0,31)} : {name:'', days:[]});
+  }
+  if(!confirm(srcMonth+'月の内容を '+dsts.join('・')+'月 へコピーします。\nコピー先の既存の入力は上書きされます。よろしいですか？')) return;
+  dsts.forEach(function(dstMonth){
+    const dstYm = shiftYm(SHIFT_NENDO, dstMonth);
+    for(let idx=1; idx<=SHIFT_ROWS; idx++){
+      let rec = shiftRowFor(dstYm, idx);
+      if(!rec){ rec = {row:null, ym:dstYm, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
+      rec.name = srcRows[idx-1].name;
+      const nd = new Array(31).fill('');
+      for(let i=0;i<31;i++){ nd[i] = srcRows[idx-1].days[i] || ''; }
+      rec.days = nd;
+      markShiftDirty(dstMonth, idx);
+    }
+  });
+  renderShift();
+  toast(srcMonth+'月の内容を '+dsts.join('・')+'月 へコピーしました。内容を確認して「💾 保存」してください');
 }
 // 職員名入力：ローカル更新のみ・未保存登録（保存は「💾 保存」ボタン）
 function saveShiftName(month, idx, name){
