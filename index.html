@@ -655,7 +655,7 @@
           <div id="shift-palette" class="shift-palette"></div>
         </div>
         <div class="shift-copy-wrap edit-only no-print" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)">
-          <span class="pal-caption">月コピー：</span>
+          <span class="pal-caption">名前コピー：</span>
           <select id="shift-copy-src" style="border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:13px;font-family:inherit;background:#fff;font-weight:700;color:var(--accent)">
             <option value="11">11月</option>
             <option value="12">12月</option>
@@ -673,7 +673,7 @@
           </span>
           <button type="button" class="btn sm" onclick="copyShiftMonth()">コピー実行</button>
         </div>
-        <p class="hint edit-only no-print" style="margin-top:6px">「月コピー」＝コピー元の月の職員名と入力内容を、選んだコピー先の月へまとめて複製します（コピー先の既存入力は上書き）。複製後は内容を確認して「💾 保存」してください。</p>
+        <p class="hint edit-only no-print" style="margin-top:6px">「名前コピー」＝コピー元の月の職員名だけを、選んだコピー先の月へまとめて複製します（○などの入力内容はコピーしません。コピー先の職員名は上書き）。複製後は内容を確認して「💾 保存」してください。</p>
         <div id="shift-grid"></div>
       </div>
     </section>
@@ -2189,28 +2189,25 @@ function copyShiftMonth(){
     function(c){ return Number(c.value); }
   ).filter(function(m){ return m!==srcMonth; });
   if(dsts.length===0){ toast('コピー先の月を選んでください（コピー元と別の月）'); return; }
-  // コピー元の各行（職員名＋日別入力）を取得
+  // コピー元の各行の「職員名」だけを取得（○などの入力内容はコピーしない）
   const srcYm = shiftYm(SHIFT_NENDO, srcMonth);
-  const srcRows = [];
+  const srcNames = [];
   for(let idx=1; idx<=SHIFT_ROWS; idx++){
     const rec = shiftRowFor(srcYm, idx);
-    srcRows.push(rec ? {name:rec.name||'', days:(rec.days||[]).slice(0,31)} : {name:'', days:[]});
+    srcNames.push(rec ? (rec.name||'') : '');
   }
-  if(!confirm(srcMonth+'月の内容を '+dsts.join('・')+'月 へコピーします。\nコピー先の既存の入力は上書きされます。よろしいですか？')) return;
+  if(!confirm(srcMonth+'月の職員名を '+dsts.join('・')+'月 へコピーします。\nコピー先の職員名は上書きされます（○などの入力内容はコピーしません）。よろしいですか？')) return;
   dsts.forEach(function(dstMonth){
     const dstYm = shiftYm(SHIFT_NENDO, dstMonth);
     for(let idx=1; idx<=SHIFT_ROWS; idx++){
       let rec = shiftRowFor(dstYm, idx);
       if(!rec){ rec = {row:null, ym:dstYm, idx:idx, name:'', days:new Array(31).fill('')}; SHIFTS.push(rec); }
-      rec.name = srcRows[idx-1].name;
-      const nd = new Array(31).fill('');
-      for(let i=0;i<31;i++){ nd[i] = srcRows[idx-1].days[i] || ''; }
-      rec.days = nd;
+      rec.name = srcNames[idx-1];   // 名前のみ更新。days（○など）はそのまま維持
       markShiftDirty(dstMonth, idx);
     }
   });
   renderShift();
-  toast(srcMonth+'月の内容を '+dsts.join('・')+'月 へコピーしました。内容を確認して「💾 保存」してください');
+  toast(srcMonth+'月の職員名を '+dsts.join('・')+'月 へコピーしました。内容を確認して「💾 保存」してください');
 }
 // 職員名入力：ローカル更新のみ・未保存登録（保存は「💾 保存」ボタン）
 function saveShiftName(month, idx, name){
