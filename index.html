@@ -3182,14 +3182,31 @@ document.querySelectorAll('nav button').forEach(function(b){
 });
 
 /*════════════════ ログイン ════════════════*/
+// ログイン状態の記憶キー（この端末のブラウザにのみ保存。再読み込みしても再入力不要にする）
+const AUTH_KEY = 'josetsu_auth_mode';
+function saveAuthMode(){ try{ localStorage.setItem(AUTH_KEY, READONLY?'view':'edit'); }catch(e){} }
+function clearAuthMode(){ try{ localStorage.removeItem(AUTH_KEY); }catch(e){} }
 function logout(){
   READONLY = false;
+  clearAuthMode();               // 記憶を消す（次回はログイン画面）
   document.body.classList.remove('readonly');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login').style.display = 'flex';
   document.getElementById('login-pw').value = '';
   document.getElementById('login-err').textContent = '';
   document.getElementById('login-pw').focus();
+}
+// 保存済みモードがあれば、パスワード入力なしで自動ログイン
+function restoreSession(){
+  let mode = null;
+  try{ mode = localStorage.getItem(AUTH_KEY); }catch(e){}
+  if(mode !== 'edit' && mode !== 'view') return false;
+  READONLY = (mode === 'view');
+  applyReadonlyUi();
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  loadData();
+  return true;
 }
 function applyReadonlyUi(){
   document.body.classList.toggle('readonly', READONLY);
@@ -3201,6 +3218,7 @@ function tryLogin(){
   if(pw === APP_PASSWORD || pw === VIEW_PASSWORD){
     READONLY = (pw === VIEW_PASSWORD);
     applyReadonlyUi();
+    saveAuthMode();               // このモードを記憶（次回の再読み込みで自動ログイン）
     document.getElementById('login').style.display = 'none';
     document.getElementById('app').style.display = '';
     loadData();
@@ -3224,7 +3242,10 @@ document.getElementById('map-modal').addEventListener('click', function(e){
 if(DEMO){
   document.querySelector('#login p').textContent = 'サンプルデータで動作中（GAS_URL 未設定）／パスワードを入力してください';
 }
-window.addEventListener('load', function(){ document.getElementById('login-pw').focus(); });
+window.addEventListener('load', function(){
+  // 記憶済みなら自動ログイン。なければログイン画面にフォーカス
+  if(!restoreSession()){ document.getElementById('login-pw').focus(); }
+});
 </script>
 </body>
 </html>
