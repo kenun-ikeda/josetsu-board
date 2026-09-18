@@ -44,16 +44,21 @@
   #login .err{color:var(--bad);font-size:12px;min-height:16px;font-weight:700}
   /* list table (spreadsheet風) */
   .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
-  table.sheet{border-collapse:collapse;font-size:12.5px;white-space:nowrap;min-width:100%}
-  table.sheet th,table.sheet td{border:1px solid var(--line);padding:5px 8px;text-align:center;vertical-align:middle}
-  table.sheet thead th{background:#eef3f9;color:var(--accent);font-weight:800;position:sticky;top:0;z-index:1}
+  table.sheet{border-collapse:collapse;font-size:12px;width:100%;table-layout:fixed}
+  table.sheet th,table.sheet td{border:1px solid var(--line);padding:4px 5px;text-align:center;vertical-align:middle;word-break:break-word;overflow-wrap:anywhere}
+  table.sheet thead th{background:#eef3f9;color:var(--accent);font-weight:800;position:sticky;top:0;z-index:1;font-size:11.5px}
   table.sheet tbody tr{cursor:pointer}
   table.sheet tbody tr:hover{background:#f1f6fd}
   table.sheet td.left{text-align:left}
   table.sheet td.sat{color:#1a5fb4} table.sheet td.sun{color:#c0392b}
-  table.sheet .mc{line-height:1.35;min-width:78px}
+  /* 列幅（合計100%目安）。使わない機械列は自動で隠すので、実際はもっと余裕が出ます */
+  table.sheet col.c-ban{width:5%} table.sheet col.c-date{width:5%} table.sheet col.c-wd{width:3.2%}
+  table.sheet col.c-dn{width:4%} table.sheet col.c-start{width:5%} table.sheet col.c-work{width:9%}
+  table.sheet col.c-place{width:8%} table.sheet col.c-site{width:8%} table.sheet col.c-mac{width:6.5%}
+  table.sheet col.c-dump{width:5%} table.sheet col.c-keibi{width:4%} table.sheet col.c-work2{width:8%} table.sheet col.c-sewa{width:8%}
+  table.sheet .mc{line-height:1.3}
   table.sheet .mc .op{font-weight:700}
-  table.sheet .mc .as{font-size:11px;color:var(--muted)}
+  table.sheet .mc .as{font-size:10.5px;color:var(--muted)}
   table.sheet td.dn-day{background:#eaf6ef} table.sheet td.dn-night{background:#eaf0fb}
   .machead{font-size:11px;color:var(--muted);font-weight:700}
   /* drawer */
@@ -183,6 +188,24 @@ function wdCls(s){ const d=parseISO(s).getDay(); return d===0?'sun':(d===6?'sat'
 function mmdd(s){ const d=parseISO(s); return (d.getMonth()+1)+'/'+d.getDate(); }
 function uid(){ return 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function linesToArr(t){ return String(t||'').split(/\r?\n/).map(function(x){ return x.trim(); }).filter(Boolean); }
+// 名前を配列に正規化（旧データの「カンマ/読点区切り文字列」も配列化）
+function toNameArr(v){ if(Array.isArray(v)) return v.map(String).map(function(x){ return x.trim(); }).filter(Boolean);
+  if(v==null||v==='') return []; return String(v).split(/[,、\n]/).map(function(x){ return x.trim(); }).filter(Boolean); }
+function joinNames(a){ return Array.isArray(a) ? a.filter(Boolean).join('、') : (a||''); }
+// 班テンプレを正規化して返す（{m:{機械:{op,assist}}, workers:[], sewa:[]}）。旧形式（班直下に機械）も吸収。
+function tplOf(ban){
+  let t = TEMPLATES[ban];
+  if(!t || typeof t!=='object'){ t={m:{},workers:[],sewa:[]}; TEMPLATES[ban]=t; return t; }
+  if(!t.m){
+    const looksMachines = Object.keys(t).some(function(k){ return t[k] && typeof t[k]==='object' && (('op' in t[k])||('assist' in t[k])); });
+    TEMPLATES[ban] = { m: looksMachines ? t : {}, workers: toNameArr(t.workers), sewa: toNameArr(t.sewa) };
+    t = TEMPLATES[ban];
+  }
+  if(!t.m || typeof t.m!=='object') t.m={};
+  if(!Array.isArray(t.workers)) t.workers=[];
+  if(!Array.isArray(t.sewa)) t.sewa=[];
+  return t;
+}
 
 /*═══════════ 通信 ═══════════*/
 let mockSubs=[];
@@ -225,7 +248,7 @@ async function loadAll(){
       if(Array.isArray(o.machines)&&o.machines.length) MACHINES=o.machines;
       if(Array.isArray(o.bans)&&o.bans.length) BANS=o.bans;
     } else if(s.company==='TPL'){ TPL_ROW=s.row; if(o.templates&&typeof o.templates==='object') TEMPLATES=o.templates; }
-    else if(s.company==='ENT'&&s.doc){ o.row=s.row; if(!o.id) o.id=s.doc; if(!o.machines) o.machines={}; if(!o.dumps) o.dumps={}; ENTRIES.push(o); }
+    else if(s.company==='ENT'&&s.doc){ o.row=s.row; if(!o.id) o.id=s.doc; if(!o.machines) o.machines={}; if(!o.dumps) o.dumps={}; o.workers=toNameArr(o.workers); o.sewa=toNameArr(o.sewa); ENTRIES.push(o); }
   });
   if(!CUR_TAB) CUR_TAB = BANS[0] || 'all';
   renderAll();
@@ -281,17 +304,23 @@ function renderTab(){
     + '</div>';
   wireSheet();
 }
-function machHeadCols(){ return MACHINES.map(function(m){ return '<th class="machead">'+esc(m)+'</th>'; }).join(''); }
 function sheetHtml(list,isAll){
   if(!list.length) return '<div class="empty">まだ予定がありません。'+(READONLY?'':'右上の「＋ 予定入力」から追加してください。')+'</div>';
+  // 使っている機械の列だけ表示（横スクロールを避けるため空の機械列は隠す）
+  const usedM = MACHINES.filter(function(m){ return list.some(function(e){ const mm=e.machines&&e.machines[m]; return mm&&(mm.op||mm.assist); }); });
+  // colgroup（列幅指定）
+  let cols = (isAll?'<col class="c-ban">':'')
+    + '<col class="c-date"><col class="c-wd"><col class="c-dn"><col class="c-start"><col class="c-work"><col class="c-place"><col class="c-site">'
+    + usedM.map(function(){ return '<col class="c-mac">'; }).join('')
+    + '<col class="c-dump"><col class="c-keibi"><col class="c-work2"><col class="c-sewa">';
   const head='<tr>'
     + (isAll?'<th>班</th>':'')
     + '<th>日付</th><th>曜</th><th>昼夜</th><th>開始</th><th>作業内容</th><th>箇所</th><th>堆積場</th>'
-    + machHeadCols()
+    + usedM.map(function(m){ return '<th class="machead">'+esc(m)+'</th>'; }).join('')
     + '<th>ダンプ計</th><th>警備</th><th>作業員</th><th>世話役</th></tr>';
   const body=list.map(function(e){
     const dnCls = e.dn==='夜'?'dn-night':(e.dn==='昼'?'dn-day':'');
-    let mcells = MACHINES.map(function(m){
+    let mcells = usedM.map(function(m){
       const mm=(e.machines&&e.machines[m])?e.machines[m]:{};
       const op=mm.op||'', as=mm.assist||'';
       if(!op&&!as) return '<td></td>';
@@ -309,11 +338,11 @@ function sheetHtml(list,isAll){
       + mcells
       + '<td>'+dumpTotal(e)+'</td>'
       + '<td>'+esc(e.keibi||'')+'</td>'
-      + '<td class="left">'+esc(e.workers||'')+'</td>'
-      + '<td class="left">'+esc(e.sewa||'')+'</td>'
+      + '<td class="left">'+esc(joinNames(e.workers))+'</td>'
+      + '<td class="left">'+esc(joinNames(e.sewa))+'</td>'
       + '</tr>';
   }).join('');
-  return '<table class="sheet"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+  return '<table class="sheet"><colgroup>'+cols+'</colgroup><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
 }
 function wireSheet(){
   Array.prototype.forEach.call(document.querySelectorAll('#main table.sheet tbody tr'), function(tr){
@@ -323,7 +352,7 @@ function wireSheet(){
 function dumpTotal(e){ let t=0; COMPANIES.forEach(function(c){ const v=Number(e.dumps&&e.dumps[c]); if(!isNaN(v)) t+=v; }); return t; }
 
 /*═══════════ ドロワー（右パネル入力） ═══════════*/
-function blankEntry(ban){ const o={id:uid(),ban:ban||BANS[0]||'A班',date:todayISO(),dn:'昼',start:'',work:'',place:'',site:'',machines:{},dumps:{},driver:'',motomura:'',keibi:'',workers:'',sewa:''};
+function blankEntry(ban){ const o={id:uid(),ban:ban||BANS[0]||'A班',date:todayISO(),dn:'昼',start:'',work:'',place:'',site:'',machines:{},dumps:{},driver:'',motomura:'',keibi:'',workers:[],sewa:[]};
   MACHINES.forEach(function(m){ o.machines[m]={op:'',assist:''}; }); return o; }
 function openNew(ban){ if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   DRAFT=blankEntry(ban||(CUR_TAB!=='all'&&CUR_TAB!=='settings'?CUR_TAB:'')); DRAFT_ROW=null; DRAFT_ISNEW=true;
@@ -331,6 +360,7 @@ function openNew(ban){ if(READONLY){ toast('閲覧モードのため編集でき
   openDrawer('予定入力（新規）'); document.getElementById('drawer-del').style.display='none';
 }
 function openEdit(e){ DRAFT=JSON.parse(JSON.stringify(e)); if(!DRAFT.machines) DRAFT.machines={}; MACHINES.forEach(function(m){ if(!DRAFT.machines[m]) DRAFT.machines[m]={op:'',assist:''}; });
+  DRAFT.workers=toNameArr(DRAFT.workers); DRAFT.sewa=toNameArr(DRAFT.sewa);
   DRAFT_ROW=e.row!=null?e.row:null; DRAFT_ISNEW=false;
   openDrawer('予定を編集'); document.getElementById('drawer-del').style.display = READONLY?'none':'';
 }
@@ -338,12 +368,15 @@ function openDrawer(title){ document.getElementById('drawer-title').textContent=
   document.getElementById('scrim').classList.add('open'); document.getElementById('drawer').classList.add('open'); }
 function closeDrawer(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('drawer').classList.remove('open'); DRAFT=null; }
 function applyTemplate(){
-  const t=TEMPLATES[DRAFT.ban]||{};
-  MACHINES.forEach(function(m){ const src=t[m]||{}; DRAFT.machines[m]={op:src.op||'',assist:src.assist||''}; });
+  const t=tplOf(DRAFT.ban);
+  MACHINES.forEach(function(m){ const src=t.m[m]||{}; DRAFT.machines[m]={op:src.op||'',assist:src.assist||''}; });
+  DRAFT.workers=(t.workers||[]).slice();
+  DRAFT.sewa=(t.sewa||[]).slice();
 }
 function onBanChange(v){ DRAFT.ban=v;
-  // 新規で機械がまだ空なら、その班のテンプレを反映
-  const empty = MACHINES.every(function(m){ const mm=DRAFT.machines[m]||{}; return !mm.op && !mm.assist; });
+  // 新規、または機械も作業員・世話役もまだ空なら、その班のテンプレを反映
+  const empty = MACHINES.every(function(m){ const mm=DRAFT.machines[m]||{}; return !mm.op && !mm.assist; })
+    && !(DRAFT.workers&&DRAFT.workers.length) && !(DRAFT.sewa&&DRAFT.sewa.length);
   if(DRAFT_ISNEW || empty){ applyTemplate(); }
   renderDrawer();
 }
@@ -381,8 +414,8 @@ function renderDrawer(){
     +  fld('タウン警備（人数）','<input type="number" min="0" inputmode="numeric" value="'+esc(DRAFT.keibi||'')+'" oninput="dfSet(\'keibi\',this.value)">')
     + '</div>'
     + '<div class="fldgrid">'
-    +  fld('作業員（カンマ区切り可）','<input list="dl-worker" value="'+esc(DRAFT.workers||'')+'" oninput="dfSet(\'workers\',this.value)">')
-    +  fld('世話役（カンマ区切り可）','<input list="dl-sewa" value="'+esc(DRAFT.sewa||'')+'" oninput="dfSet(\'sewa\',this.value)">')
+    +  '<div class="fld"><label>作業員（複数可）</label>'+nameListHtml('workers',DRAFT.workers||[],'dl-worker')+'</div>'
+    +  '<div class="fld"><label>世話役（複数可）</label>'+nameListHtml('sewa',DRAFT.sewa||[],'dl-sewa')+'</div>'
     + '</div>';
 }
 function fld(label,inner){ return '<div class="fld"><label>'+esc(label)+'</label>'+inner+'</div>'; }
@@ -390,9 +423,24 @@ function dfSet(k,v){ DRAFT[k]=v; }
 function dfDN(v){ DRAFT.dn=v; Array.prototype.forEach.call(document.querySelectorAll('#drawer .seg button'), function(b){ b.classList.toggle('active', b.getAttribute('data-dn')===v); }); }
 function dfMach(m,k,v){ if(!DRAFT.machines[m]) DRAFT.machines[m]={op:'',assist:''}; DRAFT.machines[m][k]=v; }
 function dfDump(c,v){ if(!DRAFT.dumps) DRAFT.dumps={}; DRAFT.dumps[c]=(v===''?'':Number(v)); const t=document.getElementById('df-total'); if(t) t.value=dumpTotal(DRAFT); }
+// 作業員・世話役（複数名）
+function nameListHtml(kind,arr,dl){
+  const list = (arr&&arr.length) ? arr : [''];
+  const rows = list.map(function(n,i){
+    return '<div class="row" style="gap:6px;margin-bottom:6px">'
+      + '<input list="'+dl+'" value="'+esc(n)+'" placeholder="名前" oninput="dfName(\''+kind+'\','+i+',this.value)" style="flex:1;min-width:0">'
+      + '<button type="button" class="btn warn sm edit-only" onclick="dfDelName(\''+kind+'\','+i+')" title="削除">×</button>'
+      + '</div>';
+  }).join('');
+  return rows + '<button type="button" class="btn sec sm edit-only" onclick="dfAddName(\''+kind+'\')">＋ 追加</button>';
+}
+function dfName(kind,i,v){ if(!Array.isArray(DRAFT[kind])) DRAFT[kind]=[]; DRAFT[kind][i]=v; }
+function dfAddName(kind){ if(!Array.isArray(DRAFT[kind])) DRAFT[kind]=[]; DRAFT[kind].push(''); renderDrawer(); }
+function dfDelName(kind,i){ if(!Array.isArray(DRAFT[kind])) DRAFT[kind]=[]; DRAFT[kind].splice(i,1); renderDrawer(); }
 async function saveEntry(){
   if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   if(!DRAFT.date){ toast('日付を入れてください'); return; }
+  DRAFT.workers=toNameArr(DRAFT.workers); DRAFT.sewa=toNameArr(DRAFT.sewa);   // 空欄を除去
   const btn=document.getElementById('drawer-save'); btn.disabled=true; btn.textContent='保存中...';
   const sub={year:'__HS__',company:'ENT',doc:DRAFT.id,status:'',date:'',link:'',note:JSON.stringify(DRAFT)};
   if(DRAFT_ROW!=null) sub.row=DRAFT_ROW;
@@ -421,13 +469,18 @@ async function deleteEntry(){
 function settingsHtml(){
   // 班テンプレ（班ごとに 機械×オペ・助手）
   let tpl = BANS.map(function(b){
-    let rows=MACHINES.map(function(m){ const mm=(TEMPLATES[b]&&TEMPLATES[b][m])?TEMPLATES[b][m]:{};
+    const t=tplOf(b);
+    let rows=MACHINES.map(function(m){ const mm=t.m[m]||{};
       return '<tr><td class="mk">'+esc(m)+'</td>'
         + '<td><input list="dl-op" value="'+esc(mm.op||'')+'" placeholder="オペ" oninput="tplSet(\''+jsarg(b)+'\',\''+jsarg(m)+'\',\'op\',this.value)"></td>'
         + '<td><input list="dl-assist" value="'+esc(mm.assist||'')+'" placeholder="助手" oninput="tplSet(\''+jsarg(b)+'\',\''+jsarg(m)+'\',\'assist\',this.value)"></td></tr>';
     }).join('');
     return '<div class="card"><h3 style="color:var(--accent);margin-bottom:8px">'+esc(b)+' の顔ぶれ</h3>'
-      + '<table class="mtbl"><thead><tr><th class="mk">機械</th><th>オペ</th><th>助手</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+      + '<table class="mtbl"><thead><tr><th class="mk">機械</th><th>オペ</th><th>助手</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      + '<div class="fldgrid" style="margin-top:10px">'
+      +   '<div class="fld"><label>作業員（1行1名）</label><textarea style="min-height:64px" oninput="tplNames(\''+jsarg(b)+'\',\'workers\',this.value)">'+esc((t.workers||[]).join('\n'))+'</textarea></div>'
+      +   '<div class="fld"><label>世話役（1行1名）</label><textarea style="min-height:64px" oninput="tplNames(\''+jsarg(b)+'\',\'sewa\',this.value)">'+esc((t.sewa||[]).join('\n'))+'</textarea></div>'
+      + '</div></div>';
   }).join('');
   let mem=MEMBER_ROLES.map(function(r){ return '<div class="fld"><label>'+esc(r.label)+'（1行1名）</label><textarea id="set-mem-'+r.key+'">'+esc((MEMBERS[r.key]||[]).join('\n'))+'</textarea></div>'; }).join('');
   return '<div class="card"><div class="row"><h2 style="color:var(--accent);margin:0">班テンプレート</h2><div class="spacer"></div>'
@@ -448,7 +501,8 @@ function settingsHtml(){
       + '<div class="memgrid" style="margin-top:10px">'+mem+'</div></div>';
 }
 function wireSettings(){ /* 入力はインラインで反映済み */ }
-function tplSet(ban,m,k,v){ if(!TEMPLATES[ban]) TEMPLATES[ban]={}; if(!TEMPLATES[ban][m]) TEMPLATES[ban][m]={op:'',assist:''}; TEMPLATES[ban][m][k]=v; }
+function tplSet(ban,m,k,v){ const t=tplOf(ban); if(!t.m[m]) t.m[m]={op:'',assist:''}; t.m[m][k]=v; }
+function tplNames(ban,kind,v){ const t=tplOf(ban); t[kind]=linesToArr(v); }
 async function saveTemplates(){
   if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   const sub={year:'__HS__',company:'TPL',doc:'templates',status:'',date:'',link:'',note:JSON.stringify({templates:TEMPLATES})};
