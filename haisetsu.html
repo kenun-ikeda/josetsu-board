@@ -157,7 +157,9 @@ const AUTH_KEY = 'haisetsu_auth_mode';
 let READONLY = false, offline = false;
 
 /*═══════════ 既定値・状態 ═══════════*/
-const DEFAULT_MACHINES  = ['BR','G','TS1','TS2','TS3','TS4','BH','SR1','SR2'];
+const DEFAULT_MACHINES  = ['BR','G','TS1','TS2','TS3','TS4','SR1','SR2','BH'];
+const BH_SLOT   = 'BH';        // BH列は、BHが空でもモトムラ名があれば「モトムラ／名前」を表示
+const KENUN_CO  = 'ケンウン';   // ケンウン列は、台数の下に運転手名を表示
 const DEFAULT_BANS      = ['A班','B班'];
 const DEFAULT_COMPANIES = ['小橋','春興業','丸山','タイヨウ','佐藤','末広','ケンウン'];
 const WD_JP = ['日','月','火','水','木','金','土'];
@@ -175,7 +177,7 @@ let TEMPLATES = {};   // { '<班名>': { '<機械>': {op,assist} } }
 let ENTRIES   = [];   // [{row,id,ban,date,dn,start,work,place,site,machines:{slot:{op,assist}},dumps:{},driver,motomura,keibi,workers,sewa}]
 let CFG_ROW=null, TPL_ROW=null;
 let CUR_TAB = null;          // 現在のタブ（班名 or 'all' or 'settings'）
-let DRAFT=null, DRAFT_ROW=null, DRAFT_ISNEW=false;
+let DRAFT=null, DRAFT_ROW=null, DRAFT_ISNEW=false, DRAFT_DAYS=1;
 
 /*═══════════ ユーティリティ ═══════════*/
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -313,8 +315,11 @@ function renderTab(){
 function sheetHtml(list,isAll){
   if(!list.length) return '<div class="empty">まだ予定がありません。'+(READONLY?'':'右上の「＋ 予定入力」から追加してください。')+'</div>';
   // 使っている機械・会社の列だけ表示（空の列は隠して横スクロールを避ける）
-  const usedM = MACHINES.filter(function(m){ return list.some(function(e){ const mm=e.machines&&e.machines[m]; return mm&&(mm.op||mm.assist); }); });
-  const usedC = COMPANIES.filter(function(c){ return list.some(function(e){ const v=Number(e.dumps&&e.dumps[c]); return !isNaN(v)&&v>0; }); });
+  // BH列は、BHが空でもモトムラ名があれば表示する。ケンウン列は、台数が無くても運転手名があれば表示する。
+  const usedM = MACHINES.filter(function(m){ return list.some(function(e){ const mm=e.machines&&e.machines[m]; const filled=mm&&(mm.op||mm.assist);
+    if(m===BH_SLOT) return filled || (e.motomura&&String(e.motomura).trim()); return filled; }); });
+  const usedC = COMPANIES.filter(function(c){ return list.some(function(e){ const v=Number(e.dumps&&e.dumps[c]); const has=!isNaN(v)&&v>0;
+    if(c===KENUN_CO) return has || (e.driver&&String(e.driver).trim()); return has; }); });
   let cols = (isAll?'<col class="c-ban">':'')
     + '<col class="c-date"><col class="c-wd"><col class="c-dn"><col class="c-start"><col><col><col>'
     + usedM.map(function(){ return '<col>'; }).join('')
@@ -331,10 +336,14 @@ function sheetHtml(list,isAll){
     let mcells = usedM.map(function(m){
       const mm=(e.machines&&e.machines[m])?e.machines[m]:{};
       const op=mm.op||'', as=mm.assist||'';
-      if(!op&&!as) return '<td></td>';
-      return '<td class="mc"><div class="op">'+esc(op)+'</div>'+(as?'<div class="as">'+esc(as)+'</div>':'')+'</td>';
+      if(op||as) return '<td class="mc"><div class="op">'+esc(op)+'</div>'+(as?'<div class="as">'+esc(as)+'</div>':'')+'</td>';
+      if(m===BH_SLOT && e.motomura && String(e.motomura).trim())
+        return '<td class="mc"><div class="op">モトムラ</div><div class="as">'+esc(e.motomura)+'</div></td>';
+      return '<td></td>';
     }).join('');
-    let ccells = usedC.map(function(c){ const v=(e.dumps&&e.dumps[c]!=null&&e.dumps[c]!=='')?e.dumps[c]:''; return '<td class="num">'+esc(v)+'</td>'; }).join('');
+    let ccells = usedC.map(function(c){ const v=(e.dumps&&e.dumps[c]!=null&&e.dumps[c]!=='')?e.dumps[c]:'';
+      if(c===KENUN_CO){ const dr=(e.driver&&String(e.driver).trim())?e.driver:''; return '<td class="mc"><div class="op">'+esc(v)+'</div>'+(dr?'<div class="as">'+esc(dr)+'</div>':'')+'</td>'; }
+      return '<td class="num">'+esc(v)+'</td>'; }).join('');
     return '<tr data-id="'+esc(e.id)+'">'
       + (isAll?'<td>'+esc(e.ban||'—')+'</td>':'')
       + '<td class="num">'+esc(mmdd(e.date))+'</td>'
@@ -368,13 +377,13 @@ function openNew(ban){ if(READONLY){ toast('閲覧モードのため編集でき
   let b;
   if(ban) b=ban;
   else b=(CUR_TAB!=='all'&&CUR_TAB!=='settings'&&CUR_TAB!=='none') ? CUR_TAB : '';  // 全体/班なしタブは班なし('')で開始
-  DRAFT=blankEntry(b); DRAFT_ROW=null; DRAFT_ISNEW=true;
+  DRAFT=blankEntry(b); DRAFT_ROW=null; DRAFT_ISNEW=true; DRAFT_DAYS=1;
   if(b) applyTemplate();   // 班があればテンプレ反映。班なしは空のまま。
   openDrawer('予定入力（新規）'); document.getElementById('drawer-del').style.display='none';
 }
 function openEdit(e){ DRAFT=JSON.parse(JSON.stringify(e)); if(!DRAFT.machines) DRAFT.machines={}; MACHINES.forEach(function(m){ if(!DRAFT.machines[m]) DRAFT.machines[m]={op:'',assist:''}; });
   DRAFT.workers=toNameArr(DRAFT.workers); DRAFT.sewa=toNameArr(DRAFT.sewa);
-  DRAFT_ROW=e.row!=null?e.row:null; DRAFT_ISNEW=false;
+  DRAFT_ROW=e.row!=null?e.row:null; DRAFT_ISNEW=false; DRAFT_DAYS=1;
   openDrawer('予定を編集'); document.getElementById('drawer-del').style.display = READONLY?'none':'';
 }
 function openDrawer(title){ document.getElementById('drawer-title').textContent=title; renderDrawer();
@@ -403,7 +412,7 @@ function renderDrawer(){
   let dumpCells=COMPANIES.map(function(c){ const v=(DRAFT.dumps&&DRAFT.dumps[c]!=null)?DRAFT.dumps[c]:'';
     return '<div class="dumpcell"><label title="'+esc(c)+'">'+esc(c)+'</label><input type="number" min="0" inputmode="numeric" value="'+esc(v)+'" oninput="dfDump(\''+jsarg(c)+'\',this.value)"></div>';
   }).join('');
-  const banOpts='<option value=""'+(DRAFT.ban?'':' selected')+'>（班なし・イレギュラー）</option>'
+  const banOpts='<option value=""'+(DRAFT.ban?'':' selected')+'>班なし</option>'
     + BANS.map(function(b){ return '<option'+(DRAFT.ban===b?' selected':'')+'>'+esc(b)+'</option>'; }).join('');
   document.getElementById('drawer-body').innerHTML =
     '<div class="fldgrid">'
@@ -412,6 +421,9 @@ function renderDrawer(){
     +  fld('昼夜','<div class="seg">'+dnBtn('昼')+dnBtn('夜')+'</div>')
     +  fld('開始時間','<input value="'+esc(DRAFT.start||'')+'" placeholder="例）5:00" oninput="dfSet(\'start\',this.value)">')
     + '</div>'
+    + (DRAFT_ISNEW ? '<div class="fld" style="max-width:260px;margin-bottom:12px"><label>連続で登録（日数）</label>'
+        + '<input type="number" min="1" value="'+DRAFT_DAYS+'" oninput="dfDays(this.value)">'
+        + '<span class="hint">同じ内容を、この日付から指定した日数ぶん続けて登録します（1なら1日だけ）。</span></div>' : '')
     + '<div class="fldgrid">'
     +  fld('作業内容','<input value="'+esc(DRAFT.work||'')+'" placeholder="幹線拡幅 など" oninput="dfSet(\'work\',this.value)">')
     +  fld('作業箇所・町内会','<input value="'+esc(DRAFT.place||'')+'" oninput="dfSet(\'place\',this.value)">')
@@ -437,6 +449,7 @@ function dfSet(k,v){ DRAFT[k]=v; }
 function dfDN(v){ DRAFT.dn=v; Array.prototype.forEach.call(document.querySelectorAll('#drawer .seg button'), function(b){ b.classList.toggle('active', b.getAttribute('data-dn')===v); }); }
 function dfMach(m,k,v){ if(!DRAFT.machines[m]) DRAFT.machines[m]={op:'',assist:''}; DRAFT.machines[m][k]=v; }
 function dfDump(c,v){ if(!DRAFT.dumps) DRAFT.dumps={}; DRAFT.dumps[c]=(v===''?'':Number(v)); const t=document.getElementById('df-total'); if(t) t.value=dumpTotal(DRAFT); }
+function dfDays(v){ DRAFT_DAYS=Math.max(1,Math.min(60, parseInt(v,10)||1)); }
 // 作業員・世話役（複数名）
 function nameListHtml(kind,arr,dl){
   const list = (arr&&arr.length) ? arr : [''];
@@ -455,19 +468,29 @@ async function saveEntry(){
   if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   if(!DRAFT.date){ toast('日付を入れてください'); return; }
   DRAFT.workers=toNameArr(DRAFT.workers); DRAFT.sewa=toNameArr(DRAFT.sewa);   // 空欄を除去
+  const n = (DRAFT_ISNEW && DRAFT_DAYS>1) ? DRAFT_DAYS : 1;
+  if(n>1 && !confirm(mmdd(DRAFT.date)+' から '+n+'日分、同じ内容で登録します。よろしいですか？')) return;
   const btn=document.getElementById('drawer-save'); btn.disabled=true; btn.textContent='保存中...';
-  const sub={year:'__HS__',company:'ENT',doc:DRAFT.id,status:'',date:'',link:'',note:JSON.stringify(DRAFT)};
-  if(DRAFT_ROW!=null) sub.row=DRAFT_ROW;
-  const res=await callApi({action:'saveSub',sub:sub});
+  const base=JSON.parse(JSON.stringify(DRAFT));
+  let okCount=0, failed=false, err='';
+  for(let i=0;i<n;i++){
+    const d=JSON.parse(JSON.stringify(base));
+    if(i===0){ d.id=base.id; } else { d.id=uid(); const dt=parseISO(base.date); dt.setDate(dt.getDate()+i); d.date=isoOf(dt); }
+    const sub={year:'__HS__',company:'ENT',doc:d.id,status:'',date:'',link:'',note:JSON.stringify(d)};
+    if(i===0 && DRAFT_ROW!=null) sub.row=DRAFT_ROW;
+    const res=await callApi({action:'saveSub',sub:sub});
+    if(res&&res.ok){
+      const keepRow=(!offline&&res.row!=null)?res.row:((i===0&&DRAFT_ROW!=null)?DRAFT_ROW:null);
+      const saved=JSON.parse(JSON.stringify(d)); saved.row=keepRow;
+      const idx=ENTRIES.findIndex(function(x){ return x.id===saved.id; });
+      if(idx>=0) ENTRIES[idx]=saved; else ENTRIES.push(saved);
+      okCount++;
+    }else{ failed=true; err=(res&&res.error)?res.error:'不明'; }
+  }
   btn.disabled=false; btn.textContent='💾 保存';
-  if(res&&res.ok){
-    const keepRow=(!offline&&res.row!=null)?res.row:(DRAFT_ROW!=null?DRAFT_ROW:null);
-    const saved=JSON.parse(JSON.stringify(DRAFT)); saved.row=keepRow;
-    const i=ENTRIES.findIndex(function(x){ return x.id===saved.id; });
-    if(i>=0) ENTRIES[i]=saved; else ENTRIES.push(saved);
-    closeDrawer(); renderTab();
-    toast(offline?'保存しました（オフライン：共有されていません）':'保存しました');
-  }else toast('保存に失敗：'+(res&&res.error?res.error:'不明'));
+  closeDrawer(); renderTab();
+  if(failed) toast('一部保存に失敗：'+err);
+  else toast(offline?'保存しました（オフライン：共有されていません）':(n>1?(okCount+'日分を保存しました'):'保存しました'));
 }
 async function deleteEntry(){
   if(READONLY){ toast('閲覧モードのため編集できません'); return; }
