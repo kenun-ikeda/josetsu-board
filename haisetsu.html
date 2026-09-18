@@ -421,9 +421,9 @@ function renderDrawer(){
     +  fld('昼夜','<div class="seg">'+dnBtn('昼')+dnBtn('夜')+'</div>')
     +  fld('開始時間','<input value="'+esc(DRAFT.start||'')+'" placeholder="例）5:00" oninput="dfSet(\'start\',this.value)">')
     + '</div>'
-    + (DRAFT_ISNEW ? '<div class="fld" style="max-width:260px;margin-bottom:12px"><label>連続で登録（日数）</label>'
-        + '<input type="number" min="1" value="'+DRAFT_DAYS+'" oninput="dfDays(this.value)">'
-        + '<span class="hint">同じ内容を、この日付から指定した日数ぶん続けて登録します（1なら1日だけ）。</span></div>' : '')
+    + (DRAFT_ISNEW ? '<div class="fld" style="max-width:380px;margin-bottom:12px"><label>他の日からコピー（任意）</label>'
+        + '<select onchange="copyFromEntry(this.value); this.value=\'\';">'+copySrcOptions()+'</select>'
+        + '<span class="hint">過去に入れた日の予定を取り込みます。上の日付を保存したい日に変えれば、別の予定として新しく登録されます（元の予定はそのまま残ります）。</span></div>' : '')
     + '<div class="fldgrid">'
     +  fld('作業内容','<input value="'+esc(DRAFT.work||'')+'" placeholder="幹線拡幅 など" oninput="dfSet(\'work\',this.value)">')
     +  fld('作業箇所・町内会','<input value="'+esc(DRAFT.place||'')+'" oninput="dfSet(\'place\',this.value)">')
@@ -449,7 +449,29 @@ function dfSet(k,v){ DRAFT[k]=v; }
 function dfDN(v){ DRAFT.dn=v; Array.prototype.forEach.call(document.querySelectorAll('#drawer .seg button'), function(b){ b.classList.toggle('active', b.getAttribute('data-dn')===v); }); }
 function dfMach(m,k,v){ if(!DRAFT.machines[m]) DRAFT.machines[m]={op:'',assist:''}; DRAFT.machines[m][k]=v; }
 function dfDump(c,v){ if(!DRAFT.dumps) DRAFT.dumps={}; DRAFT.dumps[c]=(v===''?'':Number(v)); const t=document.getElementById('df-total'); if(t) t.value=dumpTotal(DRAFT); }
-function dfDays(v){ DRAFT_DAYS=Math.max(1,Math.min(60, parseInt(v,10)||1)); }
+// 新規入力時：他の日の予定を取り込む（コピー元は新しい日付順）
+function copySrcOptions(){
+  const list=ENTRIES.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||'') || (a.dn==='夜'?1:0)-(b.dn==='夜'?1:0); });
+  return '<option value="">他の日からコピー…</option>' + list.map(function(e){
+    const label=mmdd(e.date)+'('+wdOf(e.date)+') '+(e.ban||'班なし')+(e.dn?' '+e.dn:'')+(e.work?' '+e.work:'');
+    return '<option value="'+esc(e.id)+'">'+esc(label)+'</option>';
+  }).join('');
+}
+function copyFromEntry(id){
+  if(!id||!DRAFT) return;
+  const src=ENTRIES.find(function(x){ return x.id===id; });
+  if(!src) return;
+  const keepId=DRAFT.id, keepDate=DRAFT.date;   // 新規の識別子と、保存したい日付は維持
+  DRAFT.ban=src.ban||''; DRAFT.dn=src.dn||'昼'; DRAFT.start=src.start||''; DRAFT.work=src.work||'';
+  DRAFT.place=src.place||''; DRAFT.site=src.site||'';
+  DRAFT.machines={}; MACHINES.forEach(function(m){ const mm=(src.machines&&src.machines[m])?src.machines[m]:{}; DRAFT.machines[m]={op:mm.op||'',assist:mm.assist||''}; });
+  DRAFT.dumps=Object.assign({}, src.dumps||{});
+  DRAFT.driver=src.driver||''; DRAFT.motomura=src.motomura||''; DRAFT.keibi=src.keibi||'';
+  DRAFT.workers=toNameArr(src.workers); DRAFT.sewa=toNameArr(src.sewa);
+  DRAFT.id=keepId; DRAFT.date=keepDate;
+  renderDrawer();
+  toast(mmdd(src.date)+'（'+(src.ban||'班なし')+'）の内容をコピーしました。日付を確認して保存してください');
+}
 // 作業員・世話役（複数名）
 function nameListHtml(kind,arr,dl){
   const list = (arr&&arr.length) ? arr : [''];
