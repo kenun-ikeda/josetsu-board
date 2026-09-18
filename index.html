@@ -218,6 +218,30 @@
   .seg button{border:0;background:#fff;padding:7px 12px;font-size:13px;font-family:inherit;font-weight:700;color:var(--muted);cursor:pointer}
   .seg button.active{background:var(--accent);color:#fff}
   .map-poly-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+  /* ---------- 排雪マップ サブタブ／運搬排雪 ---------- */
+  .map-subnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .map-subbtn{background:#fff;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+  .map-subbtn.active{background:var(--accent);color:#fff}
+  .map-svg .map-line{pointer-events:auto;cursor:pointer;fill:none;stroke-linejoin:round;stroke-linecap:round}
+  .map-line-label{position:absolute;transform:translate(-50%,-50%);z-index:3;cursor:pointer;pointer-events:auto}
+  .map-line-label .mll-name{display:inline-block;font-size:11px;font-weight:800;background:rgba(255,255,255,.94);border:1.5px solid var(--line);border-radius:5px;padding:0 5px;white-space:nowrap;color:#1a2430}
+  .unpan-tbl{border-collapse:collapse;font-size:13px;min-width:100%;background:#fff}
+  .unpan-tbl th,.unpan-tbl td{border:1px solid #c9d4e2;padding:0;text-align:center;white-space:nowrap}
+  .unpan-tbl thead th{background:#eef3f9;font-weight:800;color:var(--accent);padding:6px 8px}
+  .unpan-tbl .u-datecol{background:#f4f7fb;font-weight:800;min-width:74px}
+  .unpan-tbl input.u-date{width:74px;border:none;background:transparent;text-align:center;font-family:inherit;font-size:13px;font-weight:800;color:#1a2430;padding:6px 2px}
+  .unpan-tbl input.u-head{width:96px;border:none;background:transparent;text-align:center;font-family:inherit;font-size:13px;font-weight:800;color:var(--accent);padding:2px}
+  .unpan-tbl td.u-cell{position:relative;min-width:80px;height:40px}
+  .unpan-tbl td.u-cell input.u-code{width:100%;height:40px;border:none;background:transparent;text-align:center;font-family:inherit;font-size:14px;font-weight:800;color:#0f2a4a;box-sizing:border-box;padding:0 2px}
+  .unpan-tbl td.u-cell.day{background:#cfe9d6}
+  .unpan-tbl td.u-cell.night{background:#cfdcf5}
+  .unpan-tbl td.u-cell .u-shift{position:absolute;top:1px;right:1px;font-size:9px;font-weight:800;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.9);padding:0 3px;cursor:pointer;line-height:1.5;color:var(--muted)}
+  .unpan-tbl td.u-rowdel{border:none;background:transparent}
+  .unpan-tbl .u-rowdel button{border:1px solid #e6b4b0;background:#fff;color:var(--bad);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  .unpan-tbl .u-coldel{border:none;background:transparent;padding:2px}
+  .unpan-tbl .u-coldel button{border:1px solid #e6b4b0;background:#fff;color:var(--bad);border-radius:5px;padding:0 6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  body.readonly .unpan-tbl .u-shift,body.readonly .unpan-tbl .u-rowdel,body.readonly .unpan-tbl .u-coldel{display:none}
+  body.readonly .unpan-tbl input{pointer-events:none}
   /* シフト保存ボタン（未保存強調） */
   #shift-save-btn.dirty{background:var(--bad);border-color:var(--bad);color:#fff}
 
@@ -425,6 +449,25 @@
     body.print-map .map-stage-head.second{ margin-top:10px !important; }
     body.print-map .map-img{ display:block; max-width:100%; }
 
+    /* ===== 運搬排雪 印刷モード（body.print-unpan） 地図＋日別予定表 ===== */
+    body.print-unpan .tab{ display:none !important; }
+    body.print-unpan #tab-map{ display:block !important; }
+    body.print-unpan .map-subnav,
+    body.print-unpan #map-sub-life{ display:none !important; }
+    body.print-unpan #map-sub-unpan .row,
+    body.print-unpan #map-sub-unpan .map-poly-tools,
+    body.print-unpan #map-sub-unpan .hint,
+    body.print-unpan #unpan-img-fld,
+    body.print-unpan .u-shift, body.print-unpan .u-rowdel, body.print-unpan .u-coldel{ display:none !important; }
+    body.print-unpan #map-sub-unpan h2{ display:block !important; font-size:14px; margin:0 0 6px; }
+    body.print-unpan .map-stage, body.print-unpan .map-img, body.print-unpan .map-svg,
+    body.print-unpan .map-line, body.print-unpan .map-line-label, body.print-unpan .mll-name,
+    body.print-unpan .unpan-tbl, body.print-unpan .unpan-tbl th, body.print-unpan .unpan-tbl td{
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
+    body.print-unpan .unpan-tbl input{ border:none; background:transparent; }
+    body.print-unpan #unpan-wrap{ page-break-inside:avoid; }
+
     /* ===== 安全日報 印刷モード（body.print-report） A4縦・1社1ページ ===== */
     body.print-report .tab{ display:none !important; }
     /* 帳票は既定の縦(A4 portrait)。名前付きの横ページは割り当てない（shift=横 / map=縦 と排他）。 */
@@ -606,9 +649,15 @@
 
     <!-- MAP（排雪マップ） -->
     <section class="tab" id="tab-map">
+      <div class="map-subnav">
+        <button type="button" class="map-subbtn active" data-sub="life" onclick="switchMapSub('life')">🔷 生活道路排雪</button>
+        <button type="button" class="map-subbtn" data-sub="unpan" onclick="switchMapSub('unpan')">🛣 運搬排雪</button>
+      </div>
+
+      <div id="map-sub-life">
       <div class="card">
         <div class="row">
-          <h2 style="margin:0">排雪マップ</h2>
+          <h2 style="margin:0">生活道路排雪</h2>
           <div class="spacer"></div>
           <span class="pill" id="map-count"></span>
           <div class="seg edit-only" id="map-mode">
@@ -639,6 +688,57 @@
         <p class="hint">行をクリックしても編集できます（ピンが押しにくい端末向け）。</p>
         <div id="map-list"></div>
       </div>
+      </div><!-- /#map-sub-life -->
+
+      <!-- 運搬排雪：白地図に色付きルート（線）を引く＋日別予定表 -->
+      <div id="map-sub-unpan" style="display:none">
+        <div class="card">
+          <div class="row">
+            <h2 style="margin:0">運搬排雪</h2>
+            <div class="spacer"></div>
+            <div class="seg" id="unpan-region">
+              <button type="button" data-region="3" class="active" onclick="setUnpanRegion(3)">厚別東・もみじ台</button>
+              <button type="button" data-region="4" onclick="setUnpanRegion(4)">厚別西北</button>
+            </div>
+            <button class="btn sec sm no-print" onclick="printUnpan()">🖨 印刷</button>
+          </div>
+          <div class="map-poly-tools edit-only" id="unpan-tools">
+            <span class="pal-caption" style="font-size:12px;color:var(--muted);font-weight:700">色：</span>
+            <div id="unpan-palette" class="mp-palette"></div>
+            <button class="btn sec sm" id="uline-add-btn" onclick="startLineDraw()">＋ ルート追加</button>
+            <button class="btn sm" id="uline-done-btn" style="display:none" onclick="finishLineDraw()">確定</button>
+            <button class="btn sec sm" id="uline-cancel-btn" style="display:none" onclick="cancelLineDraw()">取消</button>
+          </div>
+          <p class="hint" id="unpan-hint">色を選び「＋ ルート追加」→ 地図をクリックで線を引き、「確定」またはダブルクリックで終了（2点以上）。既存のルートをクリックで編集。</p>
+          <div class="fld full edit-only" id="unpan-img-fld" style="margin-top:8px">
+            <label style="font-size:12px;color:var(--muted);font-weight:700">この地域の背景地図の画像URL（白地図など・任意）</label>
+            <div class="row" style="gap:8px">
+              <input id="unpan-img-url" placeholder="https://... 画像URL" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;box-sizing:border-box">
+              <button class="btn sec sm" onclick="saveUnpanImg()">背景を設定</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div id="unpan-wrap"></div>
+        </div>
+        <div class="card">
+          <div class="row" style="align-items:center;margin-bottom:6px">
+            <h2 style="margin:0">日別予定表</h2>
+            <div class="spacer"></div>
+            <span class="map-legend" style="margin:0">
+              <span class="lg"><span class="sw" style="background:#2e9e5b;border-radius:3px"></span>日中</span>
+              <span class="lg"><span class="sw" style="background:#2f6bd6;border-radius:3px"></span>夜間</span>
+            </span>
+            <button class="btn sm edit-only no-print" id="unpan-plan-save" onclick="saveUnpanPlan()" style="margin-left:12px">💾 予定表を保存</button>
+          </div>
+          <p class="hint edit-only no-print">セルにルート番号（例：北1）を入力。セル右上の「昼/夜」で日中（緑）・夜間（青）を切替。会社名（列見出し）も編集できます。行の追加・削除は下のボタンから。</p>
+          <div id="unpan-table-wrap" style="overflow-x:auto"></div>
+          <div class="row edit-only no-print" style="margin-top:8px;gap:8px">
+            <button class="btn sec sm" onclick="unpanAddRow()">＋ 日付行を追加</button>
+            <button class="btn sec sm" onclick="unpanAddCol()">＋ 会社列を追加</button>
+          </div>
+        </div>
+      </div><!-- /#map-sub-unpan -->
     </section>
 
     <!-- SHIFT（勤務予定表） -->
@@ -1004,6 +1104,14 @@ let editingMapColor = '#E91E63';   // 編集中モーダルで選択中の色
 let editingMapNum = 1;             // 編集中モーダルの所属マップ(1|2)
 let editingPolyPoints = [];        // 編集/保存対象ポリゴンの頂点 [{x,y}]
 let drawMapNum = null;             // 多角形作図中にロックする所属マップ(1|2)。未確定はnull
+// ── 運搬排雪（線ルート＋日別予定表） ──
+let UNPAN_REGION = 3;              // 3=厚別東・もみじ台 / 4=厚別西北（mapPoints.map の値として保存）
+let UNPAN_COLOR = '#E91E63';       // ルート作図で選択中の色
+let drawingLine = false;           // ルート（線）作図中フラグ
+let lineVerts = [];                // 作図中の線の頂点 [{x,y}]（0〜100%）
+let UNPAN_SAVED = null;            // {img:{east,west}, plan:{east:{cols,rows}, west:{cols,rows}}}
+const UNPAN_DEFAULT_COLS = { east:['北日本','小機','開北','ケンウン'], west:['北日本','小機','開北','陸奥','みらい'] };
+function unpanRegionKey(r){ return Number(r)===4 ? 'west' : 'east'; }
 let SHIFTS = [];                   // 勤務予定 [{row, ym, idx, name, days:[31]}]
 let SHIFT_NENDO = null;            // 選択中の年度（令和X の X）
 let SHIFT_MONTH = null;            // 選択中の月（11,12,1,2,3）
@@ -1294,8 +1402,15 @@ async function loadData(){
           }catch(e){}
         }
       });
-      // 提出物タブには __REPMACH__ / __SETTINGS__ を出さない
-      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__'; });
+      // 運搬排雪の設定・日別予定表レコード（年度='__UNPAN__'）を分離
+      UNPAN_SAVED = null;
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__UNPAN__'){
+          try{ const o = JSON.parse(s.note||'{}'); if(o && typeof o==='object') UNPAN_SAVED = o; }catch(e){}
+        }
+      });
+      // 提出物タブには __REPMACH__ / __SETTINGS__ / __UNPAN__ を出さない
+      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__'; });
     }
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
@@ -1364,6 +1479,7 @@ function renderAll(){
   renderAlert();
   renderSubs();
   renderMap();
+  renderUnpan();
   renderShift();
   renderCompanyDatalist();
   repApplyPresets();   // 安全日報：保存済み台数(REPMACH_SAVED)を各社パネルへ反映
@@ -1542,7 +1658,8 @@ function planRangeShort(p){
 }
 // 将来拡張：ズーム/パンは未実装（フィット表示）。必要なら map-stage に transform:scale を掛ける想定。
 // 種別・頂点の正規化（type 無し＝pin、points 無し＝[]）
-function ptType(p){ return (p && p.type==='poly') ? 'poly' : 'pin'; }
+function ptType(p){ const t = p && p.type; return (t==='poly'||t==='line') ? t : 'pin'; }
+function isLifePt(p){ return ptType(p)!=='line'; }   // 生活道路（ピン・エリア）= 線以外
 function ptPoints(p){ return (p && Array.isArray(p.points)) ? p.points : []; }
 // ポリゴン重心（頂点の平均）
 function polyCentroid(points){
@@ -1607,7 +1724,7 @@ function buildPolyLabels(polyPts){
 }
 // 1マップぶんのステージHTML（見出し＋img＋SVG＋ピン＋ラベル）
 function buildMapStage(mapNum){
-  const pts = (MAPPOINTS || []).filter(function(p){ return ptMap(p)===mapNum; });
+  const pts = (MAPPOINTS || []).filter(function(p){ return isLifePt(p) && ptMap(p)===mapNum; });
   const pinPts  = pts.filter(function(p){ return ptType(p)==='pin'; });
   const polyPts = pts.filter(function(p){ return ptType(p)==='poly'; });
   const url = mapImageUrl(mapNum);
@@ -1653,7 +1770,7 @@ function renderMap(){
   renderMapPalette();
   const wrap = document.getElementById('map-wrap');
   if(!wrap) return;
-  const pts = MAPPOINTS || [];
+  const pts = (MAPPOINTS || []).filter(isLifePt);
   const done = pts.filter(function(p){ return p.status==='完了'; }).length;
   const countEl = document.getElementById('map-count');
   if(countEl) countEl.textContent = '完了 '+done+' / 全 '+pts.length;
@@ -1678,7 +1795,7 @@ function renderMapPalette(){
 function renderMapList(){
   const el = document.getElementById('map-list');
   if(!el) return;
-  const pts = MAPPOINTS || [];
+  const pts = (MAPPOINTS || []).filter(isLifePt);
   if(pts.length===0){
     el.innerHTML = '<div class="empty">地点がありません。「📍 ピン」または「🔷 エリア」で地図上に追加してください。</div>';
     return;
@@ -1792,7 +1909,8 @@ function openMapModal(row){
     if(found) pt = found;
   }
   editingMapType = ptType(pt);
-  editingMapNum = ptMap(pt);                           // 所属マップ(1|2)を保持
+  // 所属マップ：生活は1|2、運搬ルート(line)は3(東)|4(西北)。ptMapは1|2にクランプするので線には使わない。
+  editingMapNum = (editingMapType==='line') ? (Number(pt.map)===4 ? 4 : 3) : ptMap(pt);
   editingMapXY = { x: num(pt.x), y: num(pt.y) };        // pin用に座標保持
   editingPolyPoints = ptPoints(pt).map(function(v){ return {x:num(v.x), y:num(v.y)}; });
   editingMapColor = pt.color || MAP_POLY_COLOR;
@@ -1810,15 +1928,24 @@ function openPolyModalNew(){
 }
 function fillMapModal(pt){
   const isPoly = editingMapType==='poly';
-  document.getElementById('map-modal-title').textContent = isPoly
-    ? (editingMapRow!=null ? 'エリアを編集' : 'エリアを追加')
-    : (editingMapRow!=null ? 'ピンを編集' : 'ピンを追加');
+  const isLine = editingMapType==='line';
+  const hasColor = isPoly || isLine;
+  document.getElementById('map-modal-title').textContent = isLine
+    ? (editingMapRow!=null ? 'ルートを編集' : 'ルートを追加')
+    : (isPoly ? (editingMapRow!=null ? 'エリアを編集' : 'エリアを追加')
+              : (editingMapRow!=null ? 'ピンを編集' : 'ピンを追加'));
+  // 名称ラベル（ルートは「ルート名（番号）」）
+  const nameFld = document.getElementById('mp-name').closest('.fld');
+  if(nameFld){ const lb = nameFld.querySelector('label'); if(lb) lb.textContent = isLine ? 'ルート名・番号（例：北1）' : '名称（場所名・任意）'; }
+  document.getElementById('mp-name').placeholder = isLine ? '例）北1' : '○○町内会（任意）';
   document.getElementById('mp-name').value = pt.name||'';
   document.getElementById('mp-plan-start').value = (pt.planStart||'').slice(0,10);
   document.getElementById('mp-plan-end').value = (pt.planEnd||'').slice(0,10);
   document.getElementById('mp-done').value = (pt.doneDate||'').slice(0,10);
   document.getElementById('mp-note').value = pt.note||'';
-  document.getElementById('mp-color-fld').style.display = isPoly ? '' : 'none';
+  const colorFld = document.getElementById('mp-color-fld');
+  colorFld.style.display = hasColor ? '' : 'none';
+  const colorLbl = colorFld.querySelector('label'); if(colorLbl) colorLbl.textContent = isLine ? '色（ルート）' : '色（エリア）';
   renderModalPalette();
   document.getElementById('mp-del').style.display = (editingMapRow!=null) ? '' : 'none';
   document.getElementById('map-modal').classList.add('show');
@@ -1839,34 +1966,39 @@ function closeMapModal(){
   editingMapRow = null; pendingPoint = null;
   // 未保存の作図があれば破棄
   if(drawingPoly || polyVerts.length){ drawingPoly = false; polyVerts = []; drawMapNum = null; updatePolyTools(); }
-  renderMap();
+  if(drawingLine || lineVerts.length){ drawingLine = false; lineVerts = []; updateLineTools(); }
+  renderMapActive();
 }
 async function saveMapPoint(){
   if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   const isPoly = editingMapType==='poly';
+  const isLine = editingMapType==='line';
   const name = document.getElementById('mp-name').value.trim();
   const planStart = document.getElementById('mp-plan-start').value;
   const planEnd = document.getElementById('mp-plan-end').value;
   const doneDate = document.getElementById('mp-done').value;
   const note = document.getElementById('mp-note').value.trim();
-  if(isPoly){
+  if(isLine){
+    if(editingPolyPoints.length < 2){ toast('ルート（線）には2点以上が必要です'); return; }
+  }else if(isPoly){
     if(editingPolyPoints.length < 3){ toast('多角形には3頂点以上が必要です'); return; }
   }else{
     if(!name && !doneDate){ toast('完了日を入力してください（名称は任意）'); return; }
   }
   // データ契約（GAS側と一致）：type/color/planStart/planEnd/doneDate/note/x/y/points/map
+  // 運搬ルートは type='line'、map=3(東)/4(西北) として保存（既存の列だけで表現＝GAS変更不要）
   const pt = {
     name: name,
-    type: isPoly ? 'poly' : 'pin',
-    color: isPoly ? (editingMapColor || MAP_POLY_COLOR) : '',
+    type: isLine ? 'line' : (isPoly ? 'poly' : 'pin'),
+    color: (isPoly || isLine) ? (editingMapColor || MAP_POLY_COLOR) : '',
     planStart: planStart,
     planEnd: planEnd,
     doneDate: doneDate,
     note: note,
-    x: isPoly ? 0 : editingMapXY.x,
-    y: isPoly ? 0 : editingMapXY.y,
-    points: isPoly ? editingPolyPoints.map(function(v){ return {x:v.x, y:v.y}; }) : [],
-    map: Number(editingMapNum)===2 ? 2 : 1   // 所属マップ(1|2)
+    x: (isPoly || isLine) ? 0 : editingMapXY.x,
+    y: (isPoly || isLine) ? 0 : editingMapXY.y,
+    points: (isPoly || isLine) ? editingPolyPoints.map(function(v){ return {x:v.x, y:v.y}; }) : [],
+    map: isLine ? (Number(editingMapNum)===4 ? 4 : 3) : (Number(editingMapNum)===2 ? 2 : 1)
   };
   if(editingMapRow!=null) pt.row = editingMapRow;
   const btn = document.getElementById('mp-save');
@@ -1879,13 +2011,14 @@ async function saveMapPoint(){
     if(idx>=0) MAPPOINTS[idx] = rec; else MAPPOINTS.push(rec);
     // 作図状態をクリアしてから閉じる／再描画
     drawingPoly = false; polyVerts = []; drawMapNum = null; updatePolyTools();
+    drawingLine = false; lineVerts = []; updateLineTools();
     document.getElementById('map-modal').classList.remove('show');
-    editingMapRow = null; pendingPoint = null;
-    renderMap();
+    const wasLine = isLine; editingMapRow = null; pendingPoint = null;
+    if(wasLine) renderUnpan(); else renderMap();
     if(offline){
       toast('⚠️オフラインのため保存できていません。GASの再デプロイ（新バージョン）とアクセス＝全員をご確認ください');
     }else{
-      toast(isPoly ? 'エリアを保存しました' : '地点を保存しました');
+      toast(isLine ? 'ルートを保存しました' : (isPoly ? 'エリアを保存しました' : '地点を保存しました'));
     }
   }else{
     toast('保存に失敗：' + (res && res.error ? res.error : '不明なエラー'));
@@ -1895,12 +2028,13 @@ async function deleteMapPoint(){
   if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   if(editingMapRow==null) return;
   if(!confirm('この地点／エリアを削除しますか？')) return;
+  const wasLine = (editingMapType==='line');
   const res = await callApi({action:'delMapPt', row:editingMapRow});
   if(res && res.ok){
     MAPPOINTS = MAPPOINTS.filter(function(p){ return p.row!==editingMapRow; });
     document.getElementById('map-modal').classList.remove('show');
     editingMapRow = null; pendingPoint = null;
-    renderMap();
+    if(wasLine) renderUnpan(); else renderMap();
     if(offline){
       toast('⚠️オフラインのため削除できていません。GASの再デプロイとアクセス設定をご確認ください');
     }else{
@@ -1909,6 +2043,292 @@ async function deleteMapPoint(){
   }else{
     toast('削除に失敗：' + (res && res.error ? res.error : '不明なエラー'));
   }
+}
+
+/*════════════════ 運搬排雪（線ルート＋日別予定表） ════════════════*/
+function mapIsUnpanActive(){ const u=document.getElementById('map-sub-unpan'); return !!(u && u.style.display!=='none'); }
+function renderMapActive(){ if(mapIsUnpanActive()) renderUnpan(); else renderMap(); }
+function switchMapSub(which){
+  const life = document.getElementById('map-sub-life');
+  const unpan = document.getElementById('map-sub-unpan');
+  const isU = (which==='unpan');
+  if(life) life.style.display = isU ? 'none' : '';
+  if(unpan) unpan.style.display = isU ? '' : 'none';
+  Array.prototype.forEach.call(document.querySelectorAll('.map-subbtn'), function(b){
+    b.classList.toggle('active', b.getAttribute('data-sub')===which);
+  });
+  if(isU) renderUnpan(); else renderMap();
+}
+function setUnpanRegion(r){
+  if(drawingLine) cancelLineDraw();
+  UNPAN_REGION = Number(r)===4 ? 4 : 3;
+  Array.prototype.forEach.call(document.querySelectorAll('#unpan-region button'), function(b){
+    b.classList.toggle('active', Number(b.getAttribute('data-region'))===UNPAN_REGION);
+  });
+  renderUnpan();
+}
+function unpanImgUrl(){
+  const key = unpanRegionKey(UNPAN_REGION);
+  return (UNPAN_SAVED && UNPAN_SAVED.img && UNPAN_SAVED.img[key]) ? String(UNPAN_SAVED.img[key]).trim() : '';
+}
+// 線ルートSVG（開いた折れ線）
+function buildLinesSvg(lines){
+  return lines.map(function(p){
+    const vs = ptPoints(p);
+    if(vs.length < 2) return '';
+    const attr = vs.map(function(v){ return num(v.x)+','+num(v.y); }).join(' ');
+    const color = p.color || '#E91E63';
+    return '<polyline class="map-line" data-row="'+p.row+'" points="'+attr+'" stroke="'+esc(color)+'" stroke-width="1.1" />';
+  }).join('');
+}
+function buildLineDraftSvg(){
+  if(!(drawingLine && lineVerts.length)) return '';
+  let d='';
+  if(lineVerts.length>=2){
+    const attr = lineVerts.map(function(v){ return v.x+','+v.y; }).join(' ');
+    d += '<polyline points="'+attr+'" fill="none" stroke="'+esc(UNPAN_COLOR)+'" stroke-width="1.1" stroke-dasharray="1.5,1" />';
+  }
+  d += lineVerts.map(function(v){ return '<circle cx="'+v.x+'" cy="'+v.y+'" r="1" fill="'+esc(UNPAN_COLOR)+'" stroke="#fff" stroke-width="0.3" />'; }).join('');
+  return d;
+}
+function buildLineLabels(lines){
+  return lines.map(function(p){
+    const vs = ptPoints(p);
+    if(vs.length < 1 || !p.name) return '';
+    const mid = vs[Math.floor(vs.length/2)] || vs[0];
+    return '<div class="map-line-label" style="left:'+num(mid.x)+'%;top:'+num(mid.y)+'%" data-row="'+p.row+'">'
+      + '<span class="mll-name" style="border-color:'+esc(p.color||'#888')+'">'+esc(p.name)+'</span></div>';
+  }).join('');
+}
+function renderUnpan(){
+  renderUnpanPalette();
+  const wrap = document.getElementById('unpan-wrap');
+  if(!wrap) return;
+  const region = UNPAN_REGION;
+  const lines = (MAPPOINTS||[]).filter(function(p){ return ptType(p)==='line' && Number(p.map)===region; });
+  const url = unpanImgUrl();
+  const linesSvg = buildLinesSvg(lines);
+  const draft = drawingLine ? buildLineDraftSvg() : '';
+  const labels = buildLineLabels(lines);
+  const imgTag = url
+    ? '<img class="map-img" id="unpan-img" src="'+esc(url)+'" alt="運搬排雪 地図">'
+    : '<div class="map-img" id="unpan-img" style="height:520px;background:repeating-linear-gradient(0deg,#f4f7fb,#f4f7fb 24px,#e8eef6 24px,#e8eef6 25px),repeating-linear-gradient(90deg,#f4f7fb,#f4f7fb 24px,#e8eef6 24px,#e8eef6 25px);display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:13px;padding:16px">背景地図は未設定です。上の「画像URL」で白地図を設定できます。<br>この白地図の上にルート（線）を引けます。</div>';
+  wrap.innerHTML = '<div class="map-stage'+(drawingLine?' adding':'')+'" id="unpan-stage">'
+    + imgTag
+    + '<svg class="map-svg" id="unpan-svg" viewBox="0 0 100 100" preserveAspectRatio="none">'+linesSvg+draft+'</svg>'
+    + labels
+    + '</div>';
+  const stage = document.getElementById('unpan-stage');
+  if(stage){
+    stage.onclick = function(e){ onUnpanClick(e); };
+    stage.ondblclick = function(){ if(drawingLine) finishLineDraw(); };
+    Array.prototype.forEach.call(stage.querySelectorAll('.map-line'), function(el){
+      el.onclick = function(e){ if(drawingLine) return; e.stopPropagation(); openMapModal(Number(el.getAttribute('data-row'))); };
+    });
+    Array.prototype.forEach.call(stage.querySelectorAll('.map-line-label'), function(el){
+      el.onclick = function(e){ if(drawingLine) return; e.stopPropagation(); openMapModal(Number(el.getAttribute('data-row'))); };
+    });
+  }
+  const urlIn = document.getElementById('unpan-img-url');
+  if(urlIn && document.activeElement!==urlIn) urlIn.value = url;
+  updateLineTools();
+  renderUnpanTable();
+}
+function renderUnpanPalette(){
+  const el = document.getElementById('unpan-palette');
+  if(!el) return;
+  el.innerHTML = MAP_COLORS.map(function(c){
+    return '<button type="button" class="sw-btn'+(UNPAN_COLOR===c.c?' active':'')+'" style="background:'+c.c+'" title="'+esc(c.n)+'" data-c="'+c.c+'"></button>';
+  }).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('.sw-btn'), function(b){
+    b.onclick = function(){ UNPAN_COLOR = b.getAttribute('data-c'); renderUnpanPalette(); if(drawingLine) renderUnpan(); };
+  });
+}
+// ルート（線）の作図
+function startLineDraw(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  drawingLine = true; lineVerts = [];
+  updateLineTools(); renderUnpan();
+  toast('地図をクリックしてルートの点を追加 → ダブルクリックか「確定」で終了（2点以上）');
+}
+function updateLineTools(){
+  const add=document.getElementById('uline-add-btn'), done=document.getElementById('uline-done-btn'), cancel=document.getElementById('uline-cancel-btn');
+  if(add) add.style.display = drawingLine ? 'none' : '';
+  if(done) done.style.display = drawingLine ? '' : 'none';
+  if(cancel) cancel.style.display = drawingLine ? '' : 'none';
+  const hint=document.getElementById('unpan-hint');
+  if(hint) hint.textContent = drawingLine
+    ? '地図をクリックして点を追加 →「確定」またはダブルクリックで終了（2点以上）。「取消」で破棄。'
+    : '色を選び「＋ ルート追加」→ 地図をクリックで線を引き、「確定」またはダブルクリックで終了（2点以上）。既存のルートをクリックで編集。';
+}
+function finishLineDraw(){
+  if(!drawingLine) return;
+  if(lineVerts.length < 2){ toast('点が足りません（2点以上必要です）'); return; }
+  drawingLine = false; updateLineTools();
+  openLineModalNew();
+}
+function cancelLineDraw(){
+  drawingLine = false; lineVerts = []; updateLineTools(); renderUnpan();
+}
+function onUnpanClick(e){
+  const img = document.getElementById('unpan-img');
+  if(!img) return;
+  const rect = img.getBoundingClientRect();
+  if(!rect.width || !rect.height) return;
+  const x = Math.max(0, Math.min(100, (e.clientX - rect.left)/rect.width*100));
+  const y = Math.max(0, Math.min(100, (e.clientY - rect.top)/rect.height*100));
+  if(drawingLine){
+    lineVerts.push({ x: Math.round(x*10)/10, y: Math.round(y*10)/10 });
+    renderUnpan();
+  }
+}
+function openLineModalNew(){
+  editingMapRow = null;
+  editingMapType = 'line';
+  editingMapNum = UNPAN_REGION;    // 3=東 / 4=西北（map値として保存）
+  editingMapXY = {x:0,y:0};
+  editingPolyPoints = lineVerts.map(function(v){ return {x:v.x,y:v.y}; });
+  editingMapColor = UNPAN_COLOR;
+  fillMapModal({name:'', planStart:'', planEnd:'', doneDate:'', note:'', type:'line', color:UNPAN_COLOR});
+}
+
+// ── 日別予定表 ──
+function ensureUnpanSaved(){
+  if(!UNPAN_SAVED || typeof UNPAN_SAVED!=='object') UNPAN_SAVED = {};
+  if(!UNPAN_SAVED.img || typeof UNPAN_SAVED.img!=='object') UNPAN_SAVED.img = {};
+  if(!UNPAN_SAVED.plan || typeof UNPAN_SAVED.plan!=='object') UNPAN_SAVED.plan = {};
+}
+function unpanPlan(key){
+  ensureUnpanSaved();
+  let plan = UNPAN_SAVED.plan[key];
+  if(!plan || !Array.isArray(plan.cols)){
+    plan = { cols: (UNPAN_DEFAULT_COLS[key]||[]).slice(), rows: [] };
+    UNPAN_SAVED.plan[key] = plan;
+  }
+  if(!Array.isArray(plan.rows)) plan.rows = [];
+  // 各行の cells を cols 数にそろえる
+  plan.rows.forEach(function(r){
+    if(!Array.isArray(r.cells)) r.cells = [];
+    while(r.cells.length < plan.cols.length) r.cells.push({code:'', shift:''});
+    r.cells.length = plan.cols.length;
+    r.cells.forEach(function(c,i){ if(!c || typeof c!=='object') r.cells[i]={code:'',shift:''}; });
+  });
+  return plan;
+}
+function renderUnpanTable(){
+  const wrap = document.getElementById('unpan-table-wrap');
+  if(!wrap) return;
+  const key = unpanRegionKey(UNPAN_REGION);
+  const plan = unpanPlan(key);
+  let head = '<tr><th class="u-datecol">日付</th>';
+  plan.cols.forEach(function(c, ci){
+    head += '<th><input class="u-head" data-col="'+ci+'" value="'+esc(c)+'">'
+      + '<div class="u-coldel"><button type="button" data-col="'+ci+'" title="この列を削除">×</button></div></th>';
+  });
+  head += '<th class="u-rowdel"></th></tr>';
+  let body = '';
+  plan.rows.forEach(function(r, ri){
+    body += '<tr><td class="u-datecol"><input class="u-date" data-row="'+ri+'" value="'+esc(r.date||'')+'" placeholder="1/12"></td>';
+    r.cells.forEach(function(cell, ci){
+      const sh = cell.shift==='night' ? 'night' : (cell.shift==='day' ? 'day' : '');
+      const shLabel = sh==='night' ? '夜' : (sh==='day' ? '昼' : '−');
+      body += '<td class="u-cell '+sh+'" data-row="'+ri+'" data-col="'+ci+'">'
+        + '<span class="u-shift" data-row="'+ri+'" data-col="'+ci+'" title="日中/夜間を切替">'+shLabel+'</span>'
+        + '<input class="u-code" data-row="'+ri+'" data-col="'+ci+'" value="'+esc(cell.code||'')+'" placeholder="">'
+        + '</td>';
+    });
+    body += '<td class="u-rowdel"><button type="button" data-row="'+ri+'" title="この行を削除">×</button></td></tr>';
+  });
+  wrap.innerHTML = '<table class="unpan-tbl"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>'
+    + (plan.rows.length ? '' : '<div class="empty" style="margin-top:8px">まだ予定がありません。「＋ 日付行を追加」で行を追加してください。</div>');
+  wireUnpanTable(plan);
+}
+function wireUnpanTable(plan){
+  const wrap = document.getElementById('unpan-table-wrap');
+  if(!wrap) return;
+  Array.prototype.forEach.call(wrap.querySelectorAll('input.u-head'), function(inp){
+    inp.onchange = function(){ plan.cols[Number(inp.getAttribute('data-col'))] = inp.value; };
+  });
+  Array.prototype.forEach.call(wrap.querySelectorAll('input.u-date'), function(inp){
+    inp.onchange = function(){ plan.rows[Number(inp.getAttribute('data-row'))].date = inp.value; };
+  });
+  Array.prototype.forEach.call(wrap.querySelectorAll('input.u-code'), function(inp){
+    inp.onchange = function(){
+      const ri=Number(inp.getAttribute('data-row')), ci=Number(inp.getAttribute('data-col'));
+      plan.rows[ri].cells[ci].code = inp.value;
+    };
+  });
+  Array.prototype.forEach.call(wrap.querySelectorAll('.u-shift'), function(sp){
+    sp.onclick = function(){
+      if(READONLY) return;
+      const ri=Number(sp.getAttribute('data-row')), ci=Number(sp.getAttribute('data-col'));
+      const cur = plan.rows[ri].cells[ci].shift;
+      plan.rows[ri].cells[ci].shift = (cur==='' ? 'day' : (cur==='day' ? 'night' : ''));
+      renderUnpanTable();
+    };
+  });
+  Array.prototype.forEach.call(wrap.querySelectorAll('.u-rowdel button'), function(b){
+    b.onclick = function(){
+      if(READONLY) return;
+      if(!confirm('この日付行を削除しますか？')) return;
+      plan.rows.splice(Number(b.getAttribute('data-row')), 1);
+      renderUnpanTable();
+    };
+  });
+  Array.prototype.forEach.call(wrap.querySelectorAll('.u-coldel button'), function(b){
+    b.onclick = function(){
+      if(READONLY) return;
+      const ci = Number(b.getAttribute('data-col'));
+      if(!confirm('「'+(plan.cols[ci]||'')+'」の列を削除しますか？（各日のこの列の内容も消えます）')) return;
+      plan.cols.splice(ci,1);
+      plan.rows.forEach(function(r){ r.cells.splice(ci,1); });
+      renderUnpanTable();
+    };
+  });
+}
+function unpanAddRow(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const plan = unpanPlan(unpanRegionKey(UNPAN_REGION));
+  plan.rows.push({date:'', cells: plan.cols.map(function(){ return {code:'', shift:''}; })});
+  renderUnpanTable();
+}
+function unpanAddCol(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const plan = unpanPlan(unpanRegionKey(UNPAN_REGION));
+  plan.cols.push('会社'+(plan.cols.length+1));
+  plan.rows.forEach(function(r){ r.cells.push({code:'', shift:''}); });
+  renderUnpanTable();
+}
+async function persistUnpan(msgOk){
+  ensureUnpanSaved();
+  const res = await callApi({action:'saveSub', sub:{year:'__UNPAN__', company:'運搬排雪', doc:'設定', status:'', date:'', link:'', note: JSON.stringify(UNPAN_SAVED)}});
+  if(res && res.ok){
+    toast(offline ? '保存しました（オフライン：この端末のみ・共有されていません）' : (msgOk||'保存しました'));
+  }else{
+    toast('保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+  return res && res.ok;
+}
+function saveUnpanPlan(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  // 画面の未確定入力（フォーカス中）も取り込む
+  const ae = document.activeElement;
+  if(ae && (ae.classList.contains('u-code')||ae.classList.contains('u-date')||ae.classList.contains('u-head'))) ae.blur();
+  persistUnpan('予定表を保存しました');
+}
+function saveUnpanImg(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  ensureUnpanSaved();
+  const v = (document.getElementById('unpan-img-url').value||'').trim();
+  UNPAN_SAVED.img[unpanRegionKey(UNPAN_REGION)] = v;
+  persistUnpan('背景地図を設定しました').then(function(){ renderUnpan(); });
+}
+// 運搬排雪の印刷（地図＋予定表のみ）
+function printUnpan(){
+  document.body.classList.remove('print-map','print-shift','print-report');
+  document.body.classList.add('print-unpan');
+  window.print();
+  setTimeout(function(){ document.body.classList.remove('print-unpan'); }, 300);
 }
 
 /*════════════════ 勤務予定表（シフト） ════════════════*/
