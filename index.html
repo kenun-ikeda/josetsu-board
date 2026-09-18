@@ -53,8 +53,13 @@
   .stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)} .stat.ok .n{color:var(--ok)}
 
   /* ---------- お知らせ・注意事項ボード ---------- */
-  #notice-board{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;color:#1a2430;resize:vertical;min-height:190px;line-height:1.7;box-sizing:border-box}
+  .notice-compose{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#f7fafd}
+  .notice-name-in{width:100%;max-width:280px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#1a2430;box-sizing:border-box;margin-bottom:8px}
+  .notice-name-in:focus{outline:none;border-color:var(--accent2)}
+  #notice-board{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;color:#1a2430;resize:vertical;min-height:90px;line-height:1.7;box-sizing:border-box}
   #notice-board:focus{outline:none;border-color:var(--accent2)}
+  .notice-list{margin-top:12px}
+  .notice-list:empty::after{content:"まだ投稿はありません。";color:var(--muted);font-size:13px}
   .notice-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#fbfdff}
   .notice-item .ni-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px}
   .notice-item .ni-ts{font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace}
@@ -521,10 +526,17 @@
         <div class="row" style="align-items:center;margin-bottom:8px">
           <h2 style="margin:0">お知らせ・注意事項（みんなで共有）</h2>
           <div class="spacer"></div>
-          <span id="notice-updated" class="hint" style="margin:0"></span>
-          <button class="btn" onclick="saveNoticeBoard()" style="margin-left:12px">保存</button>
+          <span id="notice-count" class="hint" style="margin:0"></span>
         </div>
-        <textarea id="notice-board" placeholder="ここに注意事項などを書き込んで「保存」を押すと、みんなで共有できます。"></textarea>
+        <div class="notice-compose">
+          <input id="notice-name" class="notice-name-in" placeholder="お名前・会社名（任意）" maxlength="40">
+          <textarea id="notice-board" placeholder="注意事項などを書いて「投稿」を押すと、一覧に追加され、みんなで共有できます。"></textarea>
+          <div class="row" style="justify-content:flex-end;margin-top:8px">
+            <button class="btn" onclick="postNotice()">投稿</button>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:6px">投稿するとそれぞれ別の項目として一覧に残ります（他の人の投稿を上書きしません）。不要になった項目は「削除」で消せます。</p>
+        <div id="notice-list" class="notice-list"></div>
       </div>
       <div class="card">
         <h2>今日の予定</h2>
@@ -2252,38 +2264,64 @@ function renderSummary(){
 }
 
 /*════════════════ お知らせ・注意事項ボード（全員で共有・1枚の書き込みボード） ════════════════*/
-// 最新の共有テキストをそのまま1つのボードに表示。保存で全員に反映（保存は閲覧モードでも可）。
-function latestNotice(){
-  const list = (NOTICES || []).slice().sort(function(a,b){
-    return String(b.ts||'').localeCompare(String(a.ts||''));
-  });
-  return list.length ? list[0] : null;
-}
+// 追記ログ形式：投稿は行として1件ずつ追加。一覧に新しい順で全件表示（上書きは起きない）。
+// 投稿・削除は READONLY ガードなし（誰もが書き込める共有ボードのため）。
 function renderNotices(){
-  const board = document.getElementById('notice-board');
-  if(!board) return;
-  const latest = latestNotice();
-  // 入力中（フォーカス中）は上書きしない＝打ち込み中の内容を消さない
-  if(document.activeElement !== board){
-    board.value = latest ? (latest.body || '') : '';
-  }
-  const up = document.getElementById('notice-updated');
-  if(up) up.textContent = latest ? ('最終更新: ' + (latest.ts || '')) : '';
+  const listEl = document.getElementById('notice-list');
+  if(!listEl) return;
+  const list = (NOTICES || []).slice().sort(function(a,b){
+    return String(b.ts||'').localeCompare(String(a.ts||''));   // 新しい順
+  });
+  listEl.innerHTML = list.map(function(n){
+    const name = (n.name||'').trim();
+    const bodyHtml = esc(n.body||'').replace(/\n/g, '<br>');
+    return '<div class="notice-item">'
+      + '<div class="ni-head">'
+      +   '<span class="ni-ts">'+esc(n.ts||'')+'</span>'
+      +   (name ? '<span class="ni-name">'+esc(name)+'</span>' : '')
+      +   '<span class="ni-spacer"></span>'
+      +   '<button type="button" class="ni-del" data-row="'+esc(String(n.row))+'">削除</button>'
+      + '</div>'
+      + '<div class="ni-body">'+bodyHtml+'</div>'
+      + '</div>';
+  }).join('');
+  Array.prototype.forEach.call(listEl.querySelectorAll('.ni-del'), function(b){
+    b.onclick = function(){ deleteNotice(b.getAttribute('data-row')); };
+  });
+  const cnt = document.getElementById('notice-count');
+  if(cnt) cnt.textContent = list.length ? (list.length + '件') : '';
 }
 
-// 保存：READONLYガードは入れない（誰もが書き込める共有ボードのため）。最新テキストを追記し全員に反映。
-async function saveNoticeBoard(){
+// 新規投稿：1件を行として追加。他の人の投稿はそのまま残る（上書きしない）。
+async function postNotice(){
   const board = document.getElementById('notice-board');
+  const nameEl = document.getElementById('notice-name');
   if(!board) return;
-  const body = board.value;
-  const res = await callApi({action:'saveNotice', notice:{name:'', body:body}});
+  const body = (board.value||'').trim();
+  const name = nameEl ? (nameEl.value||'').trim() : '';
+  if(!body){ toast('内容を入力してください'); return; }
+  const res = await callApi({action:'saveNotice', notice:{name:name, body:body}});
   if(res && res.ok){
-    NOTICES.unshift({row:res.row, ts:res.ts, name:'', body:body});
-    const up = document.getElementById('notice-updated');
-    if(up) up.textContent = '最終更新: ' + (res.ts || '');
-    toast(offline ? '保存しました（オフライン：この端末のみ・共有されていません）' : '保存しました');
+    NOTICES.unshift({row:res.row, ts:res.ts, name:name, body:body});
+    board.value = '';               // 投稿欄はクリア（名前欄は次回のため残す）
+    renderNotices();
+    toast(offline ? '投稿しました（オフライン：この端末のみ・共有されていません）' : '投稿しました');
   }else{
-    toast('保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+    toast('投稿に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
+}
+
+// 削除：指定の1件を消す（他の投稿には影響しない）。
+async function deleteNotice(row){
+  if(row==null || row==='') return;
+  if(!confirm('この投稿を削除します。よろしいですか？')) return;
+  const res = await callApi({action:'delNotice', row:row});
+  if(res && res.ok){
+    NOTICES = (NOTICES||[]).filter(function(x){ return String(x.row)!==String(row); });
+    renderNotices();
+    toast(offline ? '削除しました（オフライン：この端末のみ・共有されていません）' : '削除しました');
+  }else{
+    toast('削除に失敗しました' + (res && res.error ? '：'+res.error : ''));
   }
 }
 
