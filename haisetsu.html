@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>排雪シフト（北日本重機）</title>
+<style>
+  :root{
+    --accent:#1a3d7c; --accent2:#2f6bd6; --line:#d9e1ec; --muted:#6b7a90;
+    --ok:#1f9d55; --bad:#d64545; --bg:#f3f6fa; --day:#2e9e5b; --night:#2f6bd6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;background:var(--bg);color:#1a2430;font-size:14px;-webkit-text-size-adjust:100%}
+  h1,h2,h3{margin:0}
+  .app{display:none}
+  header{position:sticky;top:0;z-index:20;background:var(--accent);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:calc(10px + env(safe-area-inset-top,0px))}
+  header h1{font-size:16px;font-weight:800}
+  header .spacer{flex:1}
+  .view-badge{background:#e8f0fe;color:#1a3d7c;border:1px solid #9db8e8;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;white-space:nowrap}
+  header .lo{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  nav{display:flex;gap:6px;padding:10px 14px 0;flex-wrap:wrap;max-width:1100px;margin:0 auto}
+  nav button{background:#fff;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+  nav button.active{background:var(--accent);color:#fff}
+  main{max-width:1100px;margin:0 auto;padding:12px 14px calc(40px + env(safe-area-inset-bottom,0px))}
+  .tab{display:none}
+  .tab.active{display:block}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .spacer{flex:1}
+  .hint{color:var(--muted);font-size:12px;margin:6px 0 0;line-height:1.6}
+  label{font-size:12px;color:var(--muted);font-weight:700}
+  input,select,textarea{font-family:inherit;font-size:14px;color:#1a2430}
+  input,select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent2)}
+  textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;width:100%;resize:vertical;line-height:1.6}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+  .btn.sec{background:#fff;color:var(--accent)}
+  .btn.sm{padding:6px 10px;font-size:12px}
+  .btn.warn{background:#fff;border-color:#e6b4b0;color:var(--bad)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .empty{color:var(--muted);font-size:13px;padding:14px;text-align:center;border:1px dashed var(--line);border-radius:10px}
+  .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800}
+  .pill.day{background:#e3f5ea;color:#0f5c33;border:1px solid #a5d6bb}
+  .pill.night{background:#e6edfb;color:#1a3d7c;border:1px solid #9db8e8}
+  /* ---- login ---- */
+  #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  #login .box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;max-width:360px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+  #login h2{font-size:18px;color:var(--accent);margin-bottom:6px}
+  #login p{color:var(--muted);font-size:13px;margin:0 0 14px}
+  #login input{width:100%;margin-bottom:10px}
+  #login .err{color:var(--bad);font-size:12px;min-height:16px;font-weight:700}
+  /* ---- date nav ---- */
+  .datebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .datebar .dsel{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-weight:800;color:var(--accent);font-size:15px}
+  .datebar .wd{font-weight:800;color:var(--muted)}
+  .arrow{background:#fff;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 12px;font-weight:800;cursor:pointer;font-family:inherit;font-size:15px}
+  /* ---- 班 block ---- */
+  .han{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  .han-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#eef3f9;border-bottom:1px solid var(--line)}
+  .han-head .hn{font-weight:800;color:var(--accent);font-size:15px}
+  .han-body{padding:12px}
+  .fldgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px}
+  .fld{display:flex;flex-direction:column;gap:3px}
+  .fld input,.fld select{width:100%}
+  .seg{display:inline-flex;border:1px solid var(--accent);border-radius:8px;overflow:hidden}
+  .seg button{background:#fff;border:none;color:var(--accent);padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+  .seg button.active[data-dn="昼"]{background:var(--day);color:#fff}
+  .seg button.active[data-dn="夜"]{background:var(--night);color:#fff}
+  /* machine table */
+  .mtbl{width:100%;border-collapse:collapse;margin-top:4px}
+  .mtbl th,.mtbl td{border:1px solid var(--line);padding:5px 6px;text-align:left}
+  .mtbl th{background:#f4f7fb;font-size:12px;color:var(--muted);font-weight:800}
+  .mtbl td input,.mtbl td select{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 6px}
+  .mtbl .mk{width:92px}
+  .mtbl .mx{width:34px;text-align:center}
+  .mtbl .mx button{border:1px solid #e6b4b0;background:#fff;color:var(--bad);border-radius:6px;padding:2px 7px;font-weight:800;cursor:pointer;font-family:inherit}
+  /* dump grid */
+  .dumpgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-top:6px}
+  .dumpcell{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fbfdff}
+  .dumpcell label{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dumpcell input{width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 6px;text-align:center;font-weight:800}
+  .dumptotal{border-color:var(--accent);background:#eef3f9}
+  .dumptotal input{background:transparent;border:none;color:var(--accent)}
+  /* readonly */
+  body.readonly .edit-only{display:none !important}
+  body.readonly input,body.readonly select,body.readonly textarea{background:#f5f7fa;pointer-events:none}
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222c3a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;max-width:90%;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+  #toast.show{opacity:.96}
+  .offline-badge{position:fixed;right:10px;bottom:10px;background:#8a5a00;color:#fff;font-size:11px;font-weight:800;border-radius:8px;padding:5px 9px;z-index:40;display:none}
+  .tpl-list{display:flex;flex-direction:column;gap:12px}
+  .memgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .memgrid .fld textarea{min-height:70px;font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login">
+  <div class="box">
+    <h2>排雪シフト（北日本重機）</h2>
+    <p id="login-note">パスワードを入力してください。</p>
+    <input id="login-pw" type="password" placeholder="パスワード" autocomplete="current-password">
+    <button class="btn" style="width:100%" onclick="tryLogin()">ログイン</button>
+    <div class="err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div class="app" id="app">
+  <header>
+    <h1>排雪シフト（北日本重機）</h1>
+    <span class="view-badge" id="view-badge" style="display:none">閲覧モード</span>
+    <div class="spacer"></div>
+    <button class="lo" onclick="logout()">ログアウト</button>
+  </header>
+  <nav>
+    <button data-tab="input" class="active" onclick="switchTab('input')">📝 入力</button>
+    <button data-tab="tpl" class="edit-only" onclick="switchTab('tpl')">👥 班テンプレ・名簿</button>
+  </nav>
+  <main>
+    <!-- ===== 入力 ===== -->
+    <section class="tab active" id="tab-input">
+      <div class="card">
+        <div class="datebar">
+          <button class="arrow" onclick="stepDay(-1)" title="前の日">◀</button>
+          <input type="date" id="day-date" class="dsel" onchange="onDatePick()">
+          <span class="wd" id="day-wd"></span>
+          <button class="arrow" onclick="stepDay(1)" title="次の日">▶</button>
+          <button class="btn sec sm" onclick="gotoToday()">今日</button>
+          <div class="spacer"></div>
+          <button class="btn sec sm edit-only" onclick="copyPrevDay()">前日をコピー</button>
+          <button class="btn sm edit-only" id="day-save" onclick="saveDay()">💾 保存</button>
+        </div>
+        <p class="hint">日付を選び、下で班ごとに入力します。班は「＋ 班を追加」で増やせます。班テンプレを選ぶと機械・オペ・助手が自動で入ります。台数は各社入れると合計が自動計算されます。</p>
+      </div>
+
+      <div id="blocks"></div>
+
+      <div class="card edit-only" style="text-align:center">
+        <button class="btn sec" onclick="addBlock()">＋ 班を追加</button>
+        <button class="btn warn sm" style="margin-left:10px" onclick="deleteDay()">この日の予定を削除</button>
+      </div>
+    </section>
+
+    <!-- ===== 班テンプレ・名簿 ===== -->
+    <section class="tab" id="tab-tpl">
+      <div class="card">
+        <div class="row">
+          <h2 style="color:var(--accent)">班テンプレート</h2>
+          <div class="spacer"></div>
+          <button class="btn sm edit-only" onclick="addTemplate()">＋ テンプレを追加</button>
+          <button class="btn sm edit-only" id="tpl-save" onclick="saveTemplates()">💾 テンプレを保存</button>
+        </div>
+        <p class="hint">班（Aパターン・Bパターン等）ごとに「機械→オペ・助手」の顔ぶれを登録しておくと、入力画面で班を選ぶだけで一気に埋められます。何パターンでも作れます。</p>
+        <div id="tpl-list" class="tpl-list" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <h2 style="color:var(--accent)">名簿（入力候補）</h2>
+          <div class="spacer"></div>
+          <button class="btn sm edit-only" id="mem-save" onclick="saveMembers()">💾 名簿を保存</button>
+        </div>
+        <p class="hint">よく使う名前を役割ごとに1行1名で入れておくと、入力時に候補（サジェスト）として出て、選ぶだけになります。</p>
+        <div class="memgrid" id="mem-grid" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <h2 style="color:var(--accent)">ダンプの会社</h2>
+          <div class="spacer"></div>
+          <button class="btn sm edit-only" id="cmp-save" onclick="saveCompanies()">💾 会社を保存</button>
+        </div>
+        <p class="hint">ダンプ台数を集計する会社名を1行1社で入れてください（この順で表示・FAX予定表に使います）。</p>
+        <textarea id="cmp-text" style="margin-top:10px;min-height:120px" oninput="otherDirty=true" placeholder="小橋&#10;春興業&#10;丸山&#10;タイヨウ&#10;佐藤&#10;末広&#10;ケンウン"></textarea>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast"></div>
+<div class="offline-badge" id="offline-badge">⚠ オフライン（保存は共有されません）</div>
+
+<!-- datalists -->
+<datalist id="dl-op"></datalist>
+<datalist id="dl-assist"></datalist>
+<datalist id="dl-worker"></datalist>
+<datalist id="dl-sewa"></datalist>
+<datalist id="dl-keibi"></datalist>
+<datalist id="dl-driver"></datalist>
+
+<script>
+/*═══════════ 設定（既存の除雪ボードと同じGAS・パスワードを共有） ═══════════*/
+const GAS_URL   = 'https://script.google.com/macros/s/AKfycbx7DtBGTk_QGYsHK7mGNxigC2FhTM-ZZds8O33pziuErRTv2tH-ab6MvjfjOBeK7_Z_Pg/exec';
+const API_TOKEN = 'kenun-josetsu-2026';
+const APP_PASSWORD = 'kITAMARUCHI';
+const VIEW_PASSWORD = 'Kitamaruchi';
+const DEMO = GAS_URL.indexOf('PASTE') >= 0;
+const AUTH_KEY = 'haisetsu_auth_mode';
+let READONLY = false;
+let offline = false;
+
+/*═══════════ 定数・状態 ═══════════*/
+const MACHINE_KINDS = ['BR','G','TS','BH','SR','ダンプ','その他'];
+const MEMBER_ROLES = [
+  {key:'op',     label:'オペ',   dl:'dl-op'},
+  {key:'assist', label:'助手',   dl:'dl-assist'},
+  {key:'worker', label:'作業員', dl:'dl-worker'},
+  {key:'sewa',   label:'世話役', dl:'dl-sewa'},
+  {key:'keibi',  label:'警備',   dl:'dl-keibi'},
+  {key:'driver', label:'運転手', dl:'dl-driver'}
+];
+const DEFAULT_COMPANIES = ['小橋','春興業','丸山','タイヨウ','佐藤','末広','ケンウン'];
+const WD_JP = ['日','月','火','水','木','金','土'];
+
+let TEMPLATES = [];            // [{id,name,machines:[{kind,op,assist}]}]
+let MEMBERS   = {op:[],assist:[],worker:[],sewa:[],keibi:[],driver:[]};
+let COMPANIES = DEFAULT_COMPANIES.slice();
+let DAYS = {};                 // { 'YYYY-MM-DD': {row, date, blocks:[...]} }
+let CUR_DATE = todayISO();     // 選択中の日付 'YYYY-MM-DD'
+let CUR = null;                // 選択中日のオブジェクト（編集対象）
+let dayDirty = false;          // 日別入力の未保存
+let otherDirty = false;        // 班テンプレ・名簿・会社の未保存
+
+/*═══════════ ユーティリティ ═══════════*/
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(window.__tt); window.__tt=setTimeout(function(){ t.classList.remove('show'); },2600); }
+function todayISO(){ const d=new Date(); d.setHours(0,0,0,0); return isoOf(d); }
+function isoOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseISO(s){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||''); if(!m) return new Date(); return new Date(Number(m[1]),Number(m[2])-1,Number(m[3])); }
+function wdOf(s){ return WD_JP[parseISO(s).getDay()]; }
+function fmtJP(s){ const d=parseISO(s); return (d.getMonth()+1)+'月'+d.getDate()+'日'; }
+function uid(){ return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function linesToArr(t){ return String(t||'').split(/\r?\n/).map(function(x){ return x.trim(); }).filter(Boolean); }
+
+/*═══════════ 通信（除雪ボードと同じ方式：タイムアウト＋オフライン退避） ═══════════*/
+let mockSubs = [];   // オフライン時の簡易ストア（__HS__行のみ）
+async function callApi(payload){
+  if(DEMO){ return mockApi(payload); }
+  const body = JSON.stringify(Object.assign({token:API_TOKEN}, payload));
+  for(let attempt=0; attempt<2; attempt++){
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(function(){ ctrl.abort(); }, 10000);
+      const res = await fetch(GAS_URL, {method:'POST', body:body, signal:ctrl.signal});
+      clearTimeout(timer);
+      const json = await res.json();
+      offline = false; updateOffline();
+      return json;
+    }catch(e){ if(attempt===1){ offline = true; updateOffline(); return mockApi(payload); } }
+  }
+}
+function mockApi(payload){
+  const a = payload.action;
+  if(a==='list'){ return {ok:true, submissions: mockSubs.map(function(x){ return Object.assign({}, x); })}; }
+  if(a==='saveSub'){
+    const sub = Object.assign({}, payload.sub||{});
+    let row = sub.row;
+    if(!row || row<2){
+      const found = mockSubs.find(function(x){ return (x.year||'')===(sub.year||'') && x.company===sub.company && x.doc===sub.doc; });
+      row = found ? found.row : (mockSubs.reduce(function(mx,x){ return Math.max(mx,x.row||1); },1)+1);
+    }
+    sub.row = row;
+    const i = mockSubs.findIndex(function(x){ return x.row===row; });
+    if(i>=0) mockSubs[i]=sub; else mockSubs.push(sub);
+    return {ok:true, row:row};
+  }
+  if(a==='delSub'){ mockSubs = mockSubs.filter(function(x){ return x.row!==payload.row; }); return {ok:true}; }
+  return {ok:false, error:'mock: '+a+' 未対応'};
+}
+function updateOffline(){ const b=document.getElementById('offline-badge'); if(b) b.style.display = offline ? 'block' : 'none'; }
+
+/*═══════════ データ読込（__HS__マーカー行を分類） ═══════════*/
+let TPL_ROW=null, CFG_ROW=null;   // saveの上書き用に行番号を保持
+async function loadAll(){
+  const res = await callApi({action:'list'});
+  const subs = (res && Array.isArray(res.submissions)) ? res.submissions : [];
+  TPL_ROW=null; CFG_ROW=null;
+  TEMPLATES=[]; MEMBERS={op:[],assist:[],worker:[],sewa:[],keibi:[],driver:[]}; COMPANIES=DEFAULT_COMPANIES.slice(); DAYS={};
+  subs.forEach(function(s){
+    if((s.year||'')!=='__HS__') return;
+    let o={}; try{ o=JSON.parse(s.note||'{}'); }catch(e){ o={}; }
+    if(s.company==='TPL'){ TPL_ROW=s.row; if(Array.isArray(o.templates)) TEMPLATES=o.templates; }
+    else if(s.company==='CFG'){
+      CFG_ROW=s.row;
+      if(o.members && typeof o.members==='object') MEMBERS=Object.assign({op:[],assist:[],worker:[],sewa:[],keibi:[],driver:[]}, o.members);
+      if(Array.isArray(o.companies) && o.companies.length) COMPANIES=o.companies;
+    }
+    else if(s.company==='DAY' && s.doc){
+      o.row=s.row; o.date=s.doc; if(!Array.isArray(o.blocks)) o.blocks=[];
+      DAYS[s.doc]=o;
+    }
+  });
+  renderAll();
+}
+function renderAll(){
+  renderDatalists();
+  renderDay();
+  renderTemplates();
+  renderMembers();
+  renderCompanies();
+}
+
+/*═══════════ ログイン ═══════════*/
+function saveAuthMode(){ try{ localStorage.setItem(AUTH_KEY, READONLY?'view':'edit'); }catch(e){} }
+function clearAuthMode(){ try{ localStorage.removeItem(AUTH_KEY); }catch(e){} }
+function applyReadonly(){ document.body.classList.toggle('readonly', READONLY); const b=document.getElementById('view-badge'); if(b) b.style.display = READONLY?'':'none'; }
+function enter(mode){
+  READONLY = (mode==='view'); applyReadonly(); saveAuthMode();
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  loadAll();
+}
+function tryLogin(){
+  const pw = document.getElementById('login-pw').value;
+  if(pw===APP_PASSWORD || pw===VIEW_PASSWORD){ enter(pw===VIEW_PASSWORD?'view':'edit'); }
+  else document.getElementById('login-err').textContent='パスワードが違います';
+}
+function logout(){ READONLY=false; clearAuthMode(); document.body.classList.remove('readonly');
+  document.getElementById('app').style.display='none'; document.getElementById('login').style.display='flex';
+  document.getElementById('login-pw').value=''; document.getElementById('login-err').textContent=''; }
+function restoreSession(){ let m=null; try{ m=localStorage.getItem(AUTH_KEY); }catch(e){} if(m!=='edit'&&m!=='view') return false; enter(m); return true; }
+
+/*═══════════ タブ ═══════════*/
+function switchTab(name){
+  document.querySelectorAll('nav button').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab')===name); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  const el=document.getElementById('tab-'+name); if(el) el.classList.add('active');
+}
+
+/*═══════════ 名簿 datalist ═══════════*/
+function renderDatalists(){
+  MEMBER_ROLES.forEach(function(r){
+    const dl=document.getElementById(r.dl); if(!dl) return;
+    dl.innerHTML = (MEMBERS[r.key]||[]).map(function(n){ return '<option value="'+esc(n)+'">'; }).join('');
+  });
+}
+
+/*═══════════ 日別入力 ═══════════*/
+function blankBlock(han){
+  return {han:han||'A班', dn:'昼', start:'', work:'', place:'', site:'',
+    machines:[], dumps:{}, driver:'', motomura:'', keibi:'', workers:'', sewa:''};
+}
+function ensureDay(date){
+  if(!DAYS[date]) DAYS[date] = {row:null, date:date, blocks:[]};
+  return DAYS[date];
+}
+function onDatePick(){ const v=document.getElementById('day-date').value; if(v){ if(!maybeLeave()) { document.getElementById('day-date').value=CUR_DATE; return; } CUR_DATE=v; renderDay(); } }
+function stepDay(n){ if(!maybeLeave()) return; const d=parseISO(CUR_DATE); d.setDate(d.getDate()+n); CUR_DATE=isoOf(d); renderDay(); }
+function gotoToday(){ if(!maybeLeave()) return; CUR_DATE=todayISO(); renderDay(); }
+function maybeLeave(){ if(dayDirty && !READONLY){ if(!confirm('未保存の変更があります。保存せずに移動しますか？')) return false; } dayDirty=false; return true; }
+
+function renderDay(){
+  document.getElementById('day-date').value = CUR_DATE;
+  document.getElementById('day-wd').textContent = '('+wdOf(CUR_DATE)+')';
+  CUR = DAYS[CUR_DATE] ? JSON.parse(JSON.stringify(DAYS[CUR_DATE])) : {row:null, date:CUR_DATE, blocks:[]};
+  if(!Array.isArray(CUR.blocks)) CUR.blocks=[];
+  dayDirty=false;
+  renderBlocks();
+}
+function renderBlocks(){
+  const wrap=document.getElementById('blocks');
+  if(!CUR.blocks.length){
+    wrap.innerHTML = '<div class="card"><div class="empty">この日の予定はまだありません。'
+      + (READONLY?'':'下の「＋ 班を追加」で追加してください。')+'</div></div>';
+    return;
+  }
+  wrap.innerHTML = CUR.blocks.map(function(b,bi){ return blockHtml(b,bi); }).join('');
+  CUR.blocks.forEach(function(b,bi){ wireBlock(bi); });
+}
+function tplOptions(sel){
+  return '<option value="">テンプレ選択…</option>' + TEMPLATES.map(function(t){
+    return '<option value="'+esc(t.id)+'"'+(sel===t.id?' selected':'')+'>'+esc(t.name)+'</option>';
+  }).join('');
+}
+function blockHtml(b,bi){
+  const dnBtn = function(v){ return '<button type="button" data-dn="'+v+'" class="'+(b.dn===v?'active':'')+'" onclick="setDN('+bi+',\''+v+'\')">'+v+'</button>'; };
+  let mrows = (b.machines||[]).map(function(m,mi){
+    return '<tr>'
+      + '<td class="mk"><select onchange="setMachine('+bi+','+mi+',\'kind\',this.value)">'
+      +   MACHINE_KINDS.map(function(k){ return '<option'+(m.kind===k?' selected':'')+'>'+esc(k)+'</option>'; }).join('')
+      + '</select></td>'
+      + '<td><input list="dl-op" value="'+esc(m.op||'')+'" placeholder="オペ" onchange="setMachine('+bi+','+mi+',\'op\',this.value)"></td>'
+      + '<td><input list="dl-assist" value="'+esc(m.assist||'')+'" placeholder="助手" onchange="setMachine('+bi+','+mi+',\'assist\',this.value)"></td>'
+      + '<td class="mx edit-only"><button type="button" onclick="delMachine('+bi+','+mi+')" title="削除">×</button></td>'
+      + '</tr>';
+  }).join('');
+  let dumpCells = COMPANIES.map(function(c){
+    const v = (b.dumps&&b.dumps[c]!=null) ? b.dumps[c] : '';
+    return '<div class="dumpcell"><label title="'+esc(c)+'">'+esc(c)+'</label>'
+      + '<input type="number" min="0" inputmode="numeric" value="'+esc(v)+'" onchange="setDump('+bi+',\''+esc(c)+'\',this.value)"></div>';
+  }).join('');
+  const total = dumpTotal(b);
+  return '<div class="card han">'
+    + '<div class="han-head">'
+    +   '<input class="hn" style="width:88px;border:1px solid var(--line);border-radius:7px;padding:5px 8px" value="'+esc(b.han||'')+'" onchange="setField('+bi+',\'han\',this.value)">'
+    +   '<div class="seg">'+dnBtn('昼')+dnBtn('夜')+'</div>'
+    +   '<div class="spacer"></div>'
+    +   '<select class="edit-only" onchange="applyTpl('+bi+',this.value); this.value=\'\';" style="border:1px solid var(--accent);border-radius:7px;padding:6px 8px;color:var(--accent);font-weight:700">'+tplOptions('')+'</select>'
+    +   '<button type="button" class="btn warn sm edit-only" onclick="delBlock('+bi+')">班を削除</button>'
+    + '</div>'
+    + '<div class="han-body">'
+    +   '<div class="fldgrid">'
+    +     fld('開始時間','<input value="'+esc(b.start||'')+'" placeholder="例）5:00" onchange="setField('+bi+',\'start\',this.value)">')
+    +     fld('作業内容','<input value="'+esc(b.work||'')+'" placeholder="幹線拡幅 など" onchange="setField('+bi+',\'work\',this.value)">')
+    +     fld('作業箇所・町内会','<input value="'+esc(b.place||'')+'" onchange="setField('+bi+',\'place\',this.value)">')
+    +     fld('雪堆積場','<input value="'+esc(b.site||'')+'" onchange="setField('+bi+',\'site\',this.value)">')
+    +   '</div>'
+    +   '<label>機械・オペ・助手</label>'
+    +   '<table class="mtbl"><thead><tr><th class="mk">機械</th><th>オペ</th><th>助手</th><th class="mx edit-only"></th></tr></thead><tbody>'
+    +     mrows + '</tbody></table>'
+    +   '<div class="edit-only" style="margin-top:6px"><button type="button" class="btn sec sm" onclick="addMachine('+bi+')">＋ 機械を追加</button></div>'
+    +   '<label style="display:block;margin-top:12px">各社ダンプ台数</label>'
+    +   '<div class="dumpgrid">'+dumpCells
+    +     '<div class="dumpcell dumptotal"><label>合計</label><input type="number" id="dtot-'+bi+'" value="'+total+'" readonly></div>'
+    +   '</div>'
+    +   '<div class="fldgrid" style="margin-top:12px">'
+    +     fld('ケンウン運転手','<input list="dl-driver" value="'+esc(b.driver||'')+'" onchange="setField('+bi+',\'driver\',this.value)">')
+    +     fld('モトムラ','<input value="'+esc(b.motomura||'')+'" onchange="setField('+bi+',\'motomura\',this.value)">')
+    +     fld('タウン警備（人数）','<input type="number" min="0" inputmode="numeric" value="'+esc(b.keibi||'')+'" onchange="setField('+bi+',\'keibi\',this.value)">')
+    +   '</div>'
+    +   '<div class="fldgrid">'
+    +     fld('作業員（複数可）','<input list="dl-worker" value="'+esc(b.workers||'')+'" placeholder="名前を カンマ区切り" onchange="setField('+bi+',\'workers\',this.value)">')
+    +     fld('世話役（複数可）','<input list="dl-sewa" value="'+esc(b.sewa||'')+'" placeholder="名前を カンマ区切り" onchange="setField('+bi+',\'sewa\',this.value)">')
+    +   '</div>'
+    + '</div></div>';
+}
+function fld(label,inner){ return '<div class="fld"><label>'+esc(label)+'</label>'+inner+'</div>'; }
+function wireBlock(){ /* イベントはインラインで配線済み */ }
+function dumpTotal(b){ let t=0; COMPANIES.forEach(function(c){ const v=Number(b.dumps&&b.dumps[c]); if(!isNaN(v)) t+=v; }); return t; }
+
+function setField(bi,k,v){ CUR.blocks[bi][k]=v; dayDirty=true; }
+function setDN(bi,v){ CUR.blocks[bi].dn=v; dayDirty=true; renderBlocks(); }
+function setMachine(bi,mi,k,v){ CUR.blocks[bi].machines[mi][k]=v; dayDirty=true; }
+function addMachine(bi){ if(READONLY) return; CUR.blocks[bi].machines.push({kind:'BR',op:'',assist:''}); dayDirty=true; renderBlocks(); }
+function delMachine(bi,mi){ if(READONLY) return; CUR.blocks[bi].machines.splice(mi,1); dayDirty=true; renderBlocks(); }
+function setDump(bi,c,v){ if(!CUR.blocks[bi].dumps) CUR.blocks[bi].dumps={}; CUR.blocks[bi].dumps[c]=(v===''?'':Number(v)); dayDirty=true; const t=document.getElementById('dtot-'+bi); if(t) t.value=dumpTotal(CUR.blocks[bi]); }
+function applyTpl(bi,id){ if(READONLY||!id) return; const t=TEMPLATES.find(function(x){ return x.id===id; }); if(!t) return;
+  CUR.blocks[bi].machines = (t.machines||[]).map(function(m){ return {kind:m.kind||'BR',op:m.op||'',assist:m.assist||''}; });
+  if(t.han && !CUR.blocks[bi].han) CUR.blocks[bi].han=t.han;
+  dayDirty=true; renderBlocks(); toast('テンプレ「'+t.name+'」を適用しました');
+}
+function addBlock(){ if(READONLY) return; const names=['A班','B班','C班','D班']; const used=CUR.blocks.map(function(b){return b.han;});
+  const nm = names.find(function(n){ return used.indexOf(n)<0; }) || ('班'+(CUR.blocks.length+1));
+  CUR.blocks.push(blankBlock(nm)); dayDirty=true; renderBlocks();
+}
+function delBlock(bi){ if(READONLY) return; if(!confirm('この班を削除しますか？')) return; CUR.blocks.splice(bi,1); dayDirty=true; renderBlocks(); }
+
+function copyPrevDay(){
+  if(READONLY) return;
+  const d=parseISO(CUR_DATE); d.setDate(d.getDate()-1); const prev=isoOf(d);
+  const src=DAYS[prev];
+  if(!src || !src.blocks || !src.blocks.length){ toast('前日（'+fmtJP(prev)+'）に予定がありません'); return; }
+  if(CUR.blocks.length && !confirm('前日の内容で置き換えます。よろしいですか？')) return;
+  CUR.blocks = JSON.parse(JSON.stringify(src.blocks));
+  dayDirty=true; renderBlocks(); toast('前日（'+fmtJP(prev)+'）をコピーしました');
+}
+async function saveDay(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const btn=document.getElementById('day-save'); btn.disabled=true; btn.textContent='保存中...';
+  const dayObj = {blocks: CUR.blocks};
+  const existing = DAYS[CUR_DATE];
+  const sub = {year:'__HS__', company:'DAY', doc:CUR_DATE, status:'', date:'', link:'', note:JSON.stringify(dayObj)};
+  if(existing && existing.row) sub.row = existing.row;
+  const res = await callApi({action:'saveSub', sub:sub});
+  btn.disabled=false; btn.textContent='💾 保存';
+  if(res && res.ok){
+    // オフライン時の行番号は信用しない（本番復帰後はキー(year+company+doc)で上書きされる）
+    const keepRow = (!offline && res.row!=null) ? res.row : (existing&&existing.row!=null?existing.row:null);
+    DAYS[CUR_DATE] = {row: keepRow, date:CUR_DATE, blocks: JSON.parse(JSON.stringify(CUR.blocks))};
+    dayDirty=false;
+    toast(offline ? '保存しました（オフライン：共有されていません）' : '保存しました');
+  }else{ toast('保存に失敗：'+(res&&res.error?res.error:'不明')); }
+}
+async function deleteDay(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const existing=DAYS[CUR_DATE];
+  if(!existing || !existing.row){ CUR.blocks=[]; DAYS[CUR_DATE]=null; delete DAYS[CUR_DATE]; dayDirty=false; renderBlocks(); toast('削除しました'); return; }
+  if(!confirm(fmtJP(CUR_DATE)+' の予定を削除しますか？')) return;
+  const res=await callApi({action:'delSub', row:existing.row});
+  if(res && res.ok){ delete DAYS[CUR_DATE]; renderDay(); toast('削除しました'); }
+  else toast('削除に失敗：'+(res&&res.error?res.error:'不明'));
+}
+
+/*═══════════ 班テンプレート ═══════════*/
+function renderTemplates(){
+  const el=document.getElementById('tpl-list');
+  if(!TEMPLATES.length){ el.innerHTML='<div class="empty">テンプレートがありません。'+(READONLY?'':'「＋ テンプレを追加」で作成してください。')+'</div>'; return; }
+  el.innerHTML = TEMPLATES.map(function(t,ti){
+    let rows=(t.machines||[]).map(function(m,mi){
+      return '<tr>'
+        + '<td class="mk"><select onchange="tplSet('+ti+','+mi+',\'kind\',this.value)">'
+        +   MACHINE_KINDS.map(function(k){ return '<option'+(m.kind===k?' selected':'')+'>'+esc(k)+'</option>'; }).join('')+'</select></td>'
+        + '<td><input list="dl-op" value="'+esc(m.op||'')+'" placeholder="オペ" onchange="tplSet('+ti+','+mi+',\'op\',this.value)"></td>'
+        + '<td><input list="dl-assist" value="'+esc(m.assist||'')+'" placeholder="助手" onchange="tplSet('+ti+','+mi+',\'assist\',this.value)"></td>'
+        + '<td class="mx edit-only"><button type="button" onclick="tplDelRow('+ti+','+mi+')">×</button></td>'
+        + '</tr>';
+    }).join('');
+    return '<div class="card han"><div class="han-head">'
+      + '<input class="hn" style="width:150px;border:1px solid var(--line);border-radius:7px;padding:6px 8px" value="'+esc(t.name||'')+'" onchange="tplName('+ti+',this.value)" placeholder="班テンプレ名">'
+      + '<div class="spacer"></div>'
+      + '<button type="button" class="btn warn sm edit-only" onclick="tplDelete('+ti+')">テンプレ削除</button>'
+      + '</div><div class="han-body">'
+      + '<table class="mtbl"><thead><tr><th class="mk">機械</th><th>オペ</th><th>助手</th><th class="mx edit-only"></th></tr></thead><tbody>'+rows+'</tbody></table>'
+      + '<div class="edit-only" style="margin-top:6px"><button type="button" class="btn sec sm" onclick="tplAddRow('+ti+')">＋ 機械を追加</button></div>'
+      + '</div></div>';
+  }).join('');
+}
+function addTemplate(){ if(READONLY) return; TEMPLATES.push({id:uid(), name:'新しい班', machines:[{kind:'BR',op:'',assist:''}]}); otherDirty=true; renderTemplates(); }
+function tplName(ti,v){ TEMPLATES[ti].name=v; otherDirty=true; }
+function tplSet(ti,mi,k,v){ TEMPLATES[ti].machines[mi][k]=v; otherDirty=true; }
+function tplAddRow(ti){ if(READONLY) return; TEMPLATES[ti].machines.push({kind:'BR',op:'',assist:''}); otherDirty=true; renderTemplates(); }
+function tplDelRow(ti,mi){ if(READONLY) return; TEMPLATES[ti].machines.splice(mi,1); otherDirty=true; renderTemplates(); }
+function tplDelete(ti){ if(READONLY) return; if(!confirm('この班テンプレを削除しますか？')) return; TEMPLATES.splice(ti,1); otherDirty=true; renderTemplates(); }
+async function saveTemplates(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const btn=document.getElementById('tpl-save'); btn.disabled=true; btn.textContent='保存中...';
+  const row = tplRow();
+  const sub={year:'__HS__', company:'TPL', doc:'templates', status:'', date:'', link:'', note:JSON.stringify({templates:TEMPLATES})};
+  if(row!=null) sub.row=row;
+  const res=await callApi({action:'saveSub', sub:sub});
+  btn.disabled=false; btn.textContent='💾 テンプレを保存';
+  if(res && res.ok){ if(!offline && res.row!=null) TPL_ROW=res.row; otherDirty=false; toast(offline?'保存しました（オフライン）':'班テンプレを保存しました'); }
+  else toast('保存に失敗：'+(res&&res.error?res.error:'不明'));
+}
+function tplRow(){ return TPL_ROW; }
+
+/*═══════════ 名簿・会社 ═══════════*/
+function renderMembers(){
+  const g=document.getElementById('mem-grid');
+  g.innerHTML = MEMBER_ROLES.map(function(r){
+    return '<div class="fld"><label>'+esc(r.label)+'（1行1名）</label>'
+      + '<textarea id="mem-'+r.key+'" onchange="onMemEdit()">'+esc((MEMBERS[r.key]||[]).join('\n'))+'</textarea></div>';
+  }).join('');
+}
+function onMemEdit(){ MEMBER_ROLES.forEach(function(r){ const t=document.getElementById('mem-'+r.key); if(t) MEMBERS[r.key]=linesToArr(t.value); }); otherDirty=true; renderDatalists(); }
+async function saveMembers(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  onMemEdit();
+  const btn=document.getElementById('mem-save'); btn.disabled=true; btn.textContent='保存中...';
+  const ok=await saveCfg(); btn.disabled=false; btn.textContent='💾 名簿を保存';
+  if(ok) toast(offline?'保存しました（オフライン）':'名簿を保存しました');
+}
+function renderCompanies(){ document.getElementById('cmp-text').value = COMPANIES.join('\n'); }
+async function saveCompanies(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const arr=linesToArr(document.getElementById('cmp-text').value); if(arr.length) COMPANIES=arr;
+  const btn=document.getElementById('cmp-save'); btn.disabled=true; btn.textContent='保存中...';
+  const ok=await saveCfg(); btn.disabled=false; btn.textContent='💾 会社を保存';
+  if(ok){ renderBlocks(); toast(offline?'保存しました（オフライン）':'会社を保存しました'); }
+}
+async function saveCfg(){
+  const sub={year:'__HS__', company:'CFG', doc:'config', status:'', date:'', link:'', note:JSON.stringify({members:MEMBERS, companies:COMPANIES})};
+  if(CFG_ROW!=null) sub.row=CFG_ROW;
+  const res=await callApi({action:'saveSub', sub:sub});
+  if(res && res.ok){ if(!offline && res.row!=null) CFG_ROW=res.row; otherDirty=false; return true; }
+  toast('保存に失敗：'+(res&&res.error?res.error:'不明')); return false;
+}
+
+/*═══════════ 起動 ═══════════*/
+document.getElementById('login-pw').addEventListener('keydown', function(e){ if(e.key==='Enter') tryLogin(); });
+if(DEMO){ document.getElementById('login-note').textContent='サンプル動作中（GAS未設定）／パスワードを入力してください'; }
+window.addEventListener('load', function(){ if(!restoreSession()){ document.getElementById('login-pw').focus(); } });
+window.addEventListener('beforeunload', function(e){ if((dayDirty||otherDirty) && !READONLY){ e.preventDefault(); e.returnValue=''; } });
+</script>
+</body>
+</html>
