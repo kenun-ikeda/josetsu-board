@@ -95,6 +95,9 @@
   #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222c3a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;max-width:90%;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
   #toast.show{opacity:.96}
   .offline-badge{position:fixed;right:10px;bottom:10px;background:#8a5a00;color:#fff;font-size:11px;font-weight:800;border-radius:8px;padding:5px 9px;z-index:40;display:none}
+  #offline-banner{display:none;background:#fff3e0;color:#8a5a00;border-bottom:2px solid #f0c674;padding:12px 14px;font-size:14px;font-weight:700;text-align:center;line-height:1.7}
+  #offline-banner.show{display:block}
+  #offline-banner .btn-reload{margin-left:10px;background:#8a5a00;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -116,6 +119,10 @@
     <div class="spacer"></div>
     <button class="lo" onclick="logout()">ログアウト</button>
   </header>
+  <div id="offline-banner">
+    ⚠️ サーバーに接続できませんでした。表示が最新ではない場合があります。<b>ページを一度更新（再読み込み）してください。</b>
+    <button class="btn-reload" onclick="location.reload()">🔄 更新する</button>
+  </div>
   <nav id="nav"></nav>
   <main id="main"></main>
 </div>
@@ -216,12 +223,18 @@ let mockSubs=[];
 async function callApi(payload){
   if(DEMO) return mockApi(payload);
   const body = JSON.stringify(Object.assign({token:API_TOKEN}, payload));
-  for(let attempt=0; attempt<2; attempt++){
+  // GAS(Apps Script)はスリープからの起動(コールドスタート)に時間がかかるため、早すぎるオフライン表示を防ぐ。
+  // 1回あたり30秒・最大3回（間に待機）待ってから、初めてオフライン扱いにする。
+  for(let attempt=0; attempt<3; attempt++){
+    if(attempt>0) await new Promise(function(r){ setTimeout(r, 1500*attempt); });
     try{
-      const ctrl=new AbortController(); const timer=setTimeout(function(){ ctrl.abort(); },10000);
+      const ctrl=new AbortController(); const timer=setTimeout(function(){ ctrl.abort(); },45000);
       const res=await fetch(GAS_URL,{method:'POST',body:body,signal:ctrl.signal}); clearTimeout(timer);
       const json=await res.json(); offline=false; updateOffline(); return json;
-    }catch(e){ if(attempt===1){ offline=true; updateOffline(); return mockApi(payload); } }
+    }catch(e){ if(attempt===2){ offline=true; updateOffline();
+      // オフライン時、一覧取得はサンプルを返さず、直前の表示を保つ
+      if(payload && payload.action==='list') return {ok:false, offline:true};
+      return mockApi(payload); } }
   }
 }
 function mockApi(payload){
@@ -235,11 +248,14 @@ function mockApi(payload){
   if(a==='delSub'){ mockSubs=mockSubs.filter(function(x){ return x.row!==payload.row; }); return {ok:true}; }
   return {ok:false,error:'mock:'+a};
 }
-function updateOffline(){ const b=document.getElementById('offline-badge'); if(b) b.style.display=offline?'block':'none'; }
+function updateOffline(){ const b=document.getElementById('offline-badge'); if(b) b.style.display=offline?'block':'none';
+  const bn=document.getElementById('offline-banner'); if(bn) bn.classList.toggle('show', offline); }
 
 /*═══════════ 読込（__HS__マーカー） ═══════════*/
 async function loadAll(){
   const res=await callApi({action:'list'});
+  // オフライン等で取得できないときは、直前の表示をそのまま保つ（サンプルや空で上書きしない）
+  if(!res || res.ok===false){ if(!CUR_TAB) CUR_TAB=BANS[0]||'all'; renderAll(); return; }
   const subs=(res&&Array.isArray(res.submissions))?res.submissions:[];
   MACHINES=DEFAULT_MACHINES.slice(); BANS=DEFAULT_BANS.slice(); COMPANIES=DEFAULT_COMPANIES.slice();
   MEMBERS={op:[],assist:[],worker:[],sewa:[],keibi:[],driver:[]}; TEMPLATES={}; ENTRIES=[]; CFG_ROW=null; TPL_ROW=null;
@@ -595,6 +611,17 @@ async function saveCfg(){
 /*═══════════ 起動 ═══════════*/
 document.getElementById('login-pw').addEventListener('keydown', function(e){ if(e.key==='Enter') tryLogin(); });
 if(DEMO){ document.getElementById('login-note').textContent='サンプル動作中（GAS未設定）／パスワードを入力してください'; }
+// タブに戻ってきた時、オフラインなら自動で再接続（編集中でない安全な時だけ）
+function safeToReload(){
+  if(!offline) return false;
+  const app=document.getElementById('app'); if(!app || app.style.display==='none') return false;
+  if(document.getElementById('drawer').classList.contains('open')) return false; // 入力パネル（未保存）を開いていない
+  const ae=document.activeElement; if(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return false;
+  return true;
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible' && safeToReload()) loadAll(); });
+window.addEventListener('focus', function(){ if(safeToReload()) loadAll(); });
+
 window.addEventListener('load', function(){ if(!restoreSession()){ document.getElementById('login-pw').focus(); } });
 </script>
 </body>
