@@ -98,6 +98,48 @@
   #offline-banner{display:none;background:#fff3e0;color:#8a5a00;border-bottom:2px solid #f0c674;padding:12px 14px;font-size:14px;font-weight:700;text-align:center;line-height:1.7}
   #offline-banner.show{display:block}
   #offline-banner .btn-reload{margin-left:10px;background:#8a5a00;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;vertical-align:middle}
+  /* ---------- FAX予定表 ---------- */
+  .fax-controls .row{gap:8px;flex-wrap:wrap}
+  .fax-controls input[type="date"]{font-weight:700}
+  .fax-meetin{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+  .fax-meetin .fld{min-width:180px}
+  .fax-checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .fax-checks label{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:#1a2430;border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:#fff;cursor:pointer}
+  .fax-checks label.moto{border-color:#7a5cc0;background:#f7f3ff}
+  .fax-checks label.keibi{border-color:#c9a227;background:#fffdf2}
+  #fax-preview{margin-top:6px}
+  .fax-sheet{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;margin-bottom:16px}
+  .fax-asof{font-size:12px;color:var(--muted);text-align:right}
+  .fax-ttl{font-size:24px;font-weight:800;letter-spacing:6px;text-align:center;margin:2px 0 8px}
+  .fax-sama{font-size:20px;font-weight:800;text-align:left;margin:0 0 6px}
+  .fax-sama b{font-size:22px;border-bottom:2px solid #1a2430;padding:0 26px 2px}
+  .fax-meet{display:flex;flex-direction:column;gap:4px;align-items:center;margin:12px 0 14px}
+  .fax-meet .mrow{display:flex;align-items:flex-end;gap:10px}
+  .fax-meet .ml{font-size:16px;font-weight:800}
+  .fax-meet .mv{font-size:16px;font-weight:700;min-width:180px;border-bottom:1px solid #333;padding:0 8px 2px;text-align:center}
+  .fax-tbl{width:100%;border-collapse:collapse;font-size:13.5px;table-layout:fixed}
+  .fax-tbl th,.fax-tbl td{border:1px solid #333;padding:6px 8px;text-align:center;word-break:break-word}
+  .fax-tbl thead th{background:#eef3f9;font-weight:800}
+  .fax-tbl td.left{text-align:center}
+  .fax-tbl td.sun{color:#c0392b} .fax-tbl td.sat{color:#1a5fb4}
+  .fax-foot{margin-top:18px;font-size:13px;line-height:1.9;text-align:right}
+  .fax-foot p{margin:0}
+  .fax-contacts{margin-top:10px;font-size:14px;font-weight:700;line-height:2;text-align:right}
+  .fax-empty{color:var(--muted);font-size:13px}
+  @media print{
+    @page{ size:A4 portrait; margin:12mm; }
+    body.print-fax{ background:#fff; }
+    body.print-fax header, body.print-fax nav, body.print-fax #offline-banner, body.print-fax #drawer,
+    body.print-fax #scrim, body.print-fax #toast, body.print-fax .offline-badge, body.print-fax .fax-controls{ display:none !important; }
+    body.print-fax main{ max-width:none; margin:0; padding:0; }
+    body.print-fax #fax-preview{ margin:0; }
+    body.print-fax .fax-sheet{ border:none; border-radius:0; padding:0; margin:0; page-break-after:always; }
+    body.print-fax .fax-sheet:last-child{ page-break-after:auto; }
+    body.print-fax .fax-tbl thead{ display:table-header-group; }   /* 見出しを各ページに繰り返す */
+    body.print-fax .fax-tbl tr{ page-break-inside:avoid; }
+    body.print-fax .fax-tbl th, body.print-fax .fax-tbl td,
+    body.print-fax .fax-tbl td.sun, body.print-fax .fax-tbl td.sat{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
 </style>
 </head>
 <body>
@@ -203,6 +245,7 @@ function linesToArr(t){ return String(t||'').split(/\r?\n/).map(function(x){ ret
 function toNameArr(v){ if(Array.isArray(v)) return v.map(String).map(function(x){ return x.trim(); }).filter(Boolean);
   if(v==null||v==='') return []; return String(v).split(/[,、\n]/).map(function(x){ return x.trim(); }).filter(Boolean); }
 function joinNames(a){ return Array.isArray(a) ? a.filter(Boolean).join('、') : (a||''); }
+function fmtMD(s){ const d=parseISO(s); return (d.getMonth()+1)+'月'+d.getDate()+'日'; }
 // 班テンプレを正規化して返す（{m:{機械:{op,assist}}, workers:[], sewa:[]}）。旧形式（班直下に機械）も吸収。
 function tplOf(ban){
   let t = TEMPLATES[ban];
@@ -298,9 +341,10 @@ function renderNav(){
   let html = BANS.map(function(b){ return '<button data-tab="'+esc(b)+'" onclick="switchTab(\''+jsarg(b)+'\')">'+esc(b)+'</button>'; }).join('');
   html += '<button data-tab="none" class="none-tab" onclick="switchTab(\'none\')">班なし</button>';
   html += '<button data-tab="all" onclick="switchTab(\'all\')">📋 全体</button>';
+  html += '<button data-tab="fax" onclick="switchTab(\'fax\')">🖨 FAX予定表</button>';
   html += '<button data-tab="settings" class="edit-only" onclick="switchTab(\'settings\')">⚙ 班テンプレ・設定</button>';
   nav.innerHTML = html;
-  if(BANS.indexOf(CUR_TAB)<0 && CUR_TAB!=='all' && CUR_TAB!=='settings' && CUR_TAB!=='none') CUR_TAB = BANS[0]||'all';
+  if(BANS.indexOf(CUR_TAB)<0 && CUR_TAB!=='all' && CUR_TAB!=='settings' && CUR_TAB!=='none' && CUR_TAB!=='fax') CUR_TAB = BANS[0]||'all';
   Array.prototype.forEach.call(nav.querySelectorAll('button'), function(btn){ btn.classList.toggle('active', btn.getAttribute('data-tab')===CUR_TAB); });
 }
 function switchTab(name){ CUR_TAB=name; renderNav(); renderTab(); }
@@ -309,6 +353,7 @@ function switchTab(name){ CUR_TAB=name; renderNav(); renderTab(); }
 function renderTab(){
   const main=document.getElementById('main');
   if(CUR_TAB==='settings'){ main.innerHTML=settingsHtml(); wireSettings(); return; }
+  if(CUR_TAB==='fax'){ renderFaxTab(); return; }
   const isAll = (CUR_TAB==='all');
   const isNone = (CUR_TAB==='none');
   const ban = (isAll||isNone) ? null : CUR_TAB;
@@ -606,6 +651,123 @@ async function saveCfg(){
   const res=await callApi({action:'saveSub',sub:sub});
   if(res&&res.ok){ if(!offline&&res.row!=null) CFG_ROW=res.row; return true; }
   toast('保存に失敗：'+(res&&res.error?res.error:'不明')); return false;
+}
+
+/*═══════════ FAX予定表（印刷） ═══════════*/
+// 実際に各社へFAXしている用紙（排雪予定）の体裁に合わせる。
+// 送信先ごとに1枚：右上に「会社名 様」、集合時間・集合場所、表（月日/曜日/作業箇所・町内会/雪堆積場/昼夜/台数）、下に定型文＋連絡先。
+let FAX_FROM=null, FAX_TO=null, FAX_SEL={}, FAX_TIME='', FAX_PLACE='', FAX_SHIFT='both';
+// 連絡先（担当名＋電話）は変わることがあるので一カ所で編集。1行1件。
+let FAX_CONTACT_TEXT = '㈱ケンウン　大畑　090-4873-6726\n㈱ケンウン　鈴木　080-5727-7818';
+function faxShiftOk(e){ return FAX_SHIFT==='both' || (FAX_SHIFT==='day'&&e.dn==='昼') || (FAX_SHIFT==='night'&&e.dn==='夜'); }
+function faxDefaultRange(){
+  const ds=ENTRIES.map(function(e){ return e.date; }).filter(Boolean).sort();
+  if(ds.length) return {from:ds[0], to:ds[ds.length-1]};
+  const t=todayISO(); return {from:t, to:t};
+}
+function faxSortEntries(a,b){ return (a.date||'').localeCompare(b.date||'') || (a.dn==='夜'?1:0)-(b.dn==='夜'?1:0); }
+function faxInRange(e){ if(!e.date) return false; if(FAX_FROM && e.date<FAX_FROM) return false; if(FAX_TO && e.date>FAX_TO) return false; return true; }
+// ダンプ会社あて：その会社の台数が入っている班（entry）の行
+function faxRowsForCompany(c){
+  return ENTRIES.filter(function(e){ if(!faxInRange(e)||!faxShiftOk(e)) return false; const v=Number(e.dumps&&e.dumps[c]); return !isNaN(v)&&v>0; })
+    .sort(faxSortEntries)
+    .map(function(e){ return {date:e.date, place:e.place||'', site:e.site||'', dn:e.dn||'', qty:Number(e.dumps[c])}; });
+}
+// モトムラ(BH)あて：BHに名前が入っている、またはモトムラ名が入っている班の行（台数欄は空）
+function faxRowsForMotomura(){
+  return ENTRIES.filter(function(e){ if(!faxInRange(e)||!faxShiftOk(e)) return false; const bh=e.machines&&e.machines[BH_SLOT]; const hasBH=bh&&(bh.op||bh.assist); const hasMoto=e.motomura&&String(e.motomura).trim(); return hasBH||hasMoto; })
+    .sort(faxSortEntries)
+    .map(function(e){ return {date:e.date, place:e.place||'', site:e.site||'', dn:e.dn||'', qty:''}; });
+}
+// タウン警備あて：警備人数が入っている班の行（人数を表示）
+function faxRowsForKeibi(){
+  return ENTRIES.filter(function(e){ if(!faxInRange(e)||!faxShiftOk(e)) return false; const v=Number(e.keibi); return !isNaN(v)&&v>0; })
+    .sort(faxSortEntries)
+    .map(function(e){ return {date:e.date, place:e.place||'', site:e.site||'', dn:e.dn||'', qty:Number(e.keibi)}; });
+}
+function renderFaxTab(){
+  const main=document.getElementById('main');
+  if(FAX_FROM==null){ const r=faxDefaultRange(); FAX_FROM=r.from; FAX_TO=r.to; }
+  if(!Object.keys(FAX_SEL).length){ COMPANIES.forEach(function(c){ FAX_SEL[c]=true; }); FAX_SEL['__motomura__']=true; FAX_SEL['__keibi__']=true; }
+  COMPANIES.forEach(function(c){ if(!(c in FAX_SEL)) FAX_SEL[c]=true; });
+  if(!('__keibi__' in FAX_SEL)) FAX_SEL['__keibi__']=true;
+  let checks = COMPANIES.map(function(c){
+    return '<label><input type="checkbox" '+(FAX_SEL[c]?'checked':'')+' onchange="faxToggle(\''+jsarg(c)+'\',this.checked)">'+esc(c)+'</label>';
+  }).join('')
+  + '<label class="moto"><input type="checkbox" '+(FAX_SEL['__motomura__']?'checked':'')+' onchange="faxToggle(\'__motomura__\',this.checked)">モトムラ（BH）</label>'
+  + '<label class="keibi"><input type="checkbox" '+(FAX_SEL['__keibi__']?'checked':'')+' onchange="faxToggle(\'__keibi__\',this.checked)">タウン警備</label>';
+  main.innerHTML =
+    '<div class="card fax-controls">'
+    + '<div class="row"><h2 style="color:var(--accent);margin:0">FAX予定表（印刷）</h2><div class="spacer"></div>'
+    +   '<label>期間</label>'
+    +   '<input type="date" value="'+esc(FAX_FROM)+'" onchange="faxSet(\'from\',this.value)">'
+    +   '<span style="font-weight:800">〜</span>'
+    +   '<input type="date" value="'+esc(FAX_TO)+'" onchange="faxSet(\'to\',this.value)">'
+    +   '<label style="margin-left:6px">昼夜</label>'
+    +   '<select onchange="faxSet(\'shift\',this.value)" style="border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-weight:700">'
+    +     '<option value="both"'+(FAX_SHIFT==='both'?' selected':'')+'>両方（昼・夜）</option>'
+    +     '<option value="day"'+(FAX_SHIFT==='day'?' selected':'')+'>昼のみ</option>'
+    +     '<option value="night"'+(FAX_SHIFT==='night'?' selected':'')+'>夜のみ</option>'
+    +   '</select>'
+    +   '<button class="btn" onclick="printFax()">🖨 印刷（PDF保存）</button>'
+    + '</div>'
+    + '<div class="fax-meetin">'
+    +   '<div class="fld"><label>集合時間（期間中共通）</label><input value="'+esc(FAX_TIME)+'" placeholder="例）5:00" oninput="faxSet(\'time\',this.value)"></div>'
+    +   '<div class="fld"><label>集合場所（期間中共通）</label><input value="'+esc(FAX_PLACE)+'" placeholder="例）○○車庫" oninput="faxSet(\'place\',this.value)"></div>'
+    +   '<div class="fld" style="min-width:280px;flex:1"><label>連絡先（1行に「担当名　電話番号」）</label><textarea style="min-height:58px" oninput="faxSet(\'contacts\',this.value)">'+esc(FAX_CONTACT_TEXT)+'</textarea></div>'
+    + '</div>'
+    + '<p class="hint">送信先（各社＋モトムラ）にチェックを入れ、期間・集合時間・集合場所を指定してください。送信先ごとに1枚ずつ、その相手が入っている日だけが「排雪予定」の用紙で出ます。期間が長いときは自動で複数ページに分かれ、見出しは各ページに付きます。印刷ダイアログで「送信先＝PDFに保存」を選べばPDFにもできます。</p>'
+    + '<div class="fax-checks">'+checks+'</div>'
+    + '</div>'
+    + '<div id="fax-preview"></div>';
+  renderFaxPreview();
+}
+function faxSet(k,v){ if(k==='from') FAX_FROM=v; else if(k==='to') FAX_TO=v; else if(k==='time') FAX_TIME=v; else if(k==='place') FAX_PLACE=v; else if(k==='shift') FAX_SHIFT=v; else if(k==='contacts') FAX_CONTACT_TEXT=v; renderFaxPreview(); }
+function faxToggle(key,on){ FAX_SEL[key]=!!on; renderFaxPreview(); }
+function faxSheet(name, rows, opt){
+  if(!rows.length) return '';   // その送信先が期間内に無ければ用紙を作らない
+  opt = opt || {}; const qHeader = opt.header || '台数', unit = opt.unit || '台';
+  const body = rows.map(function(r){
+    return '<tr><td class="'+wdCls(r.date)+'">'+esc(fmtMD(r.date))+'</td>'
+      + '<td class="'+wdCls(r.date)+'">'+esc(wdOf(r.date))+'</td>'
+      + '<td class="left">'+esc(r.place)+'</td>'
+      + '<td class="left">'+esc(r.site)+'</td>'
+      + '<td>'+esc(r.dn)+'</td>'
+      + '<td>'+(r.qty!==''&&r.qty!=null?esc(r.qty)+' '+unit:'')+'</td></tr>';
+  }).join('');
+  const contacts = linesToArr(FAX_CONTACT_TEXT).map(function(l){ return '<div>'+esc(l)+'</div>'; }).join('');
+  return '<div class="fax-sheet">'
+    + '<div class="fax-asof">'+esc(fmtMD(todayISO()))+'時点</div>'
+    + '<div class="fax-ttl">排雪予定</div>'
+    + '<div class="fax-sama"><b>'+esc(name)+'</b>　様</div>'
+    + '<div class="fax-meet">'
+    +   '<div class="mrow"><span class="ml">集合時間</span><span class="mv">'+esc(FAX_TIME||'')+'</span></div>'
+    +   '<div class="mrow"><span class="ml">集合場所</span><span class="mv">'+esc(FAX_PLACE||'')+'</span></div>'
+    + '</div>'
+    + '<table class="fax-tbl"><colgroup><col style="width:13%"><col style="width:8%"><col style="width:31%"><col style="width:24%"><col style="width:10%"><col style="width:14%"></colgroup>'
+    +   '<thead><tr><th>月日</th><th>曜日</th><th>作業箇所・町内会</th><th>雪堆積場</th><th>昼夜</th><th>'+esc(qHeader)+'</th></tr></thead>'
+    +   '<tbody>'+body+'</tbody></table>'
+    + '<div class="fax-foot">'
+    +   '<p>上記のとおり日程がきまりましたのでお知らせいたします。</p>'
+    +   '<p>途中変更等あるかと思いますが、何卒ご協力いただきますようお願いいたします。</p>'
+    +   '<div class="fax-contacts">'+contacts+'</div>'
+    + '</div></div>';
+}
+function renderFaxPreview(){
+  const wrap=document.getElementById('fax-preview'); if(!wrap) return;
+  if(FAX_FROM && FAX_TO && FAX_FROM>FAX_TO){ wrap.innerHTML='<div class="empty">開始日が終了日より後になっています。期間を確認してください。</div>'; return; }
+  let sheets='';
+  COMPANIES.forEach(function(c){ if(FAX_SEL[c]) sheets += faxSheet(c, faxRowsForCompany(c), {header:'台数',unit:'台'}); });
+  if(FAX_SEL['__motomura__']) sheets += faxSheet('モトムラ', faxRowsForMotomura(), {header:'台数',unit:'台'});
+  if(FAX_SEL['__keibi__']) sheets += faxSheet('タウン警備', faxRowsForKeibi(), {header:'人数',unit:'名'});
+  wrap.innerHTML = sheets || '<div class="empty">この期間に予定のある送信先がありません（または未チェックです）。期間やチェックを確認してください。</div>';
+}
+function printFax(){
+  if(FAX_FROM && FAX_TO && FAX_FROM>FAX_TO){ toast('期間の開始・終了を確認してください'); return; }
+  renderFaxPreview();
+  document.body.classList.add('print-fax');
+  window.print();
+  setTimeout(function(){ document.body.classList.remove('print-fax'); }, 400);
 }
 
 /*═══════════ 起動 ═══════════*/
