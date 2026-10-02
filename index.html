@@ -227,6 +227,20 @@
   .map-subnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
   .map-subbtn{background:#fff;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
   .map-subbtn.active{background:var(--accent);color:#fff}
+  /* ---------- 設計書ビューア（拡大縮小） ---------- */
+  #design-subnav{margin-bottom:0}
+  .dz-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .dz-title{font-weight:800;color:var(--accent);font-size:15px}
+  .dz-stage{position:relative;width:100%;height:72vh;min-height:420px;background:#eef2f7;border:1px solid var(--line);border-radius:8px;overflow:hidden;touch-action:none;cursor:grab}
+  .dz-stage.grabbing{cursor:grabbing}
+  .dz-img{position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;max-width:none;display:block}
+  .dz-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:16px}
+  .design-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(160px,2fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:8px;background:#fbfdff}
+  .design-row input{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-family:inherit;font-size:13px}
+  .design-row .drbtns{display:flex;gap:4px}
+  .design-row .drbtns button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px}
+  .design-row .drbtns button.del{border-color:#e6b4b0;color:var(--bad)}
+  @media print{ #tab-design{ display:none !important; } }
   .map-svg .map-line{pointer-events:auto;cursor:pointer;fill:none;stroke-linejoin:round;stroke-linecap:round}
   .map-line-label{position:absolute;transform:translate(-50%,-50%);z-index:3;cursor:pointer;pointer-events:auto}
   .map-line-label .mll-name{display:inline-block;font-size:11px;font-weight:800;background:rgba(255,255,255,.94);border:1.5px solid var(--line);border-radius:5px;padding:0 5px;white-space:nowrap;color:#1a2430}
@@ -570,6 +584,7 @@
       <button data-tab="report">安全日報</button>
       <button data-tab="contact">連絡先・設定</button>
       <button data-tab="sites">各サイト</button>
+      <button data-tab="design">設計書</button>
     </nav>
 
     <!-- HOME -->
@@ -911,6 +926,44 @@
           <a class="site-link" href="https://www.hottomotto.com/menu_list/index/1" target="_blank" rel="noopener">お昼（ほっともっと メニュー）</a>
           <a class="site-link" href="https://store.hottomotto.com/b/hottomotto/info/63475/" target="_blank" rel="noopener">お昼（ほっともっと 店舗情報）</a>
         </div>
+      </div>
+    </section>
+
+    <!-- 設計書（各マップを拡大縮小して閲覧・入替可） -->
+    <section class="tab" id="tab-design">
+      <div class="card">
+        <div class="row" style="align-items:center">
+          <h2 style="margin:0">設計書</h2>
+          <div class="spacer"></div>
+          <button class="btn sec sm edit-only" id="design-edit-btn" onclick="toggleDesignEdit()">⚙ 図面の入替・編集</button>
+        </div>
+        <p class="hint">各マップのタブを選ぶと下に表示されます。マウスのホイールやボタンで拡大・縮小、ドラッグで移動できます（スマホは2本指で拡大・指でスワイプ）。</p>
+        <div id="design-subnav" class="map-subnav" style="margin-top:8px"></div>
+      </div>
+
+      <!-- 入替・編集パネル（編集モードのみ） -->
+      <div class="card edit-only" id="design-edit-panel" style="display:none">
+        <div class="row"><h3 style="margin:0;color:var(--accent)">図面の入替・編集</h3><div class="spacer"></div>
+          <button class="btn sm" id="design-save" onclick="saveDesign()">💾 保存</button></div>
+        <p class="hint">毎年変わる図面はここで入れ替えます。各行の「画像URL」を差し替えるか、画像ファイル（design/map1.jpg など）をリポジトリに同名で上げ直せば更新できます。タブ名も変更できます。</p>
+        <div id="design-list" style="margin-top:8px"></div>
+        <div class="row" style="margin-top:8px"><button class="btn sec sm" onclick="designAddRow()">＋ 図面を追加</button></div>
+      </div>
+
+      <div class="card">
+        <div class="dz-bar">
+          <span class="dz-title" id="dz-title"></span>
+          <div class="spacer"></div>
+          <button class="btn sec sm" onclick="dzZoom(1/1.3)">－ 縮小</button>
+          <button class="btn sec sm" onclick="dzZoom(1.3)">＋ 拡大</button>
+          <button class="btn sec sm" onclick="dzReset()">リセット（全体表示）</button>
+          <a class="btn sec sm" id="dz-open" href="#" target="_blank" rel="noopener" style="text-decoration:none">別タブで開く</a>
+        </div>
+        <div class="dz-stage" id="dz-stage">
+          <img class="dz-img" id="dz-img" alt="設計図" draggable="false">
+          <div class="dz-empty" id="dz-empty">図面を読み込み中…</div>
+        </div>
+        <p class="hint">※ 図面が表示されない場合は、画像ファイルがまだアップロードされていない可能性があります（design フォルダに map1.jpg〜map8.jpg）。</p>
       </div>
     </section>
   </main>
@@ -1424,8 +1477,16 @@ async function loadData(){
           try{ const o = JSON.parse(s.note||'{}'); if(o && typeof o==='object') UNPAN_SAVED = o; }catch(e){}
         }
       });
-      // 提出物タブには __REPMACH__ / __SETTINGS__ / __UNPAN__ / __HS__（排雪シフト別ページ）を出さない
-      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__' && y !== '__HS__'; });
+      // 設計書（図面リスト）レコード（年度='__DESIGN__'）を分離
+      DESIGN_ROW = null; DESIGN_SAVED = null;
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__DESIGN__'){
+          DESIGN_ROW = s.row;
+          try{ const o = JSON.parse(s.note||'{}'); if(o && Array.isArray(o.maps)) DESIGN_SAVED = o.maps; }catch(e){}
+        }
+      });
+      // 提出物タブには __REPMACH__ / __SETTINGS__ / __UNPAN__ / __HS__ / __DESIGN__ を出さない
+      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__' && y !== '__HS__' && y !== '__DESIGN__'; });
     }
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
@@ -1499,6 +1560,7 @@ function renderAll(){
   renderMap();
   renderUnpan();
   renderShift();
+  renderDesign();
   renderCompanyDatalist();
   repApplyPresets();   // 安全日報：保存済み台数(REPMACH_SAVED)を各社パネルへ反映
   renderReportPreview();
@@ -3647,6 +3709,132 @@ window.addEventListener('afterprint', function(){
   document.body.classList.remove('print-no-map2');
 });
 
+/*════════════════ 設計書（図面ビューア：拡大縮小・入替） ════════════════*/
+const DEFAULT_DESIGN = [
+  {title:'車道除雪路線図',     url:'design/map1.jpg'},
+  {title:'歩道除雪路線図',     url:'design/map2.jpg'},
+  {title:'運搬排雪路線図',     url:'design/map3.jpg'},
+  {title:'交差点排雪図',       url:'design/map4.jpg'},
+  {title:'凍結路面対策路線図', url:'design/map5.jpg'},
+  {title:'砂箱設置箇所図',     url:'design/map6.jpg'},
+  {title:'横断歩道除雪図',     url:'design/map7.jpg'},
+  {title:'道路パトロール図',   url:'design/map8.jpg'}
+];
+let DESIGN = [];              // 現在の図面リスト [{title,url}]
+let DESIGN_SAVED = null;      // GASから読んだ保存値（null＝未保存→既定を使用）
+let DESIGN_ROW = null;        // __DESIGN__ 行番号（上書き用）
+let DESIGN_CUR = 0;           // 表示中の図面index
+let DESIGN_EDIT_OPEN = false;
+// ズーム状態
+let dzScale=1, dzX=0, dzY=0, dzNat={w:0,h:0}, dzDrag=null;
+
+function designList(){ return (DESIGN_SAVED && DESIGN_SAVED.length) ? DESIGN_SAVED : DEFAULT_DESIGN; }
+// データ読込時：保存値（または既定）から作業用リストを作り直す
+function renderDesign(){
+  DESIGN = designList().map(function(d){ return {title:d.title||'', url:d.url||''}; });
+  if(DESIGN_CUR>=DESIGN.length) DESIGN_CUR = 0;
+  renderDesignUI();
+}
+// 画面だけ描き直す（タブ切替・編集中はこちら＝作業中の編集を消さない）
+function renderDesignUI(){
+  const nav=document.getElementById('design-subnav');
+  if(nav){
+    nav.innerHTML = DESIGN.map(function(d,i){
+      return '<button type="button" class="map-subbtn'+(i===DESIGN_CUR?' active':'')+'" onclick="selectDesign('+i+')">'+esc(d.title||('図面'+(i+1)))+'</button>';
+    }).join('') || '<span class="hint">図面がありません。「図面の入替・編集」から追加してください。</span>';
+  }
+  renderDesignEditList();
+  loadDesignImage();
+}
+function selectDesign(i){ DESIGN_CUR=i; renderDesignUI(); }
+function loadDesignImage(){
+  const img=document.getElementById('dz-img'), empty=document.getElementById('dz-empty'), ttl=document.getElementById('dz-title'), open=document.getElementById('dz-open');
+  if(!img) return;
+  const d=DESIGN[DESIGN_CUR];
+  if(ttl) ttl.textContent = d ? (d.title||'') : '';
+  if(open) open.href = d && d.url ? d.url : '#';
+  if(!d || !d.url){ img.style.display='none'; if(empty){ empty.style.display='flex'; empty.textContent='図面が設定されていません。'; } return; }
+  if(empty){ empty.style.display='flex'; empty.textContent='図面を読み込み中…'; }
+  img.style.display='none';
+  img.onload=function(){ dzNat={w:img.naturalWidth,h:img.naturalHeight}; img.style.display='block'; if(empty) empty.style.display='none'; dzReset(); };
+  img.onerror=function(){ img.style.display='none'; if(empty){ empty.style.display='flex'; empty.textContent='図面を表示できませんでした（画像ファイル '+ (d.url) +' がまだアップロードされていない可能性があります）。'; } };
+  img.src=d.url;
+}
+function dzApply(){ const img=document.getElementById('dz-img'); if(img) img.style.transform='translate('+dzX+'px,'+dzY+'px) scale('+dzScale+')'; }
+function dzFitScale(){ const st=document.getElementById('dz-stage'); if(!st||!dzNat.w) return 1; return Math.min(st.clientWidth/dzNat.w, st.clientHeight/dzNat.h); }
+function dzReset(){ const st=document.getElementById('dz-stage'); if(!st||!dzNat.w) return; const fit=dzFitScale(); dzScale=fit; dzX=(st.clientWidth-dzNat.w*fit)/2; dzY=(st.clientHeight-dzNat.h*fit)/2; dzApply(); }
+function dzClamp(){ const st=document.getElementById('dz-stage'); if(!st||!dzNat.w) return; const w=dzNat.w*dzScale, h=dzNat.h*dzScale;
+  // 画面より大きいときは端が内側に入りすぎないように、小さいときは中央寄せ
+  if(w<=st.clientWidth) dzX=(st.clientWidth-w)/2; else dzX=Math.min(0, Math.max(st.clientWidth-w, dzX));
+  if(h<=st.clientHeight) dzY=(st.clientHeight-h)/2; else dzY=Math.min(0, Math.max(st.clientHeight-h, dzY));
+}
+function dzZoomAt(factor, cx, cy){
+  const fit=dzFitScale();
+  let ns=dzScale*factor; ns=Math.max(fit*0.9, Math.min(fit*12, ns));   // 全体表示〜12倍相当
+  const k=ns/dzScale;
+  dzX = cx - (cx-dzX)*k; dzY = cy - (cy-dzY)*k; dzScale=ns;
+  dzClamp(); dzApply();
+}
+function dzZoom(factor){ const st=document.getElementById('dz-stage'); if(!st) return; dzZoomAt(factor, st.clientWidth/2, st.clientHeight/2); }
+function wireDesignViewer(){
+  const st=document.getElementById('dz-stage'); if(!st || st.__wired) return; st.__wired=true;
+  st.addEventListener('wheel', function(e){ e.preventDefault(); const r=st.getBoundingClientRect(); dzZoomAt(e.deltaY<0?1.15:1/1.15, e.clientX-r.left, e.clientY-r.top); }, {passive:false});
+  // ドラッグ（1本指/マウス）
+  const pts={};
+  st.addEventListener('pointerdown', function(e){ st.setPointerCapture(e.pointerId); pts[e.pointerId]={x:e.clientX,y:e.clientY}; if(Object.keys(pts).length===1){ dzDrag={x:e.clientX,y:e.clientY,ox:dzX,oy:dzY}; st.classList.add('grabbing'); } });
+  st.addEventListener('pointermove', function(e){
+    if(!pts[e.pointerId]) return;
+    const ids=Object.keys(pts);
+    if(ids.length>=2){
+      // ピンチズーム
+      const a=pts[ids[0]], b=pts[ids[1]];
+      const prevDist=Math.hypot(a.x-b.x,a.y-b.y);
+      pts[e.pointerId]={x:e.clientX,y:e.clientY};
+      const a2=pts[ids[0]], b2=pts[ids[1]];
+      const newDist=Math.hypot(a2.x-b2.x,a2.y-b2.y);
+      const r=st.getBoundingClientRect();
+      const mx=((a2.x+b2.x)/2)-r.left, my=((a2.y+b2.y)/2)-r.top;
+      if(prevDist>0) dzZoomAt(newDist/prevDist, mx, my);
+      dzDrag=null;
+    } else if(dzDrag){
+      dzX=dzDrag.ox+(e.clientX-dzDrag.x); dzY=dzDrag.oy+(e.clientY-dzDrag.y); dzClamp(); dzApply();
+      pts[e.pointerId]={x:e.clientX,y:e.clientY};
+    }
+  });
+  function up(e){ delete pts[e.pointerId]; if(Object.keys(pts).length===0){ dzDrag=null; st.classList.remove('grabbing'); } }
+  st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
+  st.addEventListener('dblclick', function(e){ const r=st.getBoundingClientRect(); dzZoomAt(1.6, e.clientX-r.left, e.clientY-r.top); });
+}
+
+/* 入替・編集 */
+function toggleDesignEdit(){ DESIGN_EDIT_OPEN=!DESIGN_EDIT_OPEN; const p=document.getElementById('design-edit-panel'); if(p) p.style.display=DESIGN_EDIT_OPEN?'':'none'; }
+function renderDesignEditList(){
+  const el=document.getElementById('design-list'); if(!el) return;
+  el.innerHTML = DESIGN.map(function(d,i){
+    return '<div class="design-row">'
+      + '<input value="'+esc(d.title||'')+'" placeholder="タブ名（題名）" onchange="designSet('+i+',\'title\',this.value)">'
+      + '<input value="'+esc(d.url||'')+'" placeholder="画像URL（例：design/map1.jpg）" onchange="designSet('+i+',\'url\',this.value)">'
+      + '<div class="drbtns"><button type="button" onclick="designMove('+i+',-1)">↑</button><button type="button" onclick="designMove('+i+',1)">↓</button>'
+      + '<button type="button" class="del" onclick="designDel('+i+')">削除</button></div>'
+      + '</div>';
+  }).join('');
+}
+function designSet(i,k,v){ DESIGN[i][k]=v; if(k==='url'&&i===DESIGN_CUR) loadDesignImage(); if(k==='title'){ const nav=document.getElementById('design-subnav'); if(nav){ const btns=nav.querySelectorAll('.map-subbtn'); if(btns[i]) btns[i].textContent=v||('図面'+(i+1)); } } }
+function designMove(i,dir){ const j=i+dir; if(j<0||j>=DESIGN.length) return; const t=DESIGN[i]; DESIGN[i]=DESIGN[j]; DESIGN[j]=t; if(DESIGN_CUR===i)DESIGN_CUR=j; else if(DESIGN_CUR===j)DESIGN_CUR=i; renderDesignUI(); }
+function designDel(i){ if(!confirm('この図面を一覧から削除しますか？（画像ファイル自体は消えません）')) return; DESIGN.splice(i,1); if(DESIGN_CUR>=DESIGN.length)DESIGN_CUR=Math.max(0,DESIGN.length-1); renderDesignUI(); }
+function designAddRow(){ DESIGN.push({title:'新しい図面', url:''}); renderDesignUI(); }
+async function saveDesign(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const maps=DESIGN.map(function(d){ return {title:(d.title||'').trim(), url:(d.url||'').trim()}; });
+  const sub={year:'__DESIGN__', company:'maps', doc:'list', status:'', date:'', link:'', note:JSON.stringify({maps:maps})};
+  if(DESIGN_ROW!=null) sub.row=DESIGN_ROW;
+  const btn=document.getElementById('design-save'); if(btn){ btn.disabled=true; btn.textContent='保存中...'; }
+  const res=await callApi({action:'saveSub', sub:sub});
+  if(btn){ btn.disabled=false; btn.textContent='💾 保存'; }
+  if(res && res.ok){ if(!offline && res.row!=null) DESIGN_ROW=res.row; DESIGN_SAVED=maps; toast(offline?'保存しました（オフライン：共有されていません）':'設計書を保存しました'); }
+  else toast('保存に失敗：'+(res&&res.error?res.error:'不明'));
+}
+
 /*════════════════ タブ切替 ════════════════*/
 document.querySelectorAll('nav button').forEach(function(b){
   b.onclick = function(){
@@ -3654,6 +3842,7 @@ document.querySelectorAll('nav button').forEach(function(b){
     document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
     b.classList.add('active');
     document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+    if(b.dataset.tab==='design'){ wireDesignViewer(); setTimeout(dzReset, 60); }  // 表示後にフィット
   };
 });
 
