@@ -123,6 +123,34 @@
   th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:middle;white-space:nowrap}
   th{background:#eef2f7;font-weight:700;color:#2a3a49}
   tr.exp td{background:#fdf2f0} tr.soon td{background:#fff9ef}
+  .mreg-subnav{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .mreg-subbtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit}
+  .mreg-subbtn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .mreg-ng{display:inline-block;background:#fbe9e7;color:var(--bad);border-radius:999px;padding:0 7px;font-size:11px;margin-left:4px;font-weight:800}
+  .mreg-subbtn.active .mreg-ng{background:rgba(255,255,255,.28);color:#fff}
+  table.mreg-tbl{width:100%;border-collapse:collapse;table-layout:auto}
+  table.mreg-tbl th,table.mreg-tbl td{border:1px solid var(--line);padding:7px 9px;font-size:13px;text-align:left;vertical-align:middle}
+  table.mreg-tbl th{background:#f3f6fb;font-size:12px;color:var(--muted);white-space:nowrap}
+  table.mreg-tbl th.cat,table.mreg-tbl th.stat{text-align:center}
+  table.mreg-tbl td.mreg-cat,table.mreg-tbl td.mreg-stat{text-align:center;white-space:nowrap}
+  .mreg-west{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .mreg-in{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;background:#fff}
+  .mreg-in.cat{text-align:center}
+  .mreg-in:focus{outline:none;border-color:var(--accent)}
+  .mreg-del-cell{text-align:center}
+  .mreg-x{border:1px solid var(--line);background:#fff;color:var(--bad);border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1}
+  .mreg-x:hover{background:#fdecea}
+  .role-badge{background:#eaf2ff;color:#1a4b8e;border:1px solid #bcd3f5;border-radius:999px;padding:3px 11px;font-size:11.5px;font-weight:800;margin-right:8px;white-space:nowrap}
+  table.acct-tbl{width:100%;border-collapse:collapse}
+  table.acct-tbl th,table.acct-tbl td{border:1px solid var(--line);padding:8px 10px;font-size:13px;text-align:left;vertical-align:middle}
+  table.acct-tbl th{background:#f3f6fb;font-size:12px;color:var(--muted);white-space:nowrap}
+  .acct-roles-help{font-size:12.5px;color:var(--muted);line-height:1.85}
+  .acct-roles-help b{color:var(--accent)}
+  tr.acct-off td{opacity:.5}
+  .acct-role-pill{display:inline-block;background:#eef2f7;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:700;color:#41506a}
+  .acct-x{border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;margin-right:5px}
+  .acct-x.del{color:var(--bad)}
+  .acct-x:hover{background:#f3f6fb}
   td.num{text-align:right;font-family:"JetBrains Mono",monospace}
 
   /* ---------- modal ---------- */
@@ -188,6 +216,26 @@
   .ev-date{width:66px;flex-shrink:0;font-weight:700;color:var(--accent);font-size:13px}
   .ev-time{width:46px;flex-shrink:0;color:var(--muted);font-size:13px}
   .ev-title{flex:1;min-width:0;font-size:13px;word-break:break-word}
+
+  /* ---------- month calendar (home) ---------- */
+  .cal-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .cal-title{font-weight:800;font-size:16px;color:var(--accent);min-width:122px;text-align:center}
+  .cal-nav{display:inline-flex;gap:6px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .cal-wd{background:#eef2f7;text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:5px 0}
+  .cal-wd.sun{color:#d93025} .cal-wd.sat{color:#1a73e8}
+  .cal-cell{background:#fff;min-height:80px;padding:3px 3px 4px;display:flex;flex-direction:column;gap:2px;position:relative}
+  body:not(.readonly) .cal-cell.inm{cursor:pointer}
+  body:not(.readonly) .cal-cell.inm:hover{background:#f3f8ff}
+  .cal-cell.other{background:#f6f8fb}
+  .cal-cell.today{background:#fff7e6}
+  .cal-daynum{font-size:12px;font-weight:700;color:#1a2430;line-height:1.3;align-self:flex-start}
+  .cal-cell.other .cal-daynum{color:#b7c0cb}
+  .cal-daynum.sun{color:#d93025} .cal-daynum.sat{color:#1a73e8}
+  .cal-cell.today .cal-daynum{background:var(--accent);color:#fff;border-radius:50%;min-width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;padding:0 4px}
+  .cal-ev{font-size:10.5px;line-height:1.35;color:#fff;border-radius:4px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .cal-more{font-size:10px;color:var(--muted);padding:0 3px}
+  @media (max-width:520px){ .cal-cell{min-height:60px} .cal-ev{font-size:9px;padding:1px 3px} .cal-title{font-size:14px;min-width:100px} .cal-wd{font-size:11px} }
 
   /* ---------- haisetsu map ---------- */
   .map-stage-head{font-weight:800;color:var(--accent);font-size:14px;margin:2px 0 6px}
@@ -535,7 +583,77 @@
     body.print-report table.rep-main{ page-break-inside:auto; }
     body.print-report table.rep-main>tbody>tr{ page-break-inside:avoid; }
   }
+
+  /* ---------- 住所検索（地図） ---------- */
+  .addr-block{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .addr-block:first-of-type{border-top:none;margin-top:8px;padding-top:0}
+  .addr-blocktitle{font-size:13px;font-weight:800;color:var(--accent);margin-bottom:6px}
+  .addr-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .addr-row input[type=text], .addr-row input[type=number], .addr-row select{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:14px;font-family:inherit;color:#1a2430;box-sizing:border-box}
+  .addr-row input[type=text]{flex:1;min-width:220px}
+  .addr-dd select{min-width:120px}
+  .addr-suffix{font-size:13px;font-weight:700;color:var(--muted);align-self:center}
+  #addr-map{width:100%;height:60vh;min-height:380px;border-radius:8px;border:1px solid var(--line);background:#eef2f7;margin-top:12px}
+  .addr-result{margin-top:12px;padding:10px 12px;border:1px solid #b7cdec;border-left:5px solid var(--accent);border-radius:8px;background:#f2f7ff;font-size:14px;display:none}
+  .addr-result.show{display:block}
+  .addr-result .ar-addr{font-weight:800;color:#1a2430;font-size:15px}
+  .addr-result .ar-btns{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+  .addr-note{font-size:12px;color:var(--muted);margin-top:4px}
+  @media print{ #tab-address{ display:none !important; } }
+
+  /* ---------- 連絡チェック ---------- */
+  .check-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .check-legend{display:inline-flex;gap:8px;flex-wrap:wrap;font-size:12px;align-items:center}
+  .check-legend .cl{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:12px;font-weight:700}
+  .cl-none{background:#eceff3;color:#5f6368}
+  .cl-line{background:#d7f0dd;color:#0f5c33}
+  .cl-tel{background:#d9e8fb;color:#13448a}
+  .cl-ng{background:#fbdcd9;color:#a11}
+  .check-tbl{overflow-x:auto}
+  .check-sec-title{font-weight:800;color:var(--accent);font-size:14px;margin:16px 0 6px}
+  .check-sec-title:first-child{margin-top:2px}
+  .check-tbl table{width:100%;border-collapse:collapse;margin-bottom:4px;table-layout:fixed;border:2px solid #111}
+  /* 紙の様式に寄せた罫線・色合い（細い罫線＝薄グレー／機械セットの枠＝太い黒線） */
+  .check-tbl th,.check-tbl td{border:1px solid #c2cad6;padding:5px 7px;font-size:13px;text-align:left;vertical-align:middle;word-break:break-all;overflow-wrap:anywhere;white-space:normal}
+  .check-tbl td.c-st{white-space:nowrap}
+  .check-tbl th{background:#dfe7f1;color:#223;font-weight:800;font-size:12px;white-space:nowrap;text-align:center;border-bottom:2px solid #111}
+  .check-tbl tr.g-first td{border-top:2px solid #111}             /* 機械セット（オペ＋助手）の区切り＝太い黒枠 */
+  .check-tbl td.ck-name{color:#15489c;font-weight:700;padding:0}  /* 氏名＝青字・2段（上レギュラー／下予備） */
+  .check-tbl td.ck-name .nm-reg{padding:5px 7px}
+  .check-tbl td.ck-name .nm-sub{padding:4px 7px;border-top:1px dashed #9fb0c8;color:#5f7497;font-weight:600;font-size:12px;min-height:1.1em}
+  .check-tbl td.ck-name .nm-sub:empty::before{content:"（予備）";color:#b7c0cb;font-weight:400}
+  .check-tbl td.ck-note{color:#c0392b;font-weight:600}            /* 備考（下請け名・時間帯）＝赤字 */
+  .check-tbl td.ck-role{color:#1a2430}
+  .check-tbl td.c-tel{font-family:"JetBrains Mono",monospace;font-size:12px}
+  .check-tbl td.c-st{text-align:center;white-space:nowrap}
+  .check-sec-row td{background:#eaf1fb;font-weight:800;color:var(--accent);font-size:13px}
+  .check-st-btn{min-width:92px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#1a2430}
+  .check-st-btn:disabled{cursor:default;opacity:.9}
+  .check-tbl input{border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box;color:#1a2430}
+  .check-tbl .c-line-chk{width:auto;transform:scale(1.2)}
+  /* 連絡チェック：全画面モード（?view=check の別タブ） */
+  body.checkonly header, body.checkonly nav, body.checkonly #demo-banner{display:none !important}
+  body.checkonly .tab{display:none !important}
+  body.checkonly #tab-check{display:block !important}
+  body.checkonly #check-launcher{display:none !important}
+  body.checkonly #check-screen{display:block !important}
+  body.checkonly #app{padding-top:0}
+  .check-date-item{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid #eef2f7;flex-wrap:wrap}
+  .check-date-item:last-child{border-bottom:none}
+  .check-date-item .cd-date{font-weight:700;color:var(--accent);min-width:130px}
+  @media print{
+    body.print-check nav, body.print-check header, body.print-check #offline-banner, body.print-check .no-print, body.print-check .edit-only, body.print-check #demo-banner{display:none !important}
+    body.print-check .tab{display:none !important}
+    body.print-check #tab-check{display:block !important}
+    body.print-check #check-launcher{display:none !important}
+    body.print-check #check-screen{display:block !important}
+    body.print-check .card{box-shadow:none;border:none;padding:0}
+    body.print-check .check-st-btn{border:1px solid #999;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body.print-check .cl,.print-check .check-sec-row td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
 </style>
+<!-- Leaflet（地図表示用。CDNから読めない環境では地図を出さずGoogleマップ誘導にフォールバック） -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 </head>
 <body>
 
@@ -548,8 +666,9 @@
 <div id="login">
   <div class="box">
     <h1>❄ 除雪業務 管理ボード</h1>
-    <p>パスワードを入力してください</p>
-    <input id="login-pw" type="password" placeholder="パスワード" autocomplete="off">
+    <p>IDとパスワードを入力してください</p>
+    <input id="login-id" type="text" placeholder="ID（例：admin）" autocomplete="username" style="margin-bottom:8px">
+    <input id="login-pw" type="password" placeholder="パスワード" autocomplete="current-password">
     <div class="err" id="login-err"></div>
     <button class="btn" style="width:100%" onclick="tryLogin()">ログイン</button>
   </div>
@@ -564,6 +683,7 @@
     </div>
     <div class="sub" id="hdr-sub"></div>
     <div class="spacer"></div>
+    <span class="role-badge" id="role-badge" style="display:none"></span>
     <span class="view-badge" id="view-badge" style="display:none">閲覧モード（編集不可）</span>
     <span class="offline-badge" id="offline-badge">⚠️ 未接続</span>
     <button class="logout" onclick="logout()">ログアウト</button>
@@ -576,15 +696,20 @@
   <main>
     <nav>
       <button data-tab="home" class="active">ホーム</button>
-      <button data-tab="list">機械調書</button>
-      <button data-tab="alert">車検アラート<span class="badge" id="nav-badge" style="display:none">0</span></button>
+      <button data-tab="alert">機械調書<span class="badge" id="nav-badge" style="display:none">0</span></button>
+      <!-- 提出物管理タブは一旦非表示（必要になれば下行のコメントを外すと復活します）
       <button data-tab="subs">提出物管理</button>
+      -->
       <button data-tab="map">排雪マップ</button>
+      <button data-tab="address">住所検索</button>
       <button data-tab="shift">勤務予定表</button>
+      <button data-tab="haisetsu">排雪シフト</button>
+      <button data-tab="check">連絡チェック</button>
       <button data-tab="report">安全日報</button>
       <button data-tab="contact">連絡先・設定</button>
       <button data-tab="sites">各サイト</button>
       <button data-tab="design">設計書</button>
+      <button data-tab="accounts" class="nav-admin" style="display:none">⚙ 設定</button>
     </nav>
 
     <!-- HOME -->
@@ -614,42 +739,40 @@
         <div id="home-week"></div>
       </div>
       <div class="card">
-        <h2>予定カレンダー</h2>
+        <div class="cal-head">
+          <h2 style="margin:0">予定カレンダー</h2>
+          <div style="flex:1"></div>
+          <button class="btn sm edit-only" onclick="openEventModal(null)">＋ 予定を追加</button>
+        </div>
+        <div class="cal-head" style="justify-content:center;margin-bottom:10px">
+          <button class="btn sec sm" onclick="calPrevMonth()">◀ 前月</button>
+          <div class="cal-title" id="cal-title">—</div>
+          <button class="btn sec sm" onclick="calNextMonth()">次月 ▶</button>
+          <button class="btn sec sm" onclick="calToday()" style="margin-left:4px">今日</button>
+        </div>
         <div id="home-calendar"></div>
+        <p class="hint edit-only" style="margin-top:8px">日付のマスをクリックすると予定を追加できます。予定をクリックすると編集・削除できます。</p>
       </div>
     </section>
 
     <!-- LIST（機械調書） -->
-    <section class="tab" id="tab-list">
-      <div class="card">
-        <div class="row">
-          <h2 style="margin:0">構成会社ごとの機械</h2>
-          <div class="spacer"></div>
-          <button class="btn sec sm edit-only" onclick="openModal(null,'')">＋ 機械を追加</button>
-        </div>
-        <p class="hint">カードをクリックすると編集できます。会社名の横の「＋機械を追加」でその会社に機械を追加します。</p>
-      </div>
-      <div id="companies"></div>
-    </section>
-
-    <!-- ALERT -->
+    <!-- 機械調書（旧「車検アラート」を改称） -->
     <section class="tab" id="tab-alert">
       <div class="card">
         <div class="row">
-          <h2 style="margin:0">車検アラート</h2>
+          <h2 style="margin:0">機械調書</h2>
           <div class="spacer"></div>
-          <button class="btn edit-only" onclick="makeDraft('exp')">✉ 車検切れの担当へ下書き</button>
-          <button class="btn sec edit-only" onclick="makeDraft('expsoon')">✉ 満了間近も含めて下書き</button>
+          <span class="pill" id="mreg-total"></span>
+          <button class="btn sec sm edit-only" onclick="mregAddRow()">＋ 機械を追加</button>
         </div>
-        <p class="hint">車検満了日の近い順に並びます。ボタンを押すとGAS側で対象の担当あてにGmail下書きを作成します（自動送信はしません）。「満了間近も含めて」は車検切れ＋満了間近（残り日数がリード日数以内）が対象です。</p>
+        <p class="hint">所有企業ごとに機械の一覧を表示します（「すべて」で全社まとめて表示）。車検期限が切れている行は赤、満了が近い行（残り60日以内）は黄色で表示されます。編集モードでは各欄を直接入力でき、変更は自動で保存されます。車検期限は「R10年10月22日」のように和暦で入力してください。</p>
+        <div class="mreg-subnav" id="mreg-subnav"></div>
       </div>
       <div class="card">
         <div class="tbl-wrap">
-          <table>
-            <thead><tr>
-              <th>状態</th><th>車検満了日</th><th>残り</th><th>会社</th><th>機械種別</th><th>機械名称</th><th>車両番号</th><th>担当者</th><th>通知先メール</th>
-            </tr></thead>
-            <tbody id="alert-body"></tbody>
+          <table class="mreg-tbl">
+            <thead id="mreg-head"></thead>
+            <tbody id="mreg-body"></tbody>
           </table>
         </div>
       </div>
@@ -702,6 +825,19 @@
         <div class="map-legend">
           <span class="lg"><span class="sw done"></span>完了</span>
           <span class="lg"><span class="sw todo"></span>未完了</span>
+        </div>
+        <div class="fld full edit-only" id="life-img-fld" style="margin-top:10px">
+          <label style="font-size:12px;color:var(--muted);font-weight:700">背景地図の画像URL（白地図など・任意／空欄で設定シートの既定地図に戻ります）</label>
+          <div class="row" style="gap:8px;margin-top:4px;flex-wrap:wrap">
+            <span style="font-size:12px;font-weight:700;align-self:center;min-width:46px">地図1：</span>
+            <input id="life-img-url-1" placeholder="https://... 画像URL" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;box-sizing:border-box">
+            <button class="btn sec sm" onclick="saveLifeImg(1)">地図1の背景を設定</button>
+          </div>
+          <div class="row" style="gap:8px;margin-top:6px;flex-wrap:wrap">
+            <span style="font-size:12px;font-weight:700;align-self:center;min-width:46px">地図2：</span>
+            <input id="life-img-url-2" placeholder="https://... 画像URL" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit;box-sizing:border-box">
+            <button class="btn sec sm" onclick="saveLifeImg(2)">地図2の背景を設定</button>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -966,7 +1102,162 @@
         <p class="hint">※ 図面が表示されない場合は、画像ファイルがまだアップロードされていない可能性があります（design フォルダに map1.jpg〜map8.jpg）。</p>
       </div>
     </section>
+
+    <!-- ADDRESS（住所検索） -->
+    <section class="tab" id="tab-address">
+      <div class="card">
+        <div class="row" style="align-items:center">
+          <h2 style="margin:0">住所検索（札幌市厚別区）</h2>
+        </div>
+
+        <!-- 住所入力（フリー入力） -->
+        <div class="addr-block">
+          <div class="addr-blocktitle">住所入力</div>
+          <div class="addr-row">
+            <input type="text" id="addr-free-q" placeholder="例）厚別中央1条5丁目3-10　／　青葉町3丁目　／　大谷地東2丁目" onkeydown="if(event.key==='Enter')searchFree()">
+            <button class="btn" onclick="searchFree()">🔍 検索</button>
+          </div>
+          <div class="addr-note">「札幌市厚別区」は省略できます。番地・号まで入れてもOKです。</div>
+        </div>
+
+        <!-- 選んで検索（ドリルダウン） -->
+        <div class="addr-block addr-dd">
+          <div class="addr-blocktitle">選んで検索</div>
+          <div class="addr-row">
+            <select id="addr-town" onchange="onAddrTown()"><option value="">町名を選ぶ…</option></select>
+            <select id="addr-jo" style="display:none" onchange="searchDrill()"></select>
+            <select id="addr-chome" style="display:none" onchange="searchDrill()"></select>
+            <input type="number" id="addr-ban" min="1" inputmode="numeric" placeholder="番地" style="width:78px" onkeydown="if(event.key==='Enter')searchDrill()" onchange="searchDrill()">
+            <span class="addr-suffix">番</span>
+            <input type="number" id="addr-go" min="1" inputmode="numeric" placeholder="号" style="width:66px" onkeydown="if(event.key==='Enter')searchDrill()" onchange="searchDrill()">
+            <span class="addr-suffix">号</span>
+            <button class="btn" onclick="searchDrill()">🔍 検索</button>
+          </div>
+          <div class="addr-note">町名 →（条）→ 丁目 →（番地・号）の順に指定できます。番地・号は任意です。番地・号を入れた場合、その番地・号が実在しないときは表示しません（番地・号を消すと丁目の位置を表示します）。</div>
+        </div>
+
+        <!-- 町内会から探す -->
+        <div class="addr-block">
+          <div class="addr-blocktitle">町内会から探す</div>
+          <div class="addr-row">
+            <select id="addr-chounai" onchange="searchChounai()"><option value="">町内会を選ぶ…</option></select>
+            <button class="btn sec sm" onclick="clearChounai()">🗑 範囲をクリア</button>
+          </div>
+          <div class="addr-note">町内会を選ぶと、その町内会がかかる丁目の範囲を地図に色で表示します（正確な境界線ではなく目安です）。</div>
+        </div>
+
+        <div class="addr-result" id="addr-result">
+          <div class="ar-addr" id="addr-result-text"></div>
+          <div class="ar-btns" id="addr-btns">
+            <a class="btn sec sm" id="addr-navi" href="#" target="_blank" rel="noopener" style="text-decoration:none">🚗 Googleマップでナビ</a>
+            <a class="btn sec sm" id="addr-gmap" href="#" target="_blank" rel="noopener" style="text-decoration:none">🗺 Googleマップで開く</a>
+          </div>
+        </div>
+
+        <div id="addr-map"></div>
+        <div class="addr-note" id="addr-map-msg"></div>
+        <p class="hint">地図：国土地理院（地理院タイル）／住所検索：国土地理院 住所検索API。インターネット接続が必要です。</p>
+      </div>
+    </section>
+
+    <!-- 排雪シフト（北日本重機）：排雪シフトページをこのタブ内に埋め込み表示 -->
+    <section class="tab" id="tab-haisetsu">
+      <div class="row no-print" style="margin-bottom:8px;align-items:center">
+        <span class="hint" style="margin:0">入力しづらいときは右のボタンで全画面（別タブ）で開けます。</span>
+        <div class="spacer"></div>
+        <button class="btn sec sm" onclick="openHaisetsuNewTab()">🔗 別のタブで大きく開く</button>
+      </div>
+      <iframe id="hsframe" title="排雪シフト" src="about:blank"
+        style="width:100%;height:88vh;min-height:620px;border:1px solid var(--line);border-radius:10px;background:#fff;display:block"></iframe>
+    </section>
+
+    <!-- 連絡チェック（新雪除雪の出動連絡） -->
+    <section class="tab" id="tab-check">
+      <!-- ランチャー（ボード内表示）：日付を選んで全画面の別タブでチェック表を開く -->
+      <div class="card" id="check-launcher">
+        <div class="check-bar">
+          <h2 style="margin:0">新雪除雪 連絡チェック</h2>
+        </div>
+        <p class="hint">出動日を選ぶ（または新しい日付を入れる）→「チェックリストを開く」を押すと、全画面の別タブでチェック表が開きます。途中で閉じても、同じ日付で開けば続きから表示されます。名簿はふだんは全日共通で、その日だけ変えたいときは開いた画面の「この日だけ名簿を変更」から直せます。</p>
+        <div class="check-bar" style="margin-top:4px">
+          <label style="font-size:13px;color:var(--muted);font-weight:700">出動日</label>
+          <input type="date" id="check-date-new" style="border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:14px;font-family:inherit">
+          <button class="btn" onclick="openCheckScreen('new')">🖥 この日でチェックリストを開く（全画面）</button>
+          <button class="btn sec sm edit-only" onclick="openRosterScreen()">✏ 共通の名簿を編集（全日のひな形）</button>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:6px">これまでの出動日</div>
+          <div id="check-date-list"></div>
+        </div>
+      </div>
+
+      <!-- 全画面チェック表（?view=check で別タブ表示） -->
+      <div class="card" id="check-screen" style="display:none">
+        <div class="check-bar">
+          <h2 style="margin:0" id="check-screen-title">連絡チェック</h2>
+          <div class="spacer"></div>
+          <span class="pill" id="check-progress"></span>
+          <button class="btn sec sm no-print" onclick="printCheck()">🖨 印刷</button>
+          <button class="btn sec sm edit-only no-print" id="check-edit-btn" onclick="toggleCheckEdit()">✏ 名簿を編集</button>
+        </div>
+        <div class="check-bar" style="margin-top:8px">
+          <span class="check-legend">
+            <span class="cl cl-none">未</span>
+            <span class="cl cl-line">📱LINE既読</span>
+            <span class="cl cl-tel">☎電話済</span>
+            <span class="cl cl-ng">⚠連絡つかず</span>
+          </span>
+        </div>
+        <p class="hint" id="check-hint">状態のボタンを押すたびに「未→LINE既読→電話済→連絡つかず→未」と切り替わります。</p>
+        <div class="check-tbl" id="check-table"></div>
+      </div>
+    </section>
+
+    <!-- ACCOUNTS（アカウント設定：管理者のみ） -->
+    <section class="tab" id="tab-accounts">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">アカウント設定（ID・パスワード）</h2>
+          <div class="spacer"></div>
+          <button class="btn sec sm" onclick="openAcctModal(null)">＋ アカウントを追加</button>
+        </div>
+        <p class="hint">ログインID・パスワード・役割（権限）を管理します。この画面は管理者だけが表示できます。パスワードはサーバー（GAS）側にのみ保存され、この画面には表示されません。役割によって、見られるタブ・編集できるタブが変わります。</p>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table class="acct-tbl">
+            <thead><tr><th>ID</th><th>役割（権限）</th><th>表示名</th><th>状態</th><th></th></tr></thead>
+            <tbody id="acct-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 8px">役割（権限）でできること</h3>
+        <div id="acct-roles-help" class="acct-roles-help"></div>
+      </div>
+    </section>
   </main>
+</div>
+
+<!-- ACCOUNT MODAL（アカウント設定：追加・編集） -->
+<div class="overlay" id="acct-modal">
+  <div class="panel">
+    <h3 id="acct-modal-title">アカウント</h3>
+    <label>ID（ログイン名）</label>
+    <input id="acct-id" type="text" placeholder="例：center" autocomplete="off">
+    <label>役割（権限）</label>
+    <select id="acct-role"></select>
+    <label>表示名</label>
+    <input id="acct-label" type="text" placeholder="例：除雪センター" autocomplete="off">
+    <label>パスワード <span id="acct-pw-note" style="color:var(--muted);font-weight:400;font-size:11px"></span></label>
+    <input id="acct-pw" type="text" placeholder="新しいパスワード" autocomplete="off">
+    <label style="display:flex;align-items:center;gap:7px;margin-top:10px;font-weight:600"><input id="acct-enabled" type="checkbox" checked> 有効（チェックを外すとログイン不可）</label>
+    <div class="err" id="acct-err" style="color:var(--bad);font-size:12px;margin-top:6px"></div>
+    <div class="row" style="margin-top:14px;gap:8px">
+      <button class="btn" onclick="saveAcct()">保存</button>
+      <button class="btn sec" onclick="closeAcctModal()">キャンセル</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============ EDIT MODAL ============ -->
@@ -1087,10 +1378,50 @@
   </div>
 </div>
 
+<!-- 予定カレンダー：予定の追加・編集モーダル -->
+<div class="overlay" id="ev-modal">
+  <div class="panel" style="max-width:460px">
+    <div class="panel-head">
+      <h3 id="ev-modal-title">予定を追加</h3>
+      <div class="spacer"></div>
+      <button class="btn sec sm" onclick="closeEventModal()">閉じる</button>
+    </div>
+    <div class="form-grid">
+      <div class="fld full">
+        <label>内容（タイトル）</label>
+        <input id="ev-title" placeholder="例：安全会議／現場巡回">
+      </div>
+      <div class="fld">
+        <label>開始日</label>
+        <input id="ev-start" type="date">
+      </div>
+      <div class="fld">
+        <label>終了日（複数日のときだけ）</label>
+        <input id="ev-end" type="date">
+      </div>
+      <div class="fld full">
+        <label>時間（任意・例 9:00〜12:00／空欄＝終日）</label>
+        <input id="ev-time" placeholder="9:00〜12:00（任意）">
+      </div>
+      <div class="fld full">
+        <label>色（種別の目印）</label>
+        <div id="ev-palette" class="mp-palette"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn edit-only" id="ev-save" onclick="saveEvent()">保存</button>
+      <button class="btn danger sm edit-only" id="ev-del" style="display:none" onclick="deleteEvent()">削除</button>
+      <div class="spacer"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- SheetJS（Excel出力用。CDNから読めない環境では Excel出力をガード） -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Leaflet（住所検索の地図表示用。読めない環境では地図なしでGoogleマップ誘導にフォールバック） -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <!-- PDFはブラウザ標準の「PDFに保存」を使う方針（印刷CSSがそのまま効くので枠線が崩れない）。html2canvas/jsPDFは撤去。 -->
 
 <script>
@@ -1100,7 +1431,35 @@ const API_TOKEN = 'kenun-josetsu-2026';             // GAS側 API_TOKEN と一�
 const APP_PASSWORD = 'kITAMARUCHI';                  // 編集用ログインパスワード（ユーザーが任意に変更）
 const VIEW_PASSWORD = 'Kitamaruchi';                 // 閲覧用ログインパスワード（READONLY＝編集不可で全タブ閲覧）
 let READONLY = false;                                // 閲覧モードか（VIEW_PASSWORD でログインすると true）
+let ROLE = '';            // ログイン中の役割（admin/kitaedit/kitaview/center/company）
+let AUTH_TOKEN = '';      // サーバー発行のセッショントークン（空＝未ログイン or 旧GAS暫定）
+let MY_LABEL = '';        // ログイン中アカウントの表示名
+const ROLE_LABELS = {admin:'管理者', kitaedit:'北ケ編集', kitaview:'北ケ閲覧', center:'除雪センター', company:'各企業', legacyview:'閲覧'};
+const ROLE_ORDER = ['admin','kitaedit','kitaview','center','company'];
+// 役割ごとのタブ権限：'edit'=編集可 / 'view'=閲覧のみ / 'hidden'=非表示。_default=未指定タブの既定。
+const ROLE_TABS = {
+  admin:    {_default:'edit'},
+  kitaedit: {_default:'view', home:'edit', address:'edit', report:'edit', haisetsu:'edit', check:'edit', accounts:'hidden'},
+  kitaview: {_default:'hidden', haisetsu:'view', accounts:'hidden'},
+  center:   {_default:'hidden', home:'edit', alert:'edit', map:'edit', address:'edit', report:'edit', shift:'view', contact:'view', sites:'view', design:'view', haisetsu:'hidden', check:'hidden', accounts:'hidden'},
+  company:  {_default:'hidden', alert:'edit', accounts:'hidden'},
+  legacyview:{_default:'view', accounts:'hidden'}
+};
+const ROLE_HELP = {
+  admin:'すべてのタブを編集でき、このアカウント設定も管理できます。',
+  kitaedit:'全タブを閲覧でき、ホーム・住所検索・安全日報・排雪シフト・連絡チェックを編集できます。',
+  kitaview:'排雪シフトのみ閲覧できます。',
+  center:'ホーム・機械調書・排雪マップ・住所検索・安全日報を編集、勤務予定表・連絡先設定・各サイト・設計書を閲覧できます（排雪シフト／連絡チェックは非表示）。',
+  company:'機械調書のみ（全社分の閲覧・編集）が可能です。'
+};
+function tabAccess(tab){
+  // 設定（アカウント管理）はサーバー認証が有効な管理者のときだけ表示（旧GAS暫定ログインでは非表示）
+  if(tab==='accounts'){ return (ROLE==='admin' && AUTH_TOKEN) ? 'edit' : 'hidden'; }
+  const r=ROLE_TABS[ROLE]||ROLE_TABS.admin; return (r[tab]!==undefined)?r[tab]:r._default;
+}
+function isAdmin(){ return ROLE==='admin'; }
 const DEMO = GAS_URL.indexOf('PASTE') >= 0;         // true ならGAS無しでもメモリ内サンプルで動作
+const HAISETSU_SRC = 'haisetsu.html';               // 排雪シフト埋め込み元（デモ版では haisetsu_demo.html に差し替え）
 
 /*════════════════ 定数 ════════════════*/
 const CATEGORIES = ["除雪トラック","ロータリ除雪車","除雪ドーザ","小型ロータリ","タイヤショベル","歩道除雪車","ダンプトラック","その他"];
@@ -1114,18 +1473,204 @@ const MAP_COLORS = [
   {c:'#FF9800', n:'橙'},
   {c:'#9C27B0', n:'紫'}
 ];
+// 予定カレンダー用カラーパレット（予定の種別を色で区別）
+const CAL_COLORS = [
+  {c:'#1a73e8', n:'青'},
+  {c:'#1e8e3e', n:'緑'},
+  {c:'#d93025', n:'赤'},
+  {c:'#e8710a', n:'橙'},
+  {c:'#8430ce', n:'紫'},
+  {c:'#5f6368', n:'灰'}
+];
 // 提出物のフォールバック既定値（GASの list が docs/subStatus を返せば上書き）
 const DEFAULT_DOCS = ['一般競争入札参加資格確認申請書','同種業務履行実績書','配置予定技術者経歴書','協定書','除雪機械所有調書','車検証の写し','機械使用調書'];
 const DEFAULT_SUB_STATUS = ['未提出','準備中','提出済','確認済'];
 // 手順・資料リンク
 const RESOURCES = [
   {ic:'📘', t:'引き継ぎ資料（Doc）', s:'入札〜終了の流れ・手順書', url:'https://docs.google.com/document/d/1PymDge84iKU17ymO91nEdFmHcsOZbJ09dEJidpwW97U/edit', primary:true},
-  {ic:'📊', t:'機械管理台帳（Sheet）', s:'各社の機械・車検期限・担当', url:'https://docs.google.com/spreadsheets/d/1Lkec_iHcQVmV_fGNVaISGSVcYiTMEqtCT3slVD1AXYg/edit'},
+  {ic:'📊', t:'機械台帳（簡易版・Sheet）', s:'区分・機械名・登録番号・車検期限・所有企業（機械調書の元データ）', url:'https://docs.google.com/spreadsheets/d/1MCyu_-poPaHtGwBhTQkPsPuu_1d-JItF_LM_oX9I5Cg/edit'},
   {ic:'📄', t:'入札書類フォルダ', s:'年度別の入札関係書類・様式', url:'https://drive.google.com/drive/folders/1woC8vmSr9sUE6KFRu68a_pi7XiHzv4OE'},
   {ic:'🚜', t:'車両画像フォルダ', s:'車両の写真フォルダ', url:'https://drive.google.com/drive/folders/1So0VghhMvqyTcg9gxnC8grEGDswZyYUh'},
   {ic:'📁', t:'フォルダ全体', s:'道路維持除雪業務（親フォルダ）', url:'https://drive.google.com/drive/folders/1uu3htMBPPVlnVE1FTa7u8KOTYtEly892'}
 ];
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+/*──────── 機械調書（簡易版・旧「機械台帳」の後継。__MREG__マーカーで全員共有保存／GAS変更なし） ────────*/
+const DEFAULT_MREG_RAW = [
+  {c:'1',n:'除雪ｸﾞﾚｰﾀﾞ',r:'札幌 1 る 6993',e:'R10年10月22日',co:'北日本重機株式会社'},
+  {c:'1',n:'除雪ｸﾞﾚｰﾀﾞ',r:'札幌 1 る 7032',e:'R10年10月22日',co:'北日本重機株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 30 さ 2015',e:'R10年8月31日',co:'北日本重機株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 30 さ 2017',e:'R9年8月21日',co:'北日本重機株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 30 さ 2018',e:'R8年7月10日',co:'北日本重機株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 9014',e:'R8年11月25日',co:'北日本重機株式会社'},
+  {c:'5',n:'ﾛｰﾀﾘ除雪車',r:'札幌 930 さ 2110',e:'R9年12月25日',co:'北日本重機株式会社'},
+  {c:'10',n:'ﾊﾞｯｸﾎｳ',r:'札幌 30 さ 2678',e:'R9年12月9日',co:'北日本重機株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 830 ま 5050',e:'R10年4月24日',co:'北日本重機株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 433 さ 500',e:'R9年6月19日',co:'北日本重機株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 430 る 300',e:'R9年6月12日',co:'北日本重機株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 430 と 600',e:'R9年5月6日',co:'北日本重機株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 800 た 1894',e:'R9年3月24日',co:'北日本重機株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 430 ほ 400',e:'H9年8月29日',co:'北日本重機株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 401 わ 9551',e:'R9年7月21日',co:'北日本重機株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 402 わ 1051',e:'R9年9月10日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 111 か 8',e:'R8年11月16日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 134 え 16',e:'R8年11月16日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 131 け 21',e:'R9年1月19日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 134 を 55',e:'R9年3月26日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 132 う 81',e:'R9年5月7日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 138 あ 100',e:'R9年8月9日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 104 け 111',e:'R9年3月28日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 132 あ 130',e:'R9年4月7日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 か 917',e:'R8年12月15日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 1104',e:'R8年12月25日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 3185',e:'R8年12月8日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 3885',e:'R9年8月7日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 100 き 5087',e:'R8年12月21日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 5516',e:'R8年12月21日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 6426',e:'R8年12月6日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 100 き 7230',e:'R9年4月14日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 7468',e:'R8年12月21日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 8093',e:'R9年7月25日',co:'北日本重機株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 9918',e:'R9年7月8日',co:'北日本重機株式会社'},
+  {c:'1',n:'除雪ｸﾞﾚｰﾀﾞ',r:'札幌 0 る 2716',e:'R9年11月4日',co:'小橋北豊株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 6721',e:'R8年11月7日',co:'小橋北豊株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 6003',e:'R9年10月3日',co:'小橋北豊株式会社'},
+  {c:'5',n:'ﾛｰﾀﾘ除雪車',r:'札幌 900 る 3705',e:'R8年11月24日',co:'小橋北豊株式会社'},
+  {c:'10',n:'ﾊﾞｯｸﾎｳ',r:'札幌 0 る 5766',e:'R8年11月8日',co:'小橋北豊株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 100 ち 7779',e:'R9年7月10日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 100 き 8663',e:'R9年6月19日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 100 き 8664',e:'R9年6月20日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 あ 8665',e:'R9年9月28日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 2798',e:'R8年12月25日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 け 1331',e:'R9年4月3日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 7862',e:'R9年5月22日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 を 1221',e:'R9年5月28日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 き 1881',e:'R8年12月27日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 え 837',e:'R9年6月24日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 131 あ 838',e:'R8年12月22日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 4008',e:'R9年9月4日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 100 き 8194',e:'R9年1月19日',co:'小橋北豊株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 6946',e:'R8年11月27日',co:'小橋北豊株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 0 る 4519',e:'R8年11月4日',co:'開北工業株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 0 る 9195',e:'R8年11月4日',co:'開北工業株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 900 る 3025',e:'R9年10月15日',co:'開北工業株式会社'},
+  {c:'5',n:'ﾛｰﾀﾘ除雪車',r:'札幌 900 る 3855',e:'R9年10月23日',co:'開北工業株式会社'},
+  {c:'7',n:'ﾊﾝﾄﾞｶﾞｲﾄﾞ式 ﾛｰﾀﾘ',r:'札幌',e:'',co:'開北工業株式会社'},
+  {c:'10',n:'ﾊﾞｯｸﾎｳ',r:'札幌 2 ろ 1',e:'R8年11月29日',co:'開北工業株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 337 み 7733',e:'R9年11月3日',co:'開北工業株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 332 せ 1633',e:'R10年4月9日',co:'開北工業株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 330 な 2092',e:'R8年12月20日',co:'開北工業株式会社'},
+  {c:'1',n:'除雪ｸﾞﾚｰﾀﾞ',r:'札幌 1 る 3246',e:'R9年12月19日',co:'陸奥建設株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 5116',e:'R8年11月21日',co:'陸奥建設株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 0 る 5673',e:'R9年1月21日',co:'陸奥建設株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 5033',e:'R10年6月11日',co:'陸奥建設株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 8021',e:'R9年12月10日',co:'陸奥建設株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 6471',e:'R10年8月7日',co:'陸奥建設株式会社'},
+  {c:'5',n:'ﾛｰﾀﾘ除雪車',r:'札幌 99 は 8587',e:'R8年12月24日',co:'陸奥建設株式会社'},
+  {c:'10',n:'ﾊﾞｯｸﾎｳ',r:'札幌 1 る 3836',e:'R8年12月22日',co:'陸奥建設株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 400 も 9730',e:'R9年2月3日',co:'陸奥建設株式会社'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 303 ね 7875',e:'R10年5月24日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 132 か 44',e:'R9年1月6日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 134 あ 4',e:'R9年1月18日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 う 329',e:'R8年12月24日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 132 を 444',e:'R9年9月6日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 132 う 4004',e:'R8年12月15日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 を 440',e:'R8年12月23日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 う 4440',e:'R9年5月19日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 132 こ 4444',e:'R9年9月20日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 6025',e:'R9年6月30日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 2655',e:'R9年6月27日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 7679',e:'R9年3月25日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 100 さ 7576',e:'R9年6月19日',co:'陸奥建設株式会社'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 100 き 9668',e:'R9年6月8日',co:'陸奥建設株式会社'},
+  {c:'17',n:'ブルドーザー',r:'',e:'',co:'陸奥建設株式会社'},
+  {c:'18',n:'散水車',r:'札幌 800 わ 3369',e:'R9年2月15日',co:'陸奥建設株式会社'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 30 さ 2321',e:'R9年12月21日',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 2320',e:'R8年10月2日',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 5 ち 7670',e:'',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 1832',e:'R8年12月7日',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 0 る 7236',e:'R8年12月6日',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 2 る 125',e:'R10年5月20日',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 6297',e:'R10年6月28日',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'',e:'',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'',e:'',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 9566',e:'R9年10月5日',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 900 る 819',e:'R9年7月13日',co:'株式会社ケンウン'},
+  {c:'5',n:'ﾛｰﾀﾘ除雪車',r:'札幌 900 る 3435',e:'R8年12月8日',co:'株式会社ケンウン'},
+  {c:'6',n:'小形除雪車',r:'札幌 930 さ 563',e:'R8年12月13日',co:'株式会社ケンウン'},
+  {c:'7',n:'ﾊﾝﾄﾞｶﾞｲﾄﾞ式 ﾛｰﾀﾘ',r:'',e:'',co:'株式会社ケンウン'},
+  {c:'10',n:'ﾊﾞｯｸﾎｳ',r:'',e:'',co:'株式会社ケンウン'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 100 ち 7879',e:'R9年7月23日',co:'株式会社ケンウン'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 100 て 3592',e:'R9年10月4日',co:'株式会社ケンウン'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 533 と 200',e:'R10年1月23日',co:'株式会社ケンウン'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 101 か 6971',e:'R8年11月17日',co:'株式会社ケンウン'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 つ 6878',e:'R8年12月25日',co:'株式会社ケンウン'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 つ 6315',e:'R9年10月11日',co:'株式会社ケンウン'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 て 4995',e:'R9年2月5日',co:'株式会社ケンウン'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 400 ひ 4184',e:'R9年4月23日',co:'株式会社ケンウン'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 に 238',e:'R9年11月4日',co:'株式会社ケンウン'},
+  {c:'17',n:'ブルドーザー',r:'',e:'',co:'株式会社ケンウン'},
+  {c:'18',n:'散水車',r:'札幌 102 く 5000',e:'R9年3月23日',co:'株式会社ケンウン'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 0 ち 7',e:'R8年11月27日',co:'株式会社みらい・コンテック'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 1414',e:'R9年5月13日',co:'株式会社みらい・コンテック'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 862',e:'R10年12月10日',co:'株式会社みらい・コンテック'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 2975',e:'R9年10月23日',co:'株式会社みらい・コンテック'},
+  {c:'5',n:'ﾛｰﾀﾘ除雪車',r:'札幌 99 は 2463',e:'R8年12月17日',co:'株式会社みらい・コンテック'},
+  {c:'5',n:'ﾛｰﾀﾘ除雪車',r:'札幌 900 る 2997',e:'R9年10月29日',co:'株式会社みらい・コンテック'},
+  {c:'5',n:'ﾛｰﾀﾘ除雪車',r:'札幌 900 る 3562',e:'R9年11月20日',co:'株式会社みらい・コンテック'},
+  {c:'7',n:'ﾊﾝﾄﾞｶﾞｲﾄﾞ式 ﾛｰﾀﾘ',r:'札幌 900 る 2747',e:'R11年10月2日',co:'株式会社みらい・コンテック'},
+  {c:'10',n:'ﾊﾞｯｸﾎｳ',r:'札幌 1 る 7109',e:'R9年4月17日',co:'株式会社みらい・コンテック'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 400 ま 6175',e:'R9年6月23日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 104 を 3000',e:'R9年10月26日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 132 を 3001',e:'R9年2月6日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 131 く 3002',e:'R8年11月19日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 135 う 3003',e:'R9年2月3日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 100 き 9993',e:'R9年4月15日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 き 9994',e:'R9年4月22日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 い 9995',e:'R9年10月16日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 130 う 9997',e:'R9年3月15日',co:'株式会社みらい・コンテック'},
+  {c:'13',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ（営）',r:'札幌 131 を 9999',e:'R9年9月23日',co:'株式会社みらい・コンテック'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 1 る 3591',e:'R10年6月16日',co:'株式会社札幌緑興'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 0 る 9396',e:'R10年6月27日',co:'株式会社札幌緑興'},
+  {c:'4',n:'ﾀｲﾔｼｮﾍﾞﾙ（ﾊﾞｹｯﾄのみ）',r:'札幌 0 る 8155',e:'R10年6月30日',co:'株式会社札幌緑興'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 400 ほ 8833',e:'R9年6月28日',co:'株式会社札幌緑興'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 400 ひ 1785',e:'R9年1月13日',co:'株式会社札幌緑興'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 400 み 5214',e:'R9年9月18日',co:'株式会社札幌緑興'},
+  {c:'3',n:'ﾀｲﾔｼｮﾍﾞﾙ（可変ﾌﾟﾗｳ）',r:'札幌 0 る 7774',e:'R9年10月9日',co:'株式会社北海メンテナンス'},
+  {c:'12',n:'ﾊﾟﾄﾛｰﾙ車',r:'札幌 401 て 5',e:'R9年1月21日',co:'株式会社北海メンテナンス'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 つ 3353',e:'R9年1月13日',co:'株式会社北海メンテナンス'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 つ 5974',e:'R9年8月29日',co:'株式会社北海メンテナンス'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 つ 5975',e:'R9年9月2日',co:'株式会社北海メンテナンス'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 て 8751',e:'R9年3月24日',co:'株式会社北海メンテナンス'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 つ 8752',e:'R9年3月24日',co:'株式会社北海メンテナンス'},
+  {c:'16',n:'ﾀﾞﾝﾌﾟﾄﾗｯｸ 4t積車（白）',r:'札幌 100 つ 9493',e:'R10年9月18日',co:'株式会社北海メンテナンス'}
+];
+// 和暦文字列 "R10年10月22日" → Date（解析できなければ null）
+function warekiToDate(str){
+  str=String(str||'').trim(); if(!str) return null;
+  var m=str.match(/([RHS令平昭])\s*(\d+)\s*年\s*(\d+)\s*月\s*(\d+)\s*日/);
+  if(!m) return null;
+  var base={R:2018,'令':2018,H:1988,'平':1988,S:1925,'昭':1925}[m[1]];
+  if(base==null) return null;
+  var d=new Date(base+Number(m[2]), Number(m[3])-1, Number(m[4])); d.setHours(0,0,0,0); return d;
+}
+var MREG_LEAD=60; // この残日数以内を「満了間近」とみなす
+function mregDaysLeft(expire){ var d=warekiToDate(expire); if(!d) return null; return Math.round((d - TODAY)/86400000); }
+function mregStatus(expire){ var dl=mregDaysLeft(expire); if(dl==null) return 'none'; if(dl<0) return 'exp'; if(dl<=MREG_LEAD) return 'soon'; return 'ok'; }
+function warekiToWestern(str){ var d=warekiToDate(str); if(!d) return ''; return d.getFullYear()+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2); }
+function normalizeMreg(arr){
+  return (arr||[]).map(function(m,i){
+    return {
+      id:    m.id || ('m'+(i+1)+'_'+Math.random().toString(36).slice(2,6)),
+      cat:   (m.cat!=null?String(m.cat):(m.c!=null?String(m.c):'')),
+      name:  (m.name||m.n||''),
+      regno: (m.regno||m.r||''),
+      expire:(m.expire||m.e||''),
+      company:(m.company||m.co||'')
+    };
+  });
+}
+function defaultMreg(){ return normalizeMreg(DEFAULT_MREG_RAW); }
 
 /*════════════════ 状態 ════════════════*/
 let CONFIG   = {lead:30, jv:'', district:'', year:'', defaultEmail:'', signature:'', calendarUrl:'', mapUrl:'', mapUrl2:''};
@@ -1150,7 +1695,22 @@ let SUB_STATUS = DEFAULT_SUB_STATUS.slice();
 let EXTRA_COMPANIES = [];          // 提出物管理で手動追加した会社（機械なし）
 let EXTRA_YEARS = [];              // 提出物管理で手動追加した年度
 let SELECTED_YEAR = '';            // 提出物管理で選択中の年度
-let EVENTS = {today:[], week:[]};  // Googleカレンダーの予定（list取得時に更新）
+let EVENTS = {today:[], week:[]};  // （旧）Googleカレンダー連携の名残。現在は自前カレンダーを使用
+let CAL_EVENTS = [];               // 予定カレンダー（自前）[{id,title,start,end,time,color}]（__CAL__マーカーで全員共有保存）
+let CAL_ROW = null;                // __CAL__レコードの行番号（追記でなく上書き更新するため保持）
+let CAL_VIEW = {y: TODAY.getFullYear(), m: TODAY.getMonth()+1};  // カレンダー表示中の年・月
+let editingEventId = null;         // 編集中の予定id（新規はnull）
+let editingEventColor = '#1a73e8'; // 編集中モーダルで選択中の色
+let CHECK_SAVED = null;            // 連絡チェック {roster:[{id,sec,label,name,tel,line,note}], checks:{'YYYY-MM-DD':{id:状態}}}
+let CHECK_ROW = null;              // __CHECK__レコードの行番号
+let CHECK_DATE = '';               // 表示中の出動日
+let CHECK_EDIT = false;            // 名簿編集モード
+let CHECK_FULLSCREEN = false;      // 全画面チェック表モード（?view=check）
+let CHECK_FS_DATE = '';            // 全画面表示する出動日
+let CHECK_FS_EDIT = false;         // 全画面で名簿編集として開くか
+let MREG = [];                     // 機械調書（簡易版）[{id,cat,name,regno,expire,company}]（__MREG__マーカーで全員共有保存）
+let MREG_ROW = null;               // __MREG__レコードの行番号
+let MREG_COMPANY = '*';            // 機械調書タブで表示中の会社（'*'=すべて）
 let NOTICES = [];                  // お知らせ・注意事項ボード [{row, ts, name, body}]（新しい順で描画）
 let MAPPOINTS = [];                // 排雪マップの地点 [{row,name,planStart,planEnd,doneDate,manager,x,y,note,type,color,points,status}]
 let addingPoint = false;           // 地点追加モード（地図クリックで配置）
@@ -1220,7 +1780,7 @@ function setOffline(v){
 /*════════════════ GAS呼び出し（30秒タイムアウト×最大3回→失敗でモック） ════════════════*/
 // Content-Type ヘッダは付けない（text/plain のままにして CORS プリフライトを回避＝既存アプリの流儀）
 async function gasFetch(payload){
-  const body = JSON.stringify(Object.assign({token:API_TOKEN}, payload));
+  const body = JSON.stringify(Object.assign({token:API_TOKEN, auth:AUTH_TOKEN}, payload));
   let lastErr = null;
   // GAS(Apps Script)は無操作が続くとスリープし、起きる(コールドスタート)のに時間がかかる。
   // 早すぎるオフライン表示を防ぐため、1回あたり30秒・最大3回（間に待機）待つ。
@@ -1280,7 +1840,20 @@ const mockStore = {
     {row:2, year:mockCurrentNendo(), company:'A建設（代表）', doc:'一般競争入札参加資格確認申請書', status:'確認済', date:isoFromToday(-20), link:'', note:''},
     {row:3, year:mockCurrentNendo(), company:'A建設（代表）', doc:'除雪機械所有調書', status:'提出済', date:isoFromToday(-5), link:'', note:''},
     {row:4, year:mockCurrentNendo(), company:'B土木', doc:'協定書', status:'準備中', date:'', link:'', note:'押印待ち'},
-    {row:5, year:'令和'+(nendoNum(mockCurrentNendo())-1)+'年度', company:'A建設（代表）', doc:'協定書', status:'確認済', date:isoFromToday(-380), link:'', note:'前年度分（履歴）'}
+    {row:5, year:'令和'+(nendoNum(mockCurrentNendo())-1)+'年度', company:'A建設（代表）', doc:'協定書', status:'確認済', date:isoFromToday(-380), link:'', note:'前年度分（履歴）'},
+    {row:6, year:'__CAL__', company:'予定カレンダー', doc:'events', status:'', date:'', link:'', note: JSON.stringify({events:[
+      {id:'D1', title:'現場巡回',        start:isoFromToday(0), end:'',             time:'9:00',        color:'#1a73e8'},
+      {id:'D2', title:'除雪機械点検',    start:isoFromToday(0), end:'',             time:'14:30',       color:'#1e8e3e'},
+      {id:'D3', title:'排雪作業（東地区）',start:isoFromToday(1), end:isoFromToday(3),time:'',            color:'#e8710a'},
+      {id:'D4', title:'安全会議',        start:isoFromToday(2), end:'',             time:'10:00〜11:00', color:'#8430ce'},
+      {id:'D5', title:'書類提出締切',    start:isoFromToday(4), end:'',             time:'',            color:'#d93025'}
+    ]})},
+    {row:7, year:'__CHECK__', company:'連絡チェック', doc:'data', status:'', date:'', link:'', note: JSON.stringify((function(){
+      var cks={};
+      cks[isoFromToday(0)]={r1:'line',r2:'line',r4:'tel',r8:'line',r9:'line'};
+      cks[isoFromToday(-2)]={r1:'line',r2:'line',r3:'line',r4:'tel',r8:'line',r9:'line',r12:'ng'};
+      return {roster:defaultCheckRoster(), checks:cks};
+    })())}
   ],
   mapPoints: [
     {row:2, name:'中央町内会', plan:'1月中旬', planStart:isoFromToday(-6), planEnd:isoFromToday(-4), doneDate:isoFromToday(-3), manager:'佐藤', x:32, y:24, note:'', map:1},
@@ -1305,6 +1878,15 @@ const mockStore = {
     {row:2, ts:'2026-01-04 17:10', name:'佐藤', body:'排雪作業の予定は排雪マップを確認してください。\n完了したら完了日を入力お願いします。'}
   ]
 };
+// DEMO用アカウント（本番はGAS側のACCOUNTSシート。ここはデモ表示専用）
+let mockAuthRole = 'admin';
+const mockAccounts = [
+  {id:'admin',   pw:'admin',   role:'admin',    label:'管理者',       enabled:true},
+  {id:'kita',    pw:'kita',    role:'kitaedit', label:'北ケ編集',     enabled:true},
+  {id:'kitav',   pw:'kitav',   role:'kitaview', label:'北ケ閲覧',     enabled:true},
+  {id:'center',  pw:'center',  role:'center',   label:'除雪センター', enabled:true},
+  {id:'company', pw:'company', role:'company',  label:'各企業',       enabled:true}
+];
 // mock用：現在時刻を 'YYYY-MM-DD HH:mm' で返す
 function mockNoticeTs(){
   const d = new Date();
@@ -1437,6 +2019,29 @@ function mockApi(payload){
     });
     return {ok:true, result:{drafts:Object.keys(groups).length, skipped:skipped}};
   }
+  if(a==='login'){
+    const id=(payload.id||'').trim(), pw=payload.pw||'';
+    const acc=mockAccounts.find(function(x){ return x.id===id && x.enabled!==false; });
+    if(acc && acc.pw===pw){ mockAuthRole=acc.role; return {ok:true, auth:'DEMO-'+acc.role, role:acc.role, label:acc.label}; }
+    return {ok:false, error:'auth'};
+  }
+  if(a==='listAccounts'){
+    if(mockAuthRole!=='admin') return {ok:false, error:'forbidden'};
+    return {ok:true, accounts:mockAccounts.map(function(x){ return {id:x.id, role:x.role, label:x.label, enabled:x.enabled}; })};
+  }
+  if(a==='saveAccount'){
+    if(mockAuthRole!=='admin') return {ok:false, error:'forbidden'};
+    const ac=payload.account||{}; const ex=mockAccounts.find(function(x){ return x.id===ac.id; });
+    if(ex){ ex.role=ac.role; ex.label=ac.label; ex.enabled=(ac.enabled!==false); if(ac.pw) ex.pw=ac.pw; }
+    else{ mockAccounts.push({id:ac.id, pw:ac.pw||'', role:ac.role, label:ac.label, enabled:(ac.enabled!==false)}); }
+    return {ok:true};
+  }
+  if(a==='delAccount'){
+    if(mockAuthRole!=='admin') return {ok:false, error:'forbidden'};
+    const i=mockAccounts.findIndex(function(x){ return x.id===payload.id; });
+    if(i>=0) mockAccounts.splice(i,1);
+    return {ok:true};
+  }
   return {ok:false, error:'unknown action: '+a};
 }
 
@@ -1485,8 +2090,48 @@ async function loadData(){
           try{ const o = JSON.parse(s.note||'{}'); if(o && Array.isArray(o.maps)) DESIGN_SAVED = o.maps; }catch(e){}
         }
       });
-      // 提出物タブには __REPMACH__ / __SETTINGS__ / __UNPAN__ / __HS__ / __DESIGN__ を出さない
-      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__' && y !== '__HS__' && y !== '__DESIGN__'; });
+      // 予定カレンダー（自前）レコード（年度='__CAL__'）を分離
+      CAL_ROW = null; CAL_EVENTS = [];
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__CAL__'){
+          CAL_ROW = s.row;
+          try{
+            const o = JSON.parse(s.note||'{}');
+            if(o && Array.isArray(o.events)){
+              CAL_EVENTS = o.events.map(function(e){
+                return {
+                  id:    e.id || ('E'+Math.random().toString(36).slice(2)),
+                  title: e.title || '',
+                  start: e.start || '',
+                  end:   e.end || '',
+                  time:  e.time || '',
+                  color: e.color || '#1a73e8'
+                };
+              });
+            }
+          }catch(e){}
+        }
+      });
+      // 連絡チェック（名簿＋出動日ごとのチェック）レコード（年度='__CHECK__'）を分離
+      CHECK_ROW = null; CHECK_SAVED = null;
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__CHECK__'){
+          CHECK_ROW = s.row;
+          try{ const o = JSON.parse(s.note||'{}'); if(o && typeof o==='object') CHECK_SAVED = o; }catch(e){}
+        }
+      });
+      // 機械調書（簡易版・機械台帳の後継）レコード（年度='__MREG__'）を分離
+      MREG_ROW = null; MREG = [];
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__MREG__'){
+          MREG_ROW = s.row;
+          try{ const o = JSON.parse(s.note||'{}'); if(o && Array.isArray(o.machines)) MREG = normalizeMreg(o.machines); }catch(e){}
+        }
+      });
+      // 未保存（__MREG__行が無い）なら埋め込みの既定データで初期表示
+      if(MREG.length===0 && MREG_ROW==null){ MREG = defaultMreg(); }
+      // 提出物タブには各マーカーを出さない
+      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__' && y !== '__HS__' && y !== '__DESIGN__' && y !== '__CAL__' && y !== '__CHECK__' && y !== '__MREG__'; });
     }
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
@@ -1515,13 +2160,13 @@ async function loadData(){
 
 /*════════════════ 描画 ════════════════*/
 function companyList(){
-  const seen = []; MACHINES.forEach(function(m){ if(m.company && seen.indexOf(m.company)<0) seen.push(m.company); }); return seen;
+  const seen = []; MREG.forEach(function(m){ if(m.company && seen.indexOf(m.company)<0) seen.push(m.company); }); return seen;
 }
 // 提出物対象の会社（全年度） = 機械の会社 ∪ 提出物データの会社 ∪ 手動追加分
 function allCompanies(){
   const seen = [];
   function add(c){ if(c && seen.indexOf(c)<0) seen.push(c); }
-  MACHINES.forEach(function(m){ add(m.company); });
+  MREG.forEach(function(m){ add(m.company); });
   SUBMISSIONS.forEach(function(s){ add(s.company); });
   EXTRA_COMPANIES.forEach(add);
   return seen;
@@ -1530,7 +2175,7 @@ function allCompanies(){
 function companiesForYear(year){
   const seen = [];
   function add(c){ if(c && seen.indexOf(c)<0) seen.push(c); }
-  MACHINES.forEach(function(m){ add(m.company); });
+  MREG.forEach(function(m){ add(m.company); });
   SUBMISSIONS.forEach(function(s){ if((s.year||'')===year) add(s.company); });
   EXTRA_COMPANIES.forEach(add);
   return seen;
@@ -1561,6 +2206,7 @@ function renderAll(){
   renderUnpan();
   renderShift();
   renderDesign();
+  renderCheck();
   renderCompanyDatalist();
   repApplyPresets();   // 安全日報：保存済み台数(REPMACH_SAVED)を各社パネルへ反映
   renderReportPreview();
@@ -1593,16 +2239,37 @@ function eventRowsHtml(list){
   }).join('');
 }
 function renderHome(){
-  const ev = EVENTS || {today:[], week:[]};
-  const today = document.getElementById('home-today');
-  const week  = document.getElementById('home-week');
-  if(ev.error){
-    const msg = '<div class="empty">予定を取得できませんでした</div>';
-    if(today) today.innerHTML = msg;
-    if(week)  week.innerHTML  = msg;
-  }else{
-    if(today) today.innerHTML = eventRowsHtml(ev.today);
-    if(week)  week.innerHTML  = eventRowsHtml(ev.week);
+  const todayEl = document.getElementById('home-today');
+  const weekEl  = document.getElementById('home-week');
+  const WD = ['日','月','火','水','木','金','土'];
+  function lbl(d){ return (d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')'; }
+  const now = new Date();
+  const t0  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayIso = isoLocal(t0);
+  // 今日の予定
+  if(todayEl){
+    const list = calEventsOn(todayIso).map(function(e){
+      return {dateLabel: lbl(t0), timeLabel: (e.time||'終日'), title: e.title||''};
+    });
+    todayEl.innerHTML = eventRowsHtml(list);
+  }
+  // 今週（今日から7日間）の予定
+  if(weekEl){
+    const rows = [];
+    CAL_EVENTS.forEach(function(e){
+      if(!e.start) return;
+      let hit = false;
+      for(let off=0; off<7; off++){
+        const d = new Date(t0.getTime() + off*86400000);
+        if(evCovers(e, isoLocal(d))){ hit = true; break; }
+      }
+      if(hit){
+        const sd = parseDate(e.start);
+        rows.push({ _k: (e.start||'')+evTimeKey(e), dateLabel: sd?lbl(sd):'', timeLabel: (e.time||'終日'), title: e.title||'' });
+      }
+    });
+    rows.sort(function(a,b){ return String(a._k).localeCompare(String(b._k)); });
+    weekEl.innerHTML = eventRowsHtml(rows);
   }
 }
 
@@ -1668,22 +2335,131 @@ async function saveContact(key){
   }
 }
 
-/* ホーム：Googleカレンダー埋め込み */
+/* ───────── ホーム：月間カレンダー（自前・管理者が編集） ───────── */
+// Date → 'YYYY-MM-DD'（ローカル。toISOStringはUTCずれがあるため使わない）
+function isoLocal(d){ const y=d.getFullYear(), m=d.getMonth()+1, day=d.getDate(); return y+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day; }
+// 予定の終了日（未指定なら開始日と同じ）
+function evEndIso(e){ return (e.end && e.end>=e.start) ? e.end : e.start; }
+// 予定 e が iso日付を含むか
+function evCovers(e, iso){ return !!e.start && iso>=e.start && iso<=evEndIso(e); }
+// 時間の並べ替えキー（終日＝先頭。'9:00'も'14:30'も正しく並ぶよう2桁化）
+function evTimeKey(e){ const m=String(e.time||'').match(/(\d{1,2})\s*[:：]\s*(\d{2})/); if(!m) return '\u0000'; return (m[1].length<2?'0':'')+m[1]+':'+m[2]; }
+// 指定日の予定（時間順）
+function calEventsOn(iso){
+  return CAL_EVENTS.filter(function(e){ return evCovers(e, iso); })
+    .sort(function(a,b){ return evTimeKey(a).localeCompare(evTimeKey(b)); });
+}
 function renderCalendar(){
+  const titleEl = document.getElementById('cal-title');
+  if(titleEl) titleEl.textContent = CAL_VIEW.y+'年'+CAL_VIEW.m+'月';
   const box = document.getElementById('home-calendar');
   if(!box) return;
-  let url = (CONFIG.calendarUrl || '').trim();
-  // '<iframe ... src="...">' が丸ごと入っていても src を抽出して使う（堅牢化）
-  if(url && url.indexOf('<iframe') >= 0){
-    const m = url.match(/src\s*=\s*["']([^"']+)["']/i);
-    url = m ? m[1] : '';
+  const y=CAL_VIEW.y, m=CAL_VIEW.m;
+  const startWd = new Date(y, m-1, 1).getDay();      // 0=日
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const todayIso = isoLocal(new Date());
+  const WD = ['日','月','火','水','木','金','土'];
+  let html = '<div class="cal-grid">';
+  WD.forEach(function(w,i){ html += '<div class="cal-wd'+(i===0?' sun':(i===6?' sat':''))+'">'+w+'</div>'; });
+  const totalCells = Math.ceil((startWd+daysInMonth)/7)*7;  // 5〜6週ぶん
+  for(let i=0;i<totalCells;i++){
+    const dayNum = i - startWd + 1;
+    const inMonth = (dayNum>=1 && dayNum<=daysInMonth);
+    const cellDate = new Date(y, m-1, dayNum);
+    const iso = isoLocal(cellDate);
+    const wd = cellDate.getDay();
+    const cls = ['cal-cell']; if(inMonth) cls.push('inm'); else cls.push('other');
+    if(inMonth && iso===todayIso) cls.push('today');
+    const numCls = (wd===0?' sun':(wd===6?' sat':''));
+    let chips = '';
+    if(inMonth){
+      const evs = calEventsOn(iso);
+      const shown = evs.slice(0,4);
+      shown.forEach(function(e){
+        const label = (e.time ? e.time+' ' : '') + (e.title||'');
+        chips += '<div class="cal-ev" style="background:'+esc(e.color||'#1a73e8')+'" title="'+esc(label)+'" '
+               + 'onclick="event.stopPropagation();openEventModal(\''+esc(e.id)+'\')">'+esc(label)+'</div>';
+      });
+      if(evs.length>shown.length) chips += '<div class="cal-more">＋'+(evs.length-shown.length)+'件</div>';
+    }
+    const click = inMonth ? ' onclick="cellAdd(\''+iso+'\')"' : '';
+    html += '<div class="'+cls.join(' ')+'"'+click+'>'
+          + '<span class="cal-daynum'+numCls+'">'+(inMonth?dayNum:'')+'</span>'
+          + chips
+          + '</div>';
   }
-  if(url){
-    box.innerHTML = '<iframe src="'+esc(url)+'" title="予定カレンダー" '
-      + 'style="width:100%;height:600px;max-width:100%;border:0;display:block;border-radius:8px" '
-      + 'frameborder="0" scrolling="no" loading="lazy"></iframe>';
+  html += '</div>';
+  box.innerHTML = html;
+}
+function calPrevMonth(){ let m=CAL_VIEW.m-1, y=CAL_VIEW.y; if(m<1){ m=12; y--; } CAL_VIEW={y:y,m:m}; renderCalendar(); }
+function calNextMonth(){ let m=CAL_VIEW.m+1, y=CAL_VIEW.y; if(m>12){ m=1; y++; } CAL_VIEW={y:y,m:m}; renderCalendar(); }
+function calToday(){ const d=new Date(); CAL_VIEW={y:d.getFullYear(), m:d.getMonth()+1}; renderCalendar(); }
+// マスをクリック → その日付で新規予定（閲覧モードは無反応）
+function cellAdd(iso){ if(READONLY) return; openEventModal(null, iso); }
+
+// 予定モーダル（追加・編集）
+function renderEvPalette(){
+  const box = document.getElementById('ev-palette'); if(!box) return;
+  box.innerHTML = CAL_COLORS.map(function(c){
+    return '<button type="button" class="sw-btn'+(c.c===editingEventColor?' active':'')+'" title="'+esc(c.n)+'" style="background:'+c.c+'" onclick="pickEvColor(\''+c.c+'\')"></button>';
+  }).join('');
+}
+function pickEvColor(c){ editingEventColor=c; renderEvPalette(); }
+function openEventModal(id, presetIso){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  editingEventId = id || null;
+  const ev = id ? CAL_EVENTS.find(function(e){ return e.id===id; }) : null;
+  document.getElementById('ev-modal-title').textContent = ev ? '予定を編集' : '予定を追加';
+  document.getElementById('ev-title').value = ev ? (ev.title||'') : '';
+  document.getElementById('ev-start').value = ev ? (ev.start||'') : (presetIso || isoLocal(new Date()));
+  document.getElementById('ev-end').value   = ev ? (ev.end||'') : '';
+  document.getElementById('ev-time').value  = ev ? (ev.time||'') : '';
+  editingEventColor = ev ? (ev.color||CAL_COLORS[0].c) : CAL_COLORS[0].c;
+  renderEvPalette();
+  document.getElementById('ev-del').style.display = ev ? '' : 'none';
+  document.getElementById('ev-modal').classList.add('show');
+  setTimeout(function(){ const t=document.getElementById('ev-title'); if(t) t.focus(); }, 50);
+}
+function closeEventModal(){ document.getElementById('ev-modal').classList.remove('show'); editingEventId=null; }
+async function saveEvent(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const title = (document.getElementById('ev-title').value||'').trim();
+  const start = (document.getElementById('ev-start').value||'').trim();
+  let   end   = (document.getElementById('ev-end').value||'').trim();
+  const time  = (document.getElementById('ev-time').value||'').trim();
+  if(!title){ toast('内容（タイトル）を入力してください'); return; }
+  if(!start){ toast('開始日を入力してください'); return; }
+  if(end && end<start) end = '';   // 終了が開始より前なら無視（単日扱い）
+  if(editingEventId){
+    const e = CAL_EVENTS.find(function(x){ return x.id===editingEventId; });
+    if(e){ e.title=title; e.start=start; e.end=end; e.time=time; e.color=editingEventColor; }
   }else{
-    box.innerHTML = '<div class="empty">設定シートの「カレンダー埋め込みURL」にGoogleカレンダーの埋め込みURLを入れると表示されます。</div>';
+    CAL_EVENTS.push({ id:'E'+Date.now()+Math.floor(Math.random()*1000), title:title, start:start, end:end, time:time, color:editingEventColor });
+  }
+  closeEventModal();
+  renderCalendar(); renderHome();
+  await saveCal();
+}
+async function deleteEvent(){
+  if(READONLY) return;
+  if(!editingEventId) return;
+  if(!confirm('この予定を削除しますか？')) return;
+  CAL_EVENTS = CAL_EVENTS.filter(function(e){ return e.id!==editingEventId; });
+  closeEventModal();
+  renderCalendar(); renderHome();
+  await saveCal();
+}
+// 予定を全員共有で保存（提出物保存 saveSub を流用＝GAS変更不要。__CAL__の1行に全予定をまとめて保存）
+async function saveCal(){
+  const events = CAL_EVENTS.map(function(e){ return {id:e.id, title:e.title||'', start:e.start||'', end:e.end||'', time:e.time||'', color:e.color||CAL_COLORS[0].c}; });
+  const sub = {year:'__CAL__', company:'予定カレンダー', doc:'events', status:'', date:'', link:'', note:JSON.stringify({events:events})};
+  if(CAL_ROW!=null) sub.row = CAL_ROW;
+  const res = await callApi({action:'saveSub', sub:sub});
+  if(res && res.ok){
+    if(!offline && res.row!=null) CAL_ROW = res.row;
+    toast(offline ? '保存しました（オフライン：この端末のみ・共有されていません）' : '予定を保存しました');
+  }else{
+    toast('予定の保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
   }
 }
 
@@ -1695,8 +2471,16 @@ function resolveMapUrl(u){
   if(m) return 'https://drive.google.com/thumbnail?id='+m[0]+'&sz=w1600';
   return u;
 }
-// 背景画像URLの解決：which=1 は 地図1(mapUrl||map.png)、which=2 は 地図2(mapUrl2||mapUrl||map.png)。
+// 背景画像URLの解決：アプリ内で設定した背景（lifeImgOverride）が最優先。
+// 空なら which=1 は 地図1(mapUrl||map.png)、which=2 は 地図2(mapUrl2||mapUrl||map.png)。
+function lifeImgOverride(which){
+  if(!UNPAN_SAVED || !UNPAN_SAVED.img) return '';
+  const v = Number(which)===2 ? UNPAN_SAVED.img.life2 : UNPAN_SAVED.img.life1;
+  return (v && String(v).trim()) ? String(v).trim() : '';
+}
 function mapImageUrl(which){
+  const ov = lifeImgOverride(which);
+  if(ov) return resolveMapUrl(ov);
   if(Number(which)===2){
     const raw = (CONFIG.mapUrl2 || '').trim() || (CONFIG.mapUrl || '').trim() || 'map.png';
     return resolveMapUrl(raw);
@@ -1829,7 +2613,7 @@ function wireMapStage(mapNum){
   const img = document.getElementById('map-img-'+mapNum);
   if(img){
     img.onerror = function(){
-      if(stage) stage.innerHTML = '<div class="empty">地図'+mapNum+'の画像を用意してください（map.png をアップロード、または設定シートの「地図画像URL'+(mapNum===2?'2':'')+'」にURLを設定）</div>';
+      if(stage) stage.innerHTML = '<div class="empty">地図'+mapNum+'の画像を用意してください（上の「背景地図の画像URL（地図'+mapNum+'）」にURLを設定、または map.png をアップロード）</div>';
     };
   }
   if(stage){
@@ -1859,6 +2643,11 @@ function renderMap(){
   wrap.innerHTML = buildMapStage(1) + buildMapStage(2);
   wireMapStage(1);
   wireMapStage(2);
+  // 背景URL入力欄に現在の設定値を反映（入力中は触らない）
+  const i1 = document.getElementById('life-img-url-1');
+  if(i1 && document.activeElement!==i1) i1.value = lifeImgOverride(1);
+  const i2 = document.getElementById('life-img-url-2');
+  if(i2 && document.activeElement!==i2) i2.value = lifeImgOverride(2);
   renderMapList();
 }
 // 色パレット（ヘッダ：作図色を選択）
@@ -2403,6 +3192,16 @@ function saveUnpanImg(){
   UNPAN_SAVED.img[unpanRegionKey(UNPAN_REGION)] = v;
   persistUnpan('背景地図を設定しました').then(function(){ renderUnpan(); });
 }
+// 生活道路排雪：地図1/地図2の背景画像を設定（全員共有・GAS変更不要。運搬と同じ__UNPAN__レコードに保存）
+function saveLifeImg(which){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  ensureUnpanSaved();
+  const id = Number(which)===2 ? 'life-img-url-2' : 'life-img-url-1';
+  const key = Number(which)===2 ? 'life2' : 'life1';
+  const v = (document.getElementById(id).value||'').trim();
+  UNPAN_SAVED.img[key] = v;
+  persistUnpan(v ? ('地図'+(Number(which)===2?2:1)+'の背景を設定しました') : ('地図'+(Number(which)===2?2:1)+'の背景を既定に戻しました')).then(function(){ renderMap(); });
+}
 // 運搬排雪の印刷（地図＋予定表のみ）
 function printUnpan(){
   document.body.classList.remove('print-map','print-shift','print-report');
@@ -2741,12 +3540,12 @@ function renderHeader(){
 
 function renderSummary(){
   const companies = companyList().length;
-  const totalQty  = MACHINES.reduce(function(s,m){ return s + num(m.qty); }, 0);
-  const exp  = MACHINES.filter(function(m){ return m.status==='exp'; }).length;
-  const soon = MACHINES.filter(function(m){ return m.status==='soon'; }).length;
+  const totalQty  = MREG.length;
+  const exp  = MREG.filter(function(m){ return mregStatus(m.expire)==='exp'; }).length;
+  const soon = MREG.filter(function(m){ return mregStatus(m.expire)==='soon'; }).length;
   const tiles = [
     {n:companies, l:'構成会社数'},
-    {n:totalQty,  l:'機械台数（合計）'},
+    {n:totalQty,  l:'登録台数（合計）'},
     {n:exp,  l:'車検切れ', cls:exp>0?'bad':''},
     {n:soon, l:'満了間近', cls:soon>0?'warn':''}
   ];
@@ -2837,6 +3636,7 @@ function remainText(days){
 
 function renderList(){
   const wrap = document.getElementById('companies');
+  if(!wrap) return;   // 旧「機械調書」タブは廃止（#companiesは存在しない）
   const companies = companyList();
   if(MACHINES.length===0){
     wrap.innerHTML = '<div class="card empty">まだ機械が登録されていません。「＋ 機械を追加」から登録してください。</div>';
@@ -2872,31 +3672,124 @@ function renderList(){
   }).join('');
 }
 
-function renderAlert(){
-  const rows = MACHINES.slice().sort(function(a,b){
-    if(a.days==null) return 1; if(b.days==null) return -1; return a.days - b.days;
-  });
-  const tb = document.getElementById('alert-body');
-  if(rows.length===0){
-    tb.innerHTML = '<tr><td colspan="9" class="empty" style="border:none">機械が登録されていません。</td></tr>';
+function renderAlert(){ renderMreg(); }  // 旧「車検アラート」→「機械調書」
+
+/*──────── 機械調書（企業別一覧・車検切れ表示・編集可） ────────*/
+function renderMreg(){
+  renderMregSubnav();
+  renderMregBody();
+  const exp = MREG.filter(function(m){ return mregStatus(m.expire)==='exp'; }).length;
+  const t = document.getElementById('mreg-total');
+  if(t) t.textContent = '全'+MREG.length+'台'+(exp? ' ／ 車検切れ '+exp+'台':'');
+}
+function mregSwitchCompany(key){ MREG_COMPANY = key; renderMregSubnav(); renderMregBody(); }
+function renderMregSubnav(){
+  const nav = document.getElementById('mreg-subnav'); if(!nav) return;
+  const comps = companyList();
+  if(MREG_COMPANY!=='*' && comps.indexOf(MREG_COMPANY)<0) MREG_COMPANY='*';
+  const btns = [{key:'*', label:'すべて（'+MREG.length+'）'}].concat(comps.map(function(c){
+    const n  = MREG.filter(function(m){ return m.company===c; }).length;
+    const ng = MREG.filter(function(m){ return m.company===c && mregStatus(m.expire)==='exp'; }).length;
+    return {key:c, label:esc(c)+'（'+n+'）'+(ng? ' <span class="mreg-ng">切れ'+ng+'</span>':'')};
+  }));
+  nav.innerHTML = btns.map(function(b){
+    return '<button type="button" class="mreg-subbtn'+(b.key===MREG_COMPANY?' active':'')
+      +'" onclick="mregSwitchCompany(\''+String(b.key).replace(/'/g,"\\'")+'\')">'+b.label+'</button>';
+  }).join('');
+}
+function renderMregHead(all, editable){
+  const h = document.getElementById('mreg-head'); if(!h) return;
+  const cols = '<th class="cat">区分</th><th>機械名</th><th>登録番号</th><th class="exp">車検期限</th>'
+    + (all?'<th>所有企業</th>':'') + '<th class="stat">状態</th>' + (editable?'<th class="del"></th>':'');
+  h.innerHTML = '<tr>'+cols+'</tr>';
+}
+function renderMregBody(){
+  const tb = document.getElementById('mreg-body'); if(!tb) return;
+  const all = (MREG_COMPANY==='*');
+  const editable = !READONLY;
+  renderMregHead(all, editable);
+  const list = all ? MREG.slice() : MREG.filter(function(m){ return m.company===MREG_COMPANY; });
+  const span = (all?5:4) + 1 + (editable?1:0);
+  if(list.length===0){
+    tb.innerHTML = '<tr><td colspan="'+span+'" class="empty" style="border:none">機械がありません。'
+      + (editable? '「＋ 機械を追加」から登録してください。':'') + '</td></tr>';
     return;
   }
-  tb.innerHTML = rows.map(function(m){
-    const to = m.email || CONFIG.defaultEmail || '';
-    const mail = to ? esc(to) : '<span style="color:var(--bad)">未設定</span>';
-    const cls = (m.status==='exp'||m.status==='soon') ? m.status : '';
-    return '<tr class="'+cls+'">'
-      + '<td>'+tagHtml(m.status||'none')+'</td>'
-      + '<td class="mono">'+esc(m.inspection||'—')+'</td>'
-      + '<td class="num">'+remainText(m.days)+'</td>'
-      + '<td>'+esc(m.company||'')+'</td>'
-      + '<td>'+esc(m.category||'')+'</td>'
+  tb.innerHTML = list.map(function(m){
+    const st = mregStatus(m.expire);
+    const rowcls = (st==='exp'||st==='soon') ? st : '';
+    const west = warekiToWestern(m.expire);
+    const statCell = '<td class="mreg-stat">'+tagHtml(st)+(west? '<div class="mreg-west">'+west+'</div>':'')+'</td>';
+    if(editable){
+      const id = esc(m.id);
+      return '<tr class="'+rowcls+'" data-id="'+id+'">'
+        + '<td><input class="mreg-in cat" value="'+esc(m.cat)+'" oninput="mregSet(\''+id+'\',\'cat\',this.value)"></td>'
+        + '<td><input class="mreg-in" value="'+esc(m.name)+'" oninput="mregSet(\''+id+'\',\'name\',this.value)"></td>'
+        + '<td><input class="mreg-in" value="'+esc(m.regno)+'" oninput="mregSet(\''+id+'\',\'regno\',this.value)"></td>'
+        + '<td><input class="mreg-in exp" value="'+esc(m.expire)+'" placeholder="R10年10月22日" onchange="mregExpireChange(\''+id+'\',this.value)" oninput="mregSet(\''+id+'\',\'expire\',this.value)"></td>'
+        + (all? '<td><input class="mreg-in" value="'+esc(m.company)+'" oninput="mregSet(\''+id+'\',\'company\',this.value)"></td>':'')
+        + statCell
+        + '<td class="mreg-del-cell"><button type="button" class="mreg-x" title="この機械を削除" onclick="mregDelRow(\''+id+'\')">×</button></td>'
+        + '</tr>';
+    }
+    return '<tr class="'+rowcls+'">'
+      + '<td class="mreg-cat">'+esc(m.cat)+'</td>'
       + '<td>'+esc(m.name||'')+'</td>'
-      + '<td class="mono">'+esc(m.plate||'')+'</td>'
-      + '<td>'+esc(m.manager||'')+'</td>'
-      + '<td>'+mail+'</td>'
+      + '<td class="mono">'+esc(m.regno||'—')+'</td>'
+      + '<td class="mono">'+esc(m.expire||'—')+'</td>'
+      + (all? '<td>'+esc(m.company||'')+'</td>':'')
+      + statCell
       + '</tr>';
   }).join('');
+}
+function mregFind(id){ return MREG.find(function(m){ return m.id===id; }); }
+function mregSet(id, field, val){
+  if(READONLY) return;
+  const m = mregFind(id); if(!m) return;
+  m[field] = val;
+  mregSaveDebounced();
+}
+function mregExpireChange(id, val){
+  // 車検期限の確定（フォーカスアウト）時に状態色・バッジ・サブナビを更新
+  renderMreg();
+  renderSummary();
+}
+let _mregSaveTimer = null;
+function mregSaveDebounced(){ if(_mregSaveTimer) clearTimeout(_mregSaveTimer); _mregSaveTimer = setTimeout(function(){ mregSave(false); }, 800); }
+function mregAddRow(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const comp = (MREG_COMPANY && MREG_COMPANY!=='*') ? MREG_COMPANY : (companyList()[0] || '');
+  const row = normalizeMreg([{cat:'', name:'', regno:'', expire:'', company:comp}])[0];
+  MREG.push(row);
+  renderMreg();
+  mregSave(true);
+  // 追加した行の最初の入力欄へフォーカス
+  setTimeout(function(){
+    const tr = document.querySelector('#mreg-body tr[data-id="'+row.id+'"]');
+    if(tr){ const inp = tr.querySelector('input'); if(inp) inp.focus(); tr.scrollIntoView({block:'center'}); }
+  }, 40);
+}
+function mregDelRow(id){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const m = mregFind(id); if(!m) return;
+  const label = (m.name||'') + (m.regno? '（'+m.regno+'）':'');
+  if(!confirm('この機械を削除します。よろしいですか？\n'+label)) return;
+  MREG = MREG.filter(function(x){ return x.id!==id; });
+  renderMreg();
+  renderSummary();
+  mregSave(true);
+}
+async function mregSave(showToast){
+  if(READONLY) return;
+  const sub = {year:'__MREG__', company:'機械調書', doc:'machines', status:'', date:'', link:'', note:JSON.stringify({machines:MREG})};
+  if(MREG_ROW!=null) sub.row = MREG_ROW;
+  const res = await callApi({action:'saveSub', sub:sub});
+  if(res && res.ok){
+    if(!offline && res.row!=null) MREG_ROW = res.row;
+    if(showToast) toast(offline ? '保存しました（オフライン：この端末のみ・共有されていません）' : '機械調書を保存しました');
+  }else{
+    toast('機械調書の保存に失敗しました' + (res && res.error ? '：'+res.error : ''));
+  }
 }
 
 function renderCompanyDatalist(){
@@ -3835,41 +4728,693 @@ async function saveDesign(){
   else toast('保存に失敗：'+(res&&res.error?res.error:'不明'));
 }
 
+/*════════════════ 住所検索（札幌市厚別区・地理院地図） ════════════════*/
+// 厚別区の町名（条の有無と丁目のおおよその範囲）。実在しない丁目を選んでも、検索は
+// 「丁目なし→条なし→町名のみ」の順に自動で簡略化して必ず近い場所を表示します。
+// 厚別区北地区（当JVの担当エリア）に絞った町名リスト
+const ATSU_TOWNS = [
+  {name:'もみじ台北', jo:0, chome:7},
+  {name:'もみじ台南', jo:0, chome:7},
+  {name:'もみじ台東', jo:0, chome:7},
+  {name:'もみじ台西', jo:0, chome:7},
+  {name:'厚別東',   jo:5, chome:7},
+  {name:'厚別西',   jo:5, chome:7},
+  {name:'厚別町山本',   jo:0, chome:0},
+  {name:'厚別町小野幌', jo:0, chome:0},
+  {name:'厚別町下野幌', jo:0, chome:0},
+  {name:'下野幌テクノパーク', jo:0, chome:4}
+];
+const ATSU_PREFIX = '北海道札幌市厚別区';
+const ATSU_CENTER = {lat:43.0387, lng:141.4747, zoom:13};
+let ADDR_MAP=null, ADDR_MARKER=null, ADDR_MAP_READY=false;
+
+function addrLeafletOk(){ return (typeof L !== 'undefined' && L && L.map); }
+function initAddrMap(){
+  if(ADDR_MAP_READY){ if(ADDR_MAP) setTimeout(function(){ ADDR_MAP.invalidateSize(); }, 60); return; }
+  const el=document.getElementById('addr-map'); if(!el) return;
+  if(!addrLeafletOk()){
+    el.style.display='none';
+    const m=document.getElementById('addr-map-msg');
+    if(m) m.textContent='⚠️ 地図を読み込めませんでした（インターネット接続をご確認ください）。検索後の「Googleマップで開く／ナビ」はご利用いただけます。';
+    ADDR_MAP_READY=true; return;
+  }
+  try{
+    ADDR_MAP=L.map('addr-map',{zoomControl:true}).setView([ATSU_CENTER.lat,ATSU_CENTER.lng],ATSU_CENTER.zoom);
+    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',{
+      maxZoom:18, attribution:"<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank' rel='noopener'>地理院タイル</a>"
+    }).addTo(ADDR_MAP);
+    ADDR_MAP_READY=true;
+    setTimeout(function(){ ADDR_MAP.invalidateSize(); }, 80);
+  }catch(e){
+    const m=document.getElementById('addr-map-msg'); if(m) m.textContent='⚠️ 地図の初期化に失敗しました：'+e.message;
+    ADDR_MAP_READY=true;
+  }
+}
+function initAddrDrill(){
+  const sel=document.getElementById('addr-town'); if(!sel || sel.options.length>1) return;
+  ATSU_TOWNS.forEach(function(t){ const o=document.createElement('option'); o.value=t.name; o.textContent=t.name; sel.appendChild(o); });
+}
+function townDef(name){ return ATSU_TOWNS.find(function(t){ return t.name===name; }); }
+function onAddrTown(){
+  const name=document.getElementById('addr-town').value;
+  const joSel=document.getElementById('addr-jo'), choSel=document.getElementById('addr-chome');
+  const t=townDef(name);
+  if(t && t.jo>0){ let h='<option value="">条…</option>'; for(let i=1;i<=t.jo;i++) h+='<option value="'+i+'">'+i+'条</option>'; joSel.innerHTML=h; joSel.style.display=''; }
+  else{ joSel.innerHTML=''; joSel.style.display='none'; }
+  if(t && t.chome>0){ let h='<option value="">丁目…</option>'; for(let i=1;i<=t.chome;i++) h+='<option value="'+i+'">'+i+'丁目</option>'; choSel.innerHTML=h; choSel.style.display=''; }
+  else{ choSel.innerHTML=''; choSel.style.display='none'; }
+}
+// 国土地理院 住所検索API（GeoJSON featuresの配列を返す）
+async function geocodeGSI(q){
+  const url='https://msearch.gsi.go.jp/address-search/AddressSearch?q='+encodeURIComponent(q);
+  const res=await fetch(url);
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const arr=await res.json();
+  if(Array.isArray(arr) && arr.length){
+    const f=arr[0], c=f.geometry && f.geometry.coordinates;
+    if(c && c.length>=2) return {lng:Number(c[0]), lat:Number(c[1]), title:(f.properties&&f.properties.title)||q};
+  }
+  return null;
+}
+async function geocodeTries(list){
+  for(let i=0;i<list.length;i++){ const q=list[i]; if(!q) continue; try{ const r=await geocodeGSI(q); if(r) return r; }catch(e){} }
+  return null;
+}
+function showAddrSearching(){ document.getElementById('addr-result-text').textContent='検索中…'; document.getElementById('addr-result').classList.add('show'); }
+function addrBtns(show){ const el=document.getElementById('addr-btns'); if(el) el.style.display = show ? '' : 'none'; }
+function showAddrResult(hit, labelQuery){
+  const box=document.getElementById('addr-result'), txt=document.getElementById('addr-result-text');
+  const title=hit.title || labelQuery || '';
+  txt.textContent = title + '　（緯度 ' + hit.lat.toFixed(5) + ' / 経度 ' + hit.lng.toFixed(5) + '）';
+  document.getElementById('addr-navi').href='https://www.google.com/maps/dir/?api=1&destination='+hit.lat+','+hit.lng;
+  document.getElementById('addr-gmap').href='https://www.google.com/maps/search/?api=1&query='+hit.lat+','+hit.lng;
+  addrBtns(true);
+  box.classList.add('show');
+  if(ADDR_MAP && addrLeafletOk()){
+    ADDR_MAP.setView([hit.lat,hit.lng],16);
+    if(ADDR_MARKER) ADDR_MARKER.remove();
+    ADDR_MARKER=L.marker([hit.lat,hit.lng]).addTo(ADDR_MAP).bindPopup(esc(title)).openPopup();
+    setTimeout(function(){ ADDR_MAP.invalidateSize(); },60);
+  }
+}
+function showAddrError(msg){
+  addrBtns(false);
+  document.getElementById('addr-result-text').textContent=msg;
+  document.getElementById('addr-result').classList.add('show');
+}
+function sameCoord(a,b){ return a && b && Math.abs(a.lat-b.lat)<1e-6 && Math.abs(a.lng-b.lng)<1e-6; }
+async function searchFree(){
+  const raw=(document.getElementById('addr-free-q').value||'').trim();
+  if(!raw){ toast('住所を入力してください'); return; }
+  const hasPref=/(北海道|札幌市|厚別区)/.test(raw);
+  const tries = hasPref ? [raw, ATSU_PREFIX+raw] : [ATSU_PREFIX+raw, '札幌市厚別区'+raw, raw];
+  showAddrSearching();
+  const hit=await geocodeTries(tries);
+  if(hit) showAddrResult(hit, raw);
+  else showAddrError('⚠️ 見つかりませんでした。入力を少し変えてお試しください（例：厚別中央1条5丁目）。インターネット接続もご確認ください。');
+}
+async function searchDrill(){
+  const name=document.getElementById('addr-town').value;
+  if(!name){ toast('町名を選んでください'); return; }
+  const joV =document.getElementById('addr-jo').value;
+  const choV=document.getElementById('addr-chome').value;
+  const banV=(document.getElementById('addr-ban').value||'').trim();
+  const goV =(document.getElementById('addr-go').value||'').trim();
+  const base = ATSU_PREFIX + name + (joV?joV+'条':'') + (choV?choV+'丁目':'');
+  showAddrSearching();
+  if(banV){
+    // 枝番（番地・号）あり：その番地が実在する場合だけ表示。丁目へのフォールバックで誤魔化さない。
+    const label = name + (joV?joV+'条':'') + (choV?choV+'丁目':'') + banV + '番' + (goV?goV+'号':'');
+    const hitBan  = await geocodeGSI(base + banV + (goV? '-'+goV : '')).catch(function(){ return null; });
+    const hitBase = await geocodeGSI(base).catch(function(){ return null; });
+    // 番地が丁目の中心と同じ＝番地が見つからず丁目に丸められた、とみなして「なし」扱い
+    if(hitBan && !sameCoord(hitBan, hitBase)){
+      showAddrResult(hitBan, label);
+    }else{
+      showAddrError('⚠️「'+label+'」は見つかりませんでした。番地・号が実在するかご確認ください。（番地・号を空欄にすると丁目の位置を表示します）');
+    }
+    return;
+  }
+  // 枝番なし：丁目→条→町名 の順にフォールバック
+  const noCho = ATSU_PREFIX + name + (joV?joV+'条':'');
+  const noJo  = ATSU_PREFIX + name;
+  const tries=[]; [base,noCho,noJo].forEach(function(q){ if(q && tries.indexOf(q)<0) tries.push(q); });
+  const hit=await geocodeTries(tries);
+  if(hit) showAddrResult(hit, name+(joV?joV+'条':'')+(choV?choV+'丁目':''));
+  else showAddrError('⚠️ 見つかりませんでした。インターネット接続をご確認ください。');
+}
+
+/* ───────── 町内会から探す（かかる丁目を地図に色で表示） ───────── */
+// 各町内会がかかる「丁目」一覧（札幌市厚別区 各町内会連合会の公式ページより。番地単位ではなく丁目単位。目安）
+const CHOUNAI = [
+  // もみじ台自治連合会
+  {g:'もみじ台', n:'もみじ台北生自治会', c:['もみじ台北1丁目','もみじ台北2丁目','もみじ台北3丁目','もみじ台北4丁目','もみじ台北5丁目']},
+  {g:'もみじ台', n:'もみじ自治会', c:['もみじ台北3丁目']},
+  {g:'もみじ台', n:'第二もみじ自治会', c:['もみじ台北4丁目']},
+  {g:'もみじ台', n:'中央もみじ自治会', c:['もみじ台北6丁目']},
+  {g:'もみじ台', n:'もみじ台商業地区自治会', c:['もみじ台西3丁目','もみじ台北5丁目','もみじ台東4丁目','もみじ台北7丁目','もみじ台南1丁目','もみじ台南6丁目']},
+  {g:'もみじ台', n:'東もみじ自治会', c:['もみじ台東1丁目']},
+  {g:'もみじ台', n:'みずほ自治会', c:['もみじ台東2丁目','もみじ台東4丁目','もみじ台東6丁目','もみじ台東7丁目']},
+  {g:'もみじ台', n:'東35自治会', c:['もみじ台東3丁目','もみじ台東5丁目']},
+  {g:'もみじ台', n:'17棟自治会', c:['もみじ台東3丁目']},
+  {g:'もみじ台', n:'もみじ台西自治会', c:['もみじ台西5丁目','もみじ台西7丁目']},
+  {g:'もみじ台', n:'もみじ台西2丁目自治会', c:['もみじ台西2丁目']},
+  {g:'もみじ台', n:'あすなろ自治会', c:['もみじ台西3丁目','もみじ台西4丁目']},
+  {g:'もみじ台', n:'ポプラ自治会', c:['もみじ台西4丁目']},
+  {g:'もみじ台', n:'もみじ台みなみ自治会', c:['もみじ台南1丁目','もみじ台南3丁目','もみじ台南5丁目','もみじ台南6丁目','もみじ台南7丁目']},
+  {g:'もみじ台', n:'つくし自治会', c:['もみじ台南2丁目']},
+  {g:'もみじ台', n:'南わかば自治会', c:['もみじ台南4丁目']},
+  // 厚別東町内会連合会
+  {g:'厚別東', n:'小野幌連合会', c:['厚別東2条7丁目','厚別東3条7丁目','厚別東4条1丁目','厚別東4条2丁目','厚別東4条3丁目','厚別東4条4丁目','厚別東4条7丁目','厚別東4条8丁目','厚別東4条9丁目','厚別東5条1丁目','厚別東5条2丁目','厚別東5条3丁目','厚別東5条4丁目','厚別東5条7丁目','厚別東5条8丁目']},
+  {g:'厚別東', n:'小野幌ニュータウン町内会', c:['厚別東2条3丁目','厚別東2条4丁目','厚別東2条5丁目','厚別東2条6丁目','厚別東3条3丁目','厚別東3条4丁目','厚別東3条5丁目','厚別東3条6丁目','厚別東4条3丁目','厚別東4条4丁目','厚別東4条5丁目','厚別東4条6丁目']},
+  {g:'厚別東', n:'厚別東王子町内会', c:['厚別東1条5丁目']},
+  {g:'厚別東', n:'厚別東ひまわり町内会', c:['厚別東1条3丁目','厚別東1条4丁目','厚別東1条5丁目','厚別東2条3丁目','厚別東2条4丁目','厚別東2条5丁目']},
+  {g:'厚別東', n:'もみじ台通り町内会', c:['厚別東1条6丁目','厚別東2条6丁目']},
+  {g:'厚別東', n:'厚別東イトーピア町内会', c:['厚別東1条1丁目','厚別東2条1丁目']},
+  {g:'厚別東', n:'厚別東高台町内会', c:['厚別東1条2丁目','厚別東1条3丁目','厚別東1条4丁目','厚別東1条5丁目','厚別東1条6丁目','厚別東2条2丁目','厚別東2条3丁目','厚別東2条4丁目','厚別東2条6丁目','厚別東3条1丁目','厚別東3条2丁目','厚別東3条3丁目']},
+  // 厚別西町内会連合会
+  {g:'厚別西', n:'厚別西厚信会', c:['厚別西1条1丁目','厚別西1条2丁目','厚別西1条3丁目','厚別西1条4丁目','厚別西1条5丁目','厚別西2条1丁目','厚別西2条2丁目','厚別西2条3丁目','厚別西2条4丁目','厚別西2条5丁目','厚別西2条6丁目','厚別西3条1丁目','厚別西3条2丁目','厚別西3条3丁目','厚別西3条4丁目','厚別西3条5丁目','厚別西3条6丁目','厚別西4条2丁目','厚別西4条3丁目','厚別西4条4丁目','厚別西4条5丁目','厚別西5条4丁目','厚別西5条5丁目','厚別西5条6丁目']},
+  {g:'厚別西', n:'山本町内会', c:['厚別西5条2丁目','厚別西5条3丁目','厚別西5条4丁目','厚別町山本']},
+  {g:'厚別西', n:'桜台町内会', c:['厚別西4条1丁目','厚別西4条2丁目']},
+  {g:'厚別西', n:'森林公園町内会', c:['厚別北1条1丁目','厚別北1条2丁目','厚別北1条3丁目','厚別北1条4丁目','厚別北2条1丁目','厚別北2条2丁目','厚別北2条3丁目','厚別北2条4丁目','厚別北2条5丁目','厚別北3条2丁目','厚別北3条3丁目','厚別北3条4丁目','厚別北3条5丁目','厚別北4条2丁目','厚別北4条3丁目','厚別北4条4丁目','厚別北4条5丁目','厚別北5条4丁目','厚別北5条5丁目','厚別北6条4丁目','厚別北6条5丁目','厚別町小野幌']},
+  {g:'厚別西', n:'第二桜台町内会', c:['厚別西5条1丁目','厚別西5条2丁目']},
+  {g:'厚別西', n:'森林公園パークハウス町内会', c:['厚別北1条4丁目','厚別北2条4丁目','厚別北2条5丁目','厚別北3条4丁目','厚別北3条5丁目']},
+  {g:'厚別西', n:'厚別西クアタウン町内会', c:['厚別西5条4丁目']}
+];
+let ADDR_CHOUNAI_LAYER=null;
+const ADDR_GEO_CACHE={};
+async function geocodeCached(q){
+  if(Object.prototype.hasOwnProperty.call(ADDR_GEO_CACHE,q)) return ADDR_GEO_CACHE[q];
+  let r=null; try{ r=await geocodeGSI(q); }catch(e){ r=null; }
+  ADDR_GEO_CACHE[q]=r; return r;
+}
+// 同時実行数を絞って順に解決（GSIへの一斉アクセスを避ける）
+async function mapLimit(arr, limit, fn){
+  const out=new Array(arr.length); let i=0;
+  async function worker(){ while(i<arr.length){ const idx=i++; out[idx]=await fn(arr[idx]); } }
+  const ws=[]; for(let k=0;k<Math.min(limit,arr.length);k++) ws.push(worker());
+  await Promise.all(ws); return out;
+}
+function initAddrChounai(){
+  const sel=document.getElementById('addr-chounai'); if(!sel || sel.options.length>1) return;
+  const groups={}; CHOUNAI.forEach(function(ci){ (groups[ci.g]=groups[ci.g]||[]).push(ci); });
+  Object.keys(groups).forEach(function(g){
+    const og=document.createElement('optgroup'); og.label=g+'地区';
+    groups[g].forEach(function(ci){ const o=document.createElement('option'); o.value=ci.n; o.textContent=ci.n; og.appendChild(o); });
+    sel.appendChild(og);
+  });
+}
+// 凸包（Andrew's monotone chain）points:[{lat,lng}] → 外周[{lat,lng}]
+function convexHull(points){
+  if(points.length<3) return points.slice();
+  const pts=points.map(function(p){ return {x:p.lng,y:p.lat}; }).sort(function(a,b){ return a.x-b.x || a.y-b.y; });
+  function cross(o,a,b){ return (a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x); }
+  const lo=[]; for(let i=0;i<pts.length;i++){ const p=pts[i]; while(lo.length>=2 && cross(lo[lo.length-2],lo[lo.length-1],p)<=0) lo.pop(); lo.push(p); }
+  const up=[]; for(let i=pts.length-1;i>=0;i--){ const p=pts[i]; while(up.length>=2 && cross(up[up.length-2],up[up.length-1],p)<=0) up.pop(); up.push(p); }
+  lo.pop(); up.pop();
+  return lo.concat(up).map(function(q){ return {lat:q.y,lng:q.x}; });
+}
+function clearChounaiLayer(){ if(ADDR_CHOUNAI_LAYER){ ADDR_CHOUNAI_LAYER.remove(); ADDR_CHOUNAI_LAYER=null; } }
+function clearChounai(){ clearChounaiLayer(); const s=document.getElementById('addr-chounai'); if(s) s.value=''; const box=document.getElementById('addr-result'); if(box) box.classList.remove('show'); const m=document.getElementById('addr-map-msg'); if(m) m.textContent=''; }
+async function searchChounai(){
+  const name=document.getElementById('addr-chounai').value;
+  if(!name){ clearChounaiLayer(); return; }
+  const def=CHOUNAI.find(function(x){ return x.n===name; }); if(!def) return;
+  const msg=document.getElementById('addr-map-msg');
+  // 結果テキスト（かかる丁目一覧）は地図の有無に関わらず表示
+  showChounaiText(def);
+  if(!(ADDR_MAP && addrLeafletOk())){ return; }
+  if(msg) msg.textContent='「'+name+'」の範囲を計算中…';
+  const results=await mapLimit(def.c, 6, function(frag){ return geocodeCached(ATSU_PREFIX+frag); });
+  const pts=results.filter(Boolean).map(function(r){ return {lat:r.lat,lng:r.lng}; });
+  if(msg) msg.textContent='';
+  clearChounaiLayer();
+  if(!pts.length){ if(msg) msg.textContent='⚠️「'+name+'」の位置を取得できませんでした（インターネット接続をご確認ください）。'; return; }
+  const color='#e8710a';
+  const grp=L.layerGroup();
+  if(pts.length>=3){
+    const hull=convexHull(pts);
+    L.polygon(hull.map(function(p){ return [p.lat,p.lng]; }), {color:color, weight:2, fillColor:color, fillOpacity:0.22}).addTo(grp);
+  }else{
+    pts.forEach(function(p){ L.circle([p.lat,p.lng], {radius:150, color:color, weight:2, fillColor:color, fillOpacity:0.22}).addTo(grp); });
+  }
+  pts.forEach(function(p){ L.circleMarker([p.lat,p.lng], {radius:4, color:color, weight:1, fillColor:color, fillOpacity:0.85}).addTo(grp); });
+  grp.addTo(ADDR_MAP); ADDR_CHOUNAI_LAYER=grp;
+  ADDR_MAP.fitBounds(L.latLngBounds(pts.map(function(p){ return [p.lat,p.lng]; })).pad(0.25));
+}
+function showChounaiText(def){
+  const box=document.getElementById('addr-result'), txt=document.getElementById('addr-result-text');
+  addrBtns(false);
+  txt.innerHTML = '<b>'+esc(def.n)+'</b>（'+esc(def.g)+'地区）<br><span style="font-weight:400;font-size:13px">かかる丁目：'+esc(def.c.join('、'))+'</span>';
+  box.classList.add('show');
+}
+
+/*════════════════ 連絡チェック（新雪除雪の出動連絡） ════════════════*/
+const CHECK_ST = [
+  {k:'',     label:'未',          cls:'cl-none'},
+  {k:'line', label:'📱既読',      cls:'cl-line'},
+  {k:'tel',  label:'☎電話済',     cls:'cl-tel'},
+  {k:'ng',   label:'⚠連絡つかず', cls:'cl-ng'}
+];
+function checkStMeta(k){ return CHECK_ST.find(function(s){ return s.k===(k||''); }) || CHECK_ST[0]; }
+// 既定の名簿（初回・未保存時）。出動連絡チェック表（厚別区北地区マルチ）を元に作成。
+// ※写真からの転記のため、氏名・路線は要確認（名簿編集で修正可）。個人の携帯・自宅番号は空（セキュリティ対応後に入力）。
+const CHECK_SEC_MEMBER = '構成員';
+const CHECK_SEC_MACHINE = '機械・オペレーター・助手・担当箇所';
+// gs=true ＝機械セット（オペ＋助手のまとまり）の先頭行。gs の行から次の gs の行の手前までを黒い太枠で1つに囲む。
+// name=レギュラー氏名、sub=予備氏名（氏名欄の2段目）。mob=連絡先。
+function Mg(gs,label,role,name,note){ return {id:'', gs:!!gs, sec:'機械・オペレーター・助手・担当箇所', label:label||'', role:role||'', name:name||'', sub:'', mob:'', tel:'', note:note||''}; }
+function defaultCheckRoster(){
+  const rows=[
+    Mg(1,'幹線・補助 官D','オペ','菅沼憲一',''),
+    Mg(1,'幹線・補助 GD/6993','職員・オペ','佐井川彰吾',''),
+    Mg(0,'幹線・補助 GD/6993','助手（夜のみ）','石岡伸也',''),
+    Mg(1,'幹線・補助 GD/7032','職員・オペ','辻伸次',''),
+    Mg(0,'幹線・補助 GD/7032','助手','佐藤秀美',''),
+    Mg(1,'幹線・補助・間口処理 TS/2017','外注オペ','玲北（近藤）','住宅管理・ホクノー／土木センター／1月〜昼夜OK'),
+    Mg(0,'幹線・補助・間口処理 TS/2017','外注助手','玲北','夜間OK'),
+    Mg(1,'幹線・補助・間口処理 TS/2320','外注助手','佐々木工業（漣斗）','住宅管理・ホクノー／土木センター／夜のみ'),
+    Mg(0,'幹線・補助・間口処理 TS/2320','','',''),
+    Mg(1,'もみじ台西地区（生活道路）TS/2018','外注オペ','玲北（佐久間）','住宅管理・ホクノー／1月〜昼夜OK'),
+    Mg(0,'もみじ台西地区（生活道路）TS/2018','外注助手','野本桂太郎',''),
+    Mg(1,'もみじ台北地区（生活道路）TS/2015','職員・オペ','三木幸一','住宅管理・ホクノー'),
+    Mg(0,'もみじ台北地区（生活道路）TS/2015','助手（夜のみ）','三木',''),
+    Mg(1,'厚別東地区（生活道路）TS/予備車','職員・オペ','丸一雅史','住宅管理・ホクノー／土木センター'),
+    Mg(0,'厚別東地区（生活道路）TS/予備車','助手（夜のみ）','佐々木工業（一誠）',''),
+    Mg(1,'もみじ台東・南地区（生活道路）TS/2321','職員・オペ','佐々木剛志','住宅管理・ホクノー／土木センター'),
+    Mg(0,'もみじ台東・南地区（生活道路）TS/2321','助手（昼夜）','佐々木工業','昼夜OK'),
+    Mg(1,'厚別西地区（生活道路）TS/1832','職員・オペ','村井◯','住宅管理・ホクノー／デイ・グリューネン／セブンイレブン'),
+    Mg(0,'厚別西地区（生活道路）TS/1832','助手（夜）','大野盛',''),
+    Mg(1,'厚別西地区（生活道路）TS/7661','職員・オペ','畠山博企','住宅管理・ホクノー／デイ・グリューネン／セブンイレブン'),
+    Mg(0,'厚別西地区（生活道路）TS/7661','助手（夜）','佐藤秀美',''),
+    Mg(1,'小型ロータリー 歩道除雪 SRT/563（予備車2・0-44）','オペ','北山京平',''),
+    Mg(0,'小型ロータリー 歩道除雪 SRT/563','伴走車（パト車）','戸来勇喜',''),
+    Mg(0,'小型ロータリー 歩道除雪 SRT/563','誘導','松◯宇宙','11月〜昼夜OK'),
+    Mg(1,'小型ロータリー 官SRT/23-76（予備車20-44）','職員・オペ','佐々木工業（翔太）',''),
+    Mg(0,'小型ロータリー 官SRT/23-76','誘導（借上車）','佐々木工業（誠也）','夜のみ'),
+    Mg(0,'小型ロータリー 官SRT/23-76','オペ','佐々木工業（泰雅）','夜のみ'),
+    Mg(1,'HRT/ソワー SW3312A-S（歩道除雪）','','',''),
+    Mg(0,'HRT/ソワー SW3312A-S（歩道除雪）','オペ・誘導','東田光','4スライドダンプ・誘導'),
+    Mg(1,'平面・階段除雪 ヤマソ除雪機','入力作業（1t車・ミニHR）','土田航平',''),
+    Mg(1,'横断歩道除雪 WA40 TS/6297（167箇）','排雪オペ','曽我芳隆',''),
+    Mg(0,'横断歩道除雪 WA40 TS/6297','12月中オペ','大西靖生',''),
+    Mg(1,'横断歩道（105箇内）TS/76-70（WA30）','オペ','土田航平',''),
+    Mg(1,'緊急砂散布・砂箱・融雪水処理・穴埋め','作業員','佐久間貴裕','12月◯日〜'),
+    Mg(0,'緊急砂散布・砂箱・融雪水処理・穴埋め','作業員','須藤恭平',''),
+    Mg(0,'緊急砂散布・砂箱・融雪水処理・穴埋め','作業員','東出光',''),
+    Mg(0,'緊急砂散布・砂箱・融雪水処理・穴埋め','作業員','戸来勇喜',''),
+    Mg(0,'緊急砂散布・砂箱・融雪水処理・穴埋め','作業員','佐藤秀美',''),
+    Mg(1,'ペガス昆上除雪 TS/419','オペ','大野弘一',''),
+    Mg(0,'ペガス昆上除雪 TS/419','職員・オペ（教育係）','冨山和弘',''),
+    Mg(1,'ペガス TS/819（さんぴち他・南地区センター）','職員・オペ（教育係）','冨山和弘','')
+  ];
+  return rows.map(function(r,i){ r.id='r'+(i+1); return r; });
+}
+// 名簿配列の正規化（gs＝機械枠の先頭フラグ、sub＝予備氏名、mob＝連絡先）
+function normalizeRoster(arr){
+  if(!Array.isArray(arr)) return;
+  let _prev=null;
+  arr.forEach(function(r){
+    if(r.gs===undefined) r.gs = (r.grp!=null) ? (r.grp!==_prev) : false;  // 旧grp→gsへ
+    if(r.grp!=null) _prev=r.grp;
+    if(r.sub===undefined) r.sub='';
+    if(r.mob===undefined) r.mob='';
+  });
+}
+// データ構造：{ roster:[共通の名簿（全日のひな形）], days:{ 'YYYY-MM-DD':{ checks:{id:状態}, roster?:[その日専用の名簿] } } }
+function ensureCheckSaved(){
+  if(!CHECK_SAVED || typeof CHECK_SAVED!=='object') CHECK_SAVED = {};
+  if(!Array.isArray(CHECK_SAVED.roster) || !CHECK_SAVED.roster.length) CHECK_SAVED.roster = defaultCheckRoster();
+  if(!CHECK_SAVED.days || typeof CHECK_SAVED.days!=='object') CHECK_SAVED.days = {};
+  // 旧構造 checks:{date:{id:状態}} → days:{date:{checks:{...}}} へ移行
+  if(CHECK_SAVED.checks && typeof CHECK_SAVED.checks==='object'){
+    Object.keys(CHECK_SAVED.checks).forEach(function(d){
+      if(!CHECK_SAVED.days[d]) CHECK_SAVED.days[d]={checks:{}};
+      if(!CHECK_SAVED.days[d].checks) CHECK_SAVED.days[d].checks={};
+      Object.assign(CHECK_SAVED.days[d].checks, CHECK_SAVED.checks[d]);
+    });
+    delete CHECK_SAVED.checks;
+  }
+  normalizeRoster(CHECK_SAVED.roster);
+  Object.keys(CHECK_SAVED.days).forEach(function(d){
+    const day=CHECK_SAVED.days[d]; if(!day.checks) day.checks={};
+    if(Array.isArray(day.roster)) normalizeRoster(day.roster);
+  });
+}
+function checkDay(d){ ensureCheckSaved(); if(!CHECK_SAVED.days[d]) CHECK_SAVED.days[d]={checks:{}}; if(!CHECK_SAVED.days[d].checks) CHECK_SAVED.days[d].checks={}; return CHECK_SAVED.days[d]; }
+function dayHasOwnRoster(d){ return !!(CHECK_SAVED.days && CHECK_SAVED.days[d] && Array.isArray(CHECK_SAVED.days[d].roster) && CHECK_SAVED.days[d].roster.length); }
+function rosterForDate(d){ return dayHasOwnRoster(d) ? CHECK_SAVED.days[d].roster : CHECK_SAVED.roster; }
+// 今編集・表示の対象になっている名簿（共通名簿の編集なら共通、日付表示ならその日の名簿）
+function activeRoster(){
+  if(CHECK_FS_EDIT) return CHECK_SAVED.roster;         // 共通の名簿の編集
+  if(CHECK_DATE) return rosterForDate(CHECK_DATE);      // その日の名簿（専用があればそれ、無ければ共通）
+  return CHECK_SAVED.roster;
+}
+// その日を「専用名簿」にフォーク（共通名簿をコピー）。以後その日だけ独立して編集される。
+function forkDayRoster(d){ const day=checkDay(d); if(!Array.isArray(day.roster) || !day.roster.length){ day.roster=JSON.parse(JSON.stringify(CHECK_SAVED.roster)); normalizeRoster(day.roster); } return day.roster; }
+function checkDates(){ ensureCheckSaved(); return Object.keys(CHECK_SAVED.days).sort(function(a,b){ return b.localeCompare(a); }); }
+function checkStatusOf(id){ const day=CHECK_SAVED.days && CHECK_SAVED.days[CHECK_DATE]; return (day && day.checks && day.checks[id]) ? day.checks[id] : ''; }
+function checkTodayISO(){ const d=new Date(); const p=function(n){return(n<10?'0':'')+n;}; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function checkDateLabel(d){ const dt=parseDate(d); const w=['日','月','火','水','木','金','土']; return dt ? ((dt.getMonth()+1)+'月'+dt.getDate()+'日('+w[dt.getDay()]+')') : d; }
+
+function renderCheck(){
+  ensureCheckSaved();
+  if(CHECK_FULLSCREEN) renderCheckFull();
+  else renderCheckLauncher();
+}
+// ボード内：ランチャー（日付を選んで全画面チェック表を開く）
+function renderCheckLauncher(){
+  const ni=document.getElementById('check-date-new'); if(ni && !ni.value) ni.value=checkTodayISO();
+  const list=document.getElementById('check-date-list'); if(!list) return;
+  const dates=checkDates();
+  if(!dates.length){ list.innerHTML='<div class="empty">まだ出動日がありません。上で日付を選んで「チェックリストを開く」で始めてください。</div>'; return; }
+  list.innerHTML=dates.map(function(d){
+    const roster=rosterForDate(d);
+    const cks=(CHECK_SAVED.days[d]&&CHECK_SAVED.days[d].checks)||{};
+    let done=0; roster.forEach(function(r){ if(cks[r.id]) done++; });
+    const custom = dayHasOwnRoster(d) ? '<span class="pill" style="background:#fff0d6;color:#8a5a00">この日専用の名簿</span>' : '';
+    return '<div class="check-date-item"><span class="cd-date">'+esc(checkDateLabel(d))+'</span>'
+      + '<span class="pill">連絡済 '+done+' / '+roster.length+'</span>'+custom
+      + '<div class="spacer"></div>'
+      + '<button class="btn sec sm" onclick="openCheckScreen(\''+esc(d)+'\')">開く</button></div>';
+  }).join('');
+}
+// 全画面：指定日のチェック表（または名簿編集）
+function renderCheckFull(){
+  const masterEdit = CHECK_FS_EDIT;          // 共通名簿の編集として開いた
+  if(!masterEdit && CHECK_DATE){
+    const isNew = !CHECK_SAVED.days[CHECK_DATE];
+    checkDay(CHECK_DATE);                     // その日を用意
+    if(isNew && !READONLY) saveCheck(false);  // 新しい日は保存して一覧に残す
+  }
+  const title=document.getElementById('check-screen-title');
+  if(title){
+    if(masterEdit) title.textContent='連絡チェック　共通の名簿（全日のひな形）の編集';
+    else if(CHECK_EDIT) title.textContent='連絡チェック　'+checkDateLabel(CHECK_DATE)+'（この日だけの名簿）';
+    else title.textContent='連絡チェック　'+checkDateLabel(CHECK_DATE)+(dayHasOwnRoster(CHECK_DATE)?'（この日専用の名簿）':'');
+  }
+  renderCheckProgress();
+  const eb=document.getElementById('check-edit-btn');
+  if(eb){ eb.style.display = (CHECK_DATE && !masterEdit) ? '' : 'none'; eb.textContent = CHECK_EDIT ? '✓ 編集を終える' : '✏ この日だけ名簿を変更'; }
+  const hint=document.getElementById('check-hint');
+  if(hint) hint.textContent = masterEdit
+    ? '全日で使う「共通の名簿（ひな形）」を編集します。すでに専用名簿にした日は変わりません。'
+    : (CHECK_EDIT
+        ? 'この出動日だけの名簿に変更します（他の日には影響しません）。終わったら保存してください。'
+        : '状態のボタンを押すたびに「未→LINE既読→電話済→連絡つかず→未」と切り替わります。この画面を閉じても、同じ出動日で開けば続きから表示されます。');
+  renderCheckTable();
+}
+function renderCheckProgress(){
+  const el=document.getElementById('check-progress'); if(!el) return;
+  if(CHECK_EDIT || CHECK_FS_EDIT || !CHECK_DATE){ el.textContent=''; return; }
+  const roster=activeRoster();
+  let done=0; roster.forEach(function(r){ if(checkStatusOf(r.id)) done++; });
+  el.textContent='連絡済 '+done+' / 全 '+roster.length;
+}
+function selfUrl(){ return window.location.href.split('?')[0].split('#')[0]; }
+// 全画面チェック表を別タブで開く（which='new'=入力欄の日付／それ以外=日付文字列）。閉じても同じ日付で開けば続きから表示。
+function openCheckScreen(which){
+  let d;
+  if(which==='new'){ d=(document.getElementById('check-date-new').value||'').trim(); if(!d){ toast('日付を選んでください'); return; } }
+  else { d=which; }
+  const mode = READONLY ? 'view' : 'edit';
+  window.open(selfUrl()+'?view=check&date='+encodeURIComponent(d)+'&mode='+mode, '_blank', 'noopener');
+}
+function openRosterScreen(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  window.open(selfUrl()+'?view=check&edit=roster&mode=edit', '_blank', 'noopener');
+}
+function checkSecIsMember(sec){ return (sec||'').indexOf('構成員')>=0; }
+function checkTelCell(v){ if(!v) return '<span style="color:#b7c0cb">—</span>'; const d=String(v).replace(/[^0-9+\-]/g,''); return '<a href="tel:'+esc(d)+'">'+esc(v)+'</a>'; }
+function renderCheckTable(){
+  const wrap=document.getElementById('check-table'); if(!wrap) return;
+  ensureCheckSaved();
+  const roster=activeRoster();
+  if(CHECK_EDIT){ renderCheckEdit(wrap, roster); return; }
+  if(!CHECK_DATE){ wrap.innerHTML='<div class="empty">出動日がありません。入口で日付を選んで「チェックリストを開く」で始めてください。</div>'; return; }
+  let html='<div class="check-sec-title">機械・オペレーター・助手・担当箇所</div><table>';
+  html += '<thead><tr><th style="width:24%">機械名・担当</th><th style="width:13%">職種</th><th style="width:17%">氏名<span style="font-weight:400;font-size:11px">（上:レギュラー／下:予備）</span></th><th style="width:12%">連絡先</th><th style="width:19%">備考</th><th style="width:15%">状態</th></tr></thead><tbody>';
+  roster.forEach(function(r){
+    const st=checkStMeta(checkStatusOf(r.id));
+    const stBtn='<button class="check-st-btn '+st.cls+'"'+(READONLY?' disabled':'')+' onclick="cycleCheck(\''+esc(r.id)+'\')">'+st.label+'</button>';
+    const trCls = r.gs ? ' class="g-first"' : '';   // 機械セットの先頭＝太枠の区切り
+    const nameCell = '<div class="nm-reg">'+esc(r.name||'')+'</div><div class="nm-sub">'+esc(r.sub||'')+'</div>';
+    html += '<tr'+trCls+'><td>'+esc(r.label||'')+'</td><td class="ck-role">'+esc(r.role||'')+'</td><td class="ck-name">'+nameCell+'</td><td class="c-tel">'+checkTelCell(r.mob)+'</td><td class="ck-note">'+esc(r.note||'')+'</td><td class="c-st">'+stBtn+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML=html;
+}
+function renderCheckEdit(wrap, roster){
+  let html='<p class="hint">「新枠」にチェックした行から新しい機械セット（黒い太枠）が始まります。↑↓で行を移動できます。連絡先はセキュリティ対応後に入力してください。</p>';
+  html+='<table class="check-edit-tbl"><thead><tr><th style="width:19%">機械名・担当</th><th style="width:11%">職種</th><th style="width:12%">氏名（レギュラー）</th><th style="width:12%">予備</th><th style="width:11%">連絡先</th><th>備考</th><th style="width:5%">新枠</th><th style="width:8%">移動</th><th style="width:4%"></th></tr></thead><tbody>';
+  roster.forEach(function(r,i){
+    html+='<tr'+(r.gs?' class="g-first"':'')+'>'
+      +'<td><input value="'+esc(r.label||'')+'" placeholder="機械名・担当" onchange="checkSet('+i+',\'label\',this.value)"></td>'
+      +'<td><input value="'+esc(r.role||'')+'" placeholder="オペ/助手等" onchange="checkSet('+i+',\'role\',this.value)"></td>'
+      +'<td><input value="'+esc(r.name||'')+'" placeholder="氏名" onchange="checkSet('+i+',\'name\',this.value)"></td>'
+      +'<td><input value="'+esc(r.sub||'')+'" placeholder="予備" onchange="checkSet('+i+',\'sub\',this.value)"></td>'
+      +'<td><input value="'+esc(r.mob||'')+'" placeholder="連絡先(任意)" onchange="checkSet('+i+',\'mob\',this.value)"></td>'
+      +'<td><input value="'+esc(r.note||'')+'" placeholder="備考" onchange="checkSet('+i+',\'note\',this.value)"></td>'
+      +'<td style="text-align:center"><input type="checkbox" '+(r.gs?'checked':'')+' title="ここから新しい機械枠" onchange="checkSet('+i+',\'gs\',this.checked); renderCheckTable();"></td>'
+      +'<td style="text-align:center;white-space:nowrap"><button class="btn sec sm" title="上へ" onclick="checkMoveRow('+i+',-1)">↑</button> <button class="btn sec sm" title="下へ" onclick="checkMoveRow('+i+',1)">↓</button></td>'
+      +'<td style="text-align:center"><button class="btn danger sm" title="削除" onclick="checkDelRow('+i+')">×</button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  html+='<div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><button class="btn sec sm" onclick="checkAddRow()">＋ 行を追加（末尾）</button><button class="btn sm" onclick="saveCheck(true)">💾 名簿を保存</button></div>';
+  wrap.innerHTML=html;
+}
+function checkMoveRow(i,dir){
+  const a=activeRoster();
+  const j=i+dir; if(j<0 || j>=a.length) return;
+  const t=a[i]; a[i]=a[j]; a[j]=t;
+  renderCheckTable();
+}
+function cycleCheck(id){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  if(!CHECK_DATE){ toast('先に出動日を追加してください'); return; }
+  const day=checkDay(CHECK_DATE);
+  const cur=(day.checks[id])||'';
+  const idx=CHECK_ST.findIndex(function(s){ return s.k===cur; });
+  const next=CHECK_ST[(idx+1)%CHECK_ST.length].k;
+  if(next==='') delete day.checks[id]; else day.checks[id]=next;
+  renderCheckTable(); renderCheckProgress();
+  saveCheck(false);
+}
+function toggleCheckEdit(){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  if(!CHECK_EDIT){
+    if(CHECK_DATE && !CHECK_FS_EDIT) forkDayRoster(CHECK_DATE);  // この日だけの名簿にフォーク（共通をコピー）
+    CHECK_EDIT=true; renderCheck();
+  }else{
+    CHECK_EDIT=false; renderCheck(); saveCheck(true);
+  }
+}
+function checkSet(i,k,v){ const r=activeRoster(); if(!r[i]) return; r[i][k]=v; }
+function newCheckId(){ return 'r'+Date.now()+Math.floor(Math.random()*1000); }
+function checkAddRow(){ const r=activeRoster(); r.push({id:newCheckId(), gs:false, sec:CHECK_SEC_MACHINE, label:'', role:'', name:'', sub:'', mob:'', tel:'', note:''}); renderCheckTable(); }
+function checkDelRow(i){ const a=activeRoster(); if(!confirm('この行を削除しますか？')) return; a.splice(i,1); renderCheckTable(); }
+async function saveCheck(showToast){
+  if(READONLY) return;
+  ensureCheckSaved();
+  const sub={year:'__CHECK__', company:'連絡チェック', doc:'data', status:'', date:'', link:'', note:JSON.stringify(CHECK_SAVED)};
+  if(CHECK_ROW!=null) sub.row=CHECK_ROW;
+  const res=await callApi({action:'saveSub', sub:sub});
+  if(res && res.ok){ if(!offline && res.row!=null) CHECK_ROW=res.row; if(showToast) toast(offline?'保存しました（オフライン：この端末のみ・共有されていません）':'保存しました'); }
+  else if(showToast) toast('保存に失敗しました'+(res&&res.error?'：'+res.error:''));
+}
+function printCheck(){
+  document.body.classList.add('print-check');
+  window.print();
+  setTimeout(function(){ document.body.classList.remove('print-check'); }, 300);
+}
+
+/* ───────── 排雪シフト（iframe埋め込み） ───────── */
+// 排雪シフトを現在のログイン状態（編集/閲覧）に合わせてタブ内に読み込む。モードが変わったら読み直す。
+let HSFRAME_MODE = null;
+function loadHaisetsuFrame(){
+  const f=document.getElementById('hsframe'); if(!f) return;
+  const mode = READONLY ? 'view' : 'edit';
+  if(HSFRAME_MODE===mode && f.src && f.src.indexOf('about:blank')<0) return;  // 同じモードなら再読込しない
+  HSFRAME_MODE = mode;
+  f.src = HAISETSU_SRC + '?embed=' + mode;
+}
+// 排雪シフトを別タブ（全画面）で開く。今のログイン状態（編集/閲覧）を引き継ぐ。
+function openHaisetsuNewTab(){
+  const mode = READONLY ? 'view' : 'edit';
+  window.open(HAISETSU_SRC + '?embed=' + mode, '_blank', 'noopener');
+}
+
 /*════════════════ タブ切替 ════════════════*/
+/*──────── 役割（権限）に応じたタブ表示・編集可否 ────────*/
+const TAB_RENDER = {
+  home:    function(){ renderHome(); renderCalendar(); },
+  alert:   function(){ renderMreg(); },
+  map:     function(){ renderMap(); renderUnpan(); },
+  address: function(){ initAddrDrill(); initAddrChounai(); initAddrMap(); },
+  shift:   function(){ renderShift(); },
+  haisetsu:function(){ loadHaisetsuFrame(); },
+  check:   function(){ renderCheck(); },
+  report:  function(){ repApplyPresets(); renderReportPreview(); },
+  contact: function(){ renderContact(); },
+  design:  function(){ renderDesign(); wireDesignViewer(); setTimeout(dzReset, 60); },
+  accounts:function(){ renderAccounts(); },
+  subs:    function(){ renderSubs(); },
+  sites:   function(){}
+};
+function showTab(tab){
+  const btn = document.querySelector('nav button[data-tab="'+tab+'"]');
+  if(!btn || btn.style.display==='none' || tabAccess(tab)==='hidden') return;
+  document.querySelectorAll('nav button').forEach(function(x){ x.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+  btn.classList.add('active');
+  const sec = document.getElementById('tab-'+tab); if(sec) sec.classList.add('active');
+  // このタブが編集可かで READONLY を切替（※最終的な可否はサーバー側でも判定）
+  READONLY = (tabAccess(tab)!=='edit');
+  applyReadonlyUi();
+  const r = TAB_RENDER[tab]; if(r){ try{ r(); }catch(e){} }
+}
+function applyRoleUi(){
+  // 役割バッジ
+  const rb = document.getElementById('role-badge');
+  if(rb){ if(ROLE){ rb.style.display=''; rb.textContent = '👤 ' + (MY_LABEL || ROLE_LABELS[ROLE] || ROLE); } else { rb.style.display='none'; } }
+  // ナビボタンの表示/非表示（hiddenのタブは隠す）
+  let firstVisible = null, activeStillVisible = false;
+  const curActive = document.querySelector('nav button.active');
+  const curTab = curActive ? curActive.dataset.tab : null;
+  document.querySelectorAll('nav button').forEach(function(b){
+    const tab = b.dataset.tab;
+    if(tabAccess(tab)==='hidden'){ b.style.display='none'; }
+    else{ b.style.display=''; if(!firstVisible) firstVisible = tab; if(tab===curTab) activeStillVisible = true; }
+  });
+  const target = activeStillVisible ? curTab : firstVisible;
+  if(target) showTab(target);
+}
 document.querySelectorAll('nav button').forEach(function(b){
-  b.onclick = function(){
-    document.querySelectorAll('nav button').forEach(function(x){ x.classList.remove('active'); });
-    document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
-    b.classList.add('active');
-    document.getElementById('tab-'+b.dataset.tab).classList.add('active');
-    if(b.dataset.tab==='design'){ wireDesignViewer(); setTimeout(dzReset, 60); }  // 表示後にフィット
-  };
+  b.onclick = function(){ showTab(b.dataset.tab); };
 });
 
 /*════════════════ ログイン ════════════════*/
 // ログイン状態の記憶キー（この端末のブラウザにのみ保存。再読み込みしても再入力不要にする）
+/*──────── アカウント設定（管理者のみ・パスワードはサーバー側に保存） ────────*/
+let ACCOUNTS = [];          // 管理者が編集するアカウント一覧（パスワードは含まない）
+let editingAcctId = null;
+function acctQ(v){ return String(v).replace(/'/g, "\\'"); }
+async function renderAccounts(){
+  const help = document.getElementById('acct-roles-help');
+  if(help){ help.innerHTML = ROLE_ORDER.map(function(r){ return '<div>・<b>'+esc(ROLE_LABELS[r])+'</b>：'+esc(ROLE_HELP[r]||'')+'</div>'; }).join(''); }
+  const body = document.getElementById('acct-body');
+  if(!body) return;
+  if(!isAdmin()){ body.innerHTML = '<tr><td colspan="5" class="empty" style="border:none">管理者のみ表示できます。</td></tr>'; return; }
+  body.innerHTML = '<tr><td colspan="5" class="empty" style="border:none">読み込み中…</td></tr>';
+  const res = await callApi({action:'listAccounts'});
+  if(!(res && res.ok && Array.isArray(res.accounts))){
+    body.innerHTML = '<tr><td colspan="5" class="empty" style="border:none">アカウント一覧を取得できませんでした。'
+      + (res && res.error ? '（'+esc(res.error)+'）' : '')
+      + '<br>※サーバー（GAS）側の認証機能がまだ有効でない可能性があります。</td></tr>';
+    return;
+  }
+  ACCOUNTS = res.accounts;
+  if(ACCOUNTS.length===0){ body.innerHTML = '<tr><td colspan="5" class="empty" style="border:none">アカウントがありません。「＋ アカウントを追加」から作成してください。</td></tr>'; return; }
+  body.innerHTML = ACCOUNTS.map(function(a){
+    const enabled = (a.enabled!==false);
+    const q = acctQ(a.id);
+    return '<tr class="'+(enabled?'':'acct-off')+'">'
+      + '<td class="mono">'+esc(a.id)+'</td>'
+      + '<td><span class="acct-role-pill">'+esc(ROLE_LABELS[a.role]||a.role)+'</span></td>'
+      + '<td>'+esc(a.label||'')+'</td>'
+      + '<td>'+(enabled?'有効':'<span style="color:var(--bad)">無効</span>')+'</td>'
+      + '<td class="acct-act" style="white-space:nowrap">'
+      +   '<button class="acct-x" onclick="openAcctModal(\''+q+'\')">編集</button>'
+      +   '<button class="acct-x del" onclick="delAcct(\''+q+'\')">削除</button>'
+      + '</td></tr>';
+  }).join('');
+}
+function fillAcctRoleSelect(sel){ sel.innerHTML = ROLE_ORDER.map(function(r){ return '<option value="'+r+'">'+esc(ROLE_LABELS[r])+'</option>'; }).join(''); }
+function openAcctModal(id){
+  if(!isAdmin()){ toast('管理者のみ操作できます'); return; }
+  editingAcctId = id || null;
+  const sel = document.getElementById('acct-role'); fillAcctRoleSelect(sel);
+  const idEl = document.getElementById('acct-id');
+  const labelEl = document.getElementById('acct-label');
+  const pwEl = document.getElementById('acct-pw');
+  const enEl = document.getElementById('acct-enabled');
+  const note = document.getElementById('acct-pw-note');
+  const err = document.getElementById('acct-err'); err.textContent = '';
+  if(id){
+    const a = ACCOUNTS.find(function(x){ return x.id===id; }) || {};
+    document.getElementById('acct-modal-title').textContent = 'アカウントを編集';
+    idEl.value = a.id||''; idEl.disabled = true;
+    sel.value = a.role || 'center';
+    labelEl.value = a.label || '';
+    enEl.checked = (a.enabled!==false);
+    pwEl.value = ''; note.textContent = '（変更する場合のみ入力。空欄なら現在のまま）';
+  }else{
+    document.getElementById('acct-modal-title').textContent = 'アカウントを追加';
+    idEl.value = ''; idEl.disabled = false;
+    sel.value = 'center'; labelEl.value = ''; enEl.checked = true;
+    pwEl.value = ''; note.textContent = '（必須）';
+  }
+  document.getElementById('acct-modal').classList.add('show');
+}
+function closeAcctModal(){ document.getElementById('acct-modal').classList.remove('show'); editingAcctId = null; }
+async function saveAcct(){
+  if(!isAdmin()){ toast('管理者のみ操作できます'); return; }
+  const id = (document.getElementById('acct-id').value||'').trim();
+  const role = document.getElementById('acct-role').value;
+  const label = (document.getElementById('acct-label').value||'').trim();
+  const pw = document.getElementById('acct-pw').value;
+  const enabled = document.getElementById('acct-enabled').checked;
+  const err = document.getElementById('acct-err'); err.textContent = '';
+  if(!id){ err.textContent = 'IDを入力してください'; return; }
+  if(!/^[A-Za-z0-9_.-]+$/.test(id)){ err.textContent = 'IDは半角英数字・_ . - のみ使えます'; return; }
+  if(!editingAcctId && !pw){ err.textContent = 'パスワードを入力してください'; return; }
+  const account = {id:id, role:role, label:label, enabled:enabled};
+  if(pw) account.pw = pw;
+  const res = await callApi({action:'saveAccount', account:account});
+  if(res && res.ok){ closeAcctModal(); toast('アカウントを保存しました'); renderAccounts(); }
+  else{ err.textContent = '保存に失敗しました' + (res && res.error ? '：'+res.error : ''); }
+}
+async function delAcct(id){
+  if(!isAdmin()){ toast('管理者のみ操作できます'); return; }
+  const a = ACCOUNTS.find(function(x){ return x.id===id; }) || {};
+  const admins = ACCOUNTS.filter(function(x){ return x.role==='admin' && x.enabled!==false; });
+  if(a.role==='admin' && admins.length<=1){ toast('最後の管理者アカウントは削除できません'); return; }
+  if(id===(function(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)||'{}').id; }catch(e){ return ''; } })()){ /* 自分自身でも許可（最後の管理者以外） */ }
+  if(!confirm('アカウント「'+id+'」を削除します。よろしいですか？')) return;
+  const res = await callApi({action:'delAccount', id:id});
+  if(res && res.ok){ toast('削除しました'); renderAccounts(); }
+  else{ toast('削除に失敗しました' + (res && res.error ? '：'+res.error : '')); }
+}
+
 const AUTH_KEY = 'josetsu_auth_mode';
-function saveAuthMode(){ try{ localStorage.setItem(AUTH_KEY, READONLY?'view':'edit'); }catch(e){} }
+function saveAuthMode(){ try{ localStorage.setItem(AUTH_KEY, JSON.stringify({token:AUTH_TOKEN, role:ROLE, label:MY_LABEL})); }catch(e){} }
 function clearAuthMode(){ try{ localStorage.removeItem(AUTH_KEY); }catch(e){} }
 function logout(){
-  READONLY = false;
+  READONLY = false; ROLE = ''; AUTH_TOKEN = ''; MY_LABEL = '';
   clearAuthMode();               // 記憶を消す（次回はログイン画面）
   document.body.classList.remove('readonly');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login').style.display = 'flex';
+  const idEl = document.getElementById('login-id'); if(idEl) idEl.value = '';
   document.getElementById('login-pw').value = '';
   document.getElementById('login-err').textContent = '';
-  document.getElementById('login-pw').focus();
+  if(idEl) idEl.focus(); else document.getElementById('login-pw').focus();
 }
 // 保存済みモードがあれば、パスワード入力なしで自動ログイン
 function restoreSession(){
-  let mode = null;
-  try{ mode = localStorage.getItem(AUTH_KEY); }catch(e){}
-  if(mode !== 'edit' && mode !== 'view') return false;
-  READONLY = (mode === 'view');
-  applyReadonlyUi();
+  let raw = null;
+  try{ raw = localStorage.getItem(AUTH_KEY); }catch(e){}
+  if(!raw) return false;
+  if(raw === 'edit'){ ROLE='admin'; AUTH_TOKEN=''; MY_LABEL='管理者（暫定）'; READONLY=false; }         // 旧形式からの移行
+  else if(raw === 'view'){ ROLE='legacyview'; AUTH_TOKEN=''; MY_LABEL='閲覧'; READONLY=true; }
+  else{
+    try{ const o=JSON.parse(raw); if(!o || !o.role) return false; AUTH_TOKEN=o.token||''; ROLE=o.role; MY_LABEL=o.label||ROLE_LABELS[o.role]||''; READONLY=false; }
+    catch(e){ return false; }
+  }
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = '';
+  applyRoleUi();
   loadData();
   return true;
 }
@@ -3878,22 +5423,36 @@ function applyReadonlyUi(){
   const badge = document.getElementById('view-badge');
   if(badge) badge.style.display = READONLY ? '' : 'none';
 }
-function tryLogin(){
+async function tryLogin(){
+  const idEl = document.getElementById('login-id');
+  const id = (idEl ? idEl.value : '').trim();
   const pw = document.getElementById('login-pw').value;
-  if(pw === APP_PASSWORD || pw === VIEW_PASSWORD){
-    READONLY = (pw === VIEW_PASSWORD);
-    applyReadonlyUi();
-    saveAuthMode();               // このモードを記憶（次回の再読み込みで自動ログイン）
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('app').style.display = '';
-    loadData();
-  }else{
-    document.getElementById('login-err').textContent = 'パスワードが違います';
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+  if(!pw){ errEl.textContent = 'パスワードを入力してください'; return; }
+  // まずサーバー（GAS）認証を試す
+  let res = null;
+  try{ res = await callApi({action:'login', id:id, pw:pw}); }catch(e){ res = null; }
+  if(res && res.ok && res.auth){
+    AUTH_TOKEN = res.auth; ROLE = res.role || 'admin'; MY_LABEL = res.label || ROLE_LABELS[ROLE] || '';
+    READONLY = false; saveAuthMode(); afterLogin(); return;
   }
+  if(res && res.ok===false && res.error==='auth'){ errEl.textContent = 'ID またはパスワードが違います'; return; }
+  // サーバーが login 未対応（旧GAS）の場合は、従来パスワードで暫定ログイン
+  if(pw === APP_PASSWORD){ AUTH_TOKEN=''; ROLE='admin'; MY_LABEL='管理者（暫定）'; READONLY=false; saveAuthMode(); afterLogin(); return; }
+  if(pw === VIEW_PASSWORD){ AUTH_TOKEN=''; ROLE='legacyview'; MY_LABEL='閲覧'; READONLY=true; saveAuthMode(); afterLogin(); return; }
+  errEl.textContent = 'ID またはパスワードが違います';
+}
+function afterLogin(){
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  applyRoleUi();
+  loadData();
 }
 document.getElementById('login-pw').addEventListener('keydown', function(e){
   if(e.key === 'Enter') tryLogin();
 });
+(function(){ const el=document.getElementById('login-id'); if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter'){ const pw=document.getElementById('login-pw'); if(pw && !pw.value){ pw.focus(); } else { tryLogin(); } } }); })();
 
 // モーダル外クリックで閉じる
 document.getElementById('modal').addEventListener('click', function(e){
@@ -3901,6 +5460,12 @@ document.getElementById('modal').addEventListener('click', function(e){
 });
 document.getElementById('map-modal').addEventListener('click', function(e){
   if(e.target === this) closeMapModal();
+});
+document.getElementById('ev-modal').addEventListener('click', function(e){
+  if(e.target === this) closeEventModal();
+});
+document.getElementById('acct-modal').addEventListener('click', function(e){
+  if(e.target === this) closeAcctModal();
 });
 
 // DEMOモードのときはヒント表示（本番URL未設定）
@@ -3920,8 +5485,24 @@ document.addEventListener('visibilitychange', function(){ if(document.visibility
 window.addEventListener('focus', function(){ if(safeToReload()) loadData(); });
 
 window.addEventListener('load', function(){
+  // 連絡チェックの全画面モード（別タブ ?view=check）：ログイン省略し、チェック表だけ全画面表示
+  var q = new URLSearchParams(location.search);
+  if(q.get('view')==='check'){
+    CHECK_FULLSCREEN = true;
+    CHECK_FS_DATE = q.get('date') || '';
+    CHECK_FS_EDIT = (q.get('edit')==='roster');
+    CHECK_DATE = CHECK_FS_DATE;
+    CHECK_EDIT = CHECK_FS_EDIT;
+    READONLY = (q.get('mode')==='view');
+    document.body.classList.add('checkonly');
+    applyReadonlyUi();
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadData();
+    return;
+  }
   // 記憶済みなら自動ログイン。なければログイン画面にフォーカス
-  if(!restoreSession()){ document.getElementById('login-pw').focus(); }
+  if(!restoreSession()){ var _li=document.getElementById('login-id'); (_li||document.getElementById('login-pw')).focus(); }
 });
 </script>
 </body>
