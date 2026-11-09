@@ -317,7 +317,7 @@
   .shift-months button{background:#fff;border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
   .shift-months button.active{background:var(--accent);color:#fff}
   .shift-tbl{border-collapse:collapse;font-size:12px}
-  .shift-tbl th,.shift-tbl td{border:1px solid var(--line);text-align:center;padding:0}
+  .shift-tbl th,.shift-tbl td{border:1px solid #a6b1bf;text-align:center;padding:0}
   .shift-tbl th.day-col{min-width:30px;padding:2px 0}
   .shift-tbl th.day-col .dnum{font-size:12px;font-weight:700}
   .shift-tbl th.day-col .dwd{font-size:10px;color:var(--muted)}
@@ -336,6 +336,15 @@
   .shift-tbl thead th.sum-col{background:#eef2f7}
   .shift-tbl .tot-row td{background:#f7fafd;font-weight:700;font-family:"JetBrains Mono",monospace}
   .shift-tbl .tot-row td.stick{background:#f7fafd}
+  .shift-tbl td.sat,.shift-tbl th.sat{border-right:2px solid #7c8a9a}            /* 週の区切り（土曜の右） */
+  .shift-tbl td.today,.shift-tbl th.today{border-left:2px solid #f5a623;border-right:2px solid #f5a623} /* 今日の列を縦にハイライト */
+  .shift-tbl thead th.today{background:#fff3d6}
+  .shift-tbl thead th.today .dnum{color:#b8690a}
+  .shift-tbl td.cell.today{background:#fffaf0}
+  .shift-tbl td.cell.today.c-toki{background:#cfe8f7} .shift-tbl td.cell.today.c-kyu{background:#d9d9d9}
+  .shift-tbl .tot-row.tot-night td{background:#eef2fb}
+  .shift-tbl .tot-row.tot-night td.stick{background:#eef2fb}
+  .shift-tbl tr.nightrow .name-col{box-shadow:inset 3px 0 0 #c3d2e8}
   .shift-palette-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
   .pal-caption{font-size:12px;color:var(--muted);font-weight:700}
   .shift-palette{display:inline-flex;gap:6px;flex-wrap:wrap}
@@ -3284,48 +3293,63 @@ function renderShift(){
   updateShiftDirty();
 }
 
-// 1か月ぶんの表HTMLを返す（見出し＋表。セル等にdata-monthを持たせ対象月を識別できるようにする）
+// 1か月ぶんの表HTMLを返す（見出し＋表。日勤/夜勤の縦計・今日の列ハイライト対応）
 function renderShiftMonthTable(month){
   const ym = shiftYm(SHIFT_NENDO, month);
   const year = nendoToSeireki(SHIFT_NENDO, month);
   const ndays = new Date(year, month, 0).getDate(); // 実際の日数（うるう年対応）
+  const now = new Date();
+  const todayDay = (now.getFullYear()===year && (now.getMonth()+1)===month) ? now.getDate() : 0; // この月に今日が含まれれば日付
+  function wcls(d){ const wd=new Date(year,month-1,d).getDay(); return (wd===0?'sun':(wd===6?'sat':'')) + (d===todayDay?' today':''); }
 
-  // ヘッダ（日番号＋曜日、土日色分け。曜日は実際の西暦日付から算出）
+  // ヘッダ（日番号＋曜日、土日色分け＋今日の列）
   let head = '<tr><th class="stick name-col">職員名</th>';
   for(let d=1; d<=ndays; d++){
     const wd = new Date(year, month-1, d).getDay();
-    const cls = wd===0?'sun':(wd===6?'sat':'');
-    head += '<th class="day-col '+cls+'"><div class="dnum">'+d+'</div><div class="dwd">'+WD_JP[wd]+'</div></th>';
+    head += '<th class="day-col '+wcls(d)+'"><div class="dnum">'+d+'</div><div class="dwd">'+WD_JP[wd]+'</div></th>';
   }
   head += '<th class="sum-col">出勤</th></tr>';
 
-  // 本体10行
-  const dayTotals = new Array(ndays).fill(0);
+  // 行データ取得（空欄の職員行＝日勤と夜勤の区切り。最初の空行より上＝日勤、下＝夜勤）
+  const rows = [];
+  for(let idx=1; idx<=SHIFT_ROWS; idx++){ const rec=shiftRowFor(ym, idx); rows.push({idx:idx, name:rec?rec.name:'', days:rec?rec.days:[]}); }
+  let splitAt = -1, seen = false;
+  for(let k=0; k<rows.length; k++){ const nm=String(rows[k].name||'').trim(); if(nm){ seen=true; } else if(seen){ splitAt=k; break; } }
+  function isNight(k){ return splitAt>=0 && k>splitAt; }
+  const hasNight = (splitAt>=0) && rows.some(function(r,k){ return isNight(k) && String(r.name||'').trim(); });
+
+  const dayTot = new Array(ndays).fill(0);
+  const nightTot = new Array(ndays).fill(0);
   let body = '';
-  for(let idx=1; idx<=SHIFT_ROWS; idx++){
-    const rec = shiftRowFor(ym, idx);
-    const name = rec ? rec.name : '';
-    const days = rec ? rec.days : [];
+  rows.forEach(function(r,k){
+    const name = r.name || '', days = r.days || [], night = isNight(k);
     let rowSum = 0, cells = '';
     for(let d=1; d<=ndays; d++){
       const code = days[d-1] || '';
-      if(code==='通' || code==='時'){ rowSum++; dayTotals[d-1]++; }
-      cells += '<td class="cell '+cellCls(code)+'" data-month="'+month+'" data-idx="'+idx+'" data-day="'+d+'">'+cellSym(code)+'</td>';
+      if(code==='通' || code==='時'){ rowSum++; if(night) nightTot[d-1]++; else dayTot[d-1]++; }
+      cells += '<td class="cell '+cellCls(code)+' '+wcls(d)+'" data-month="'+month+'" data-idx="'+r.idx+'" data-day="'+d+'">'+cellSym(code)+'</td>';
     }
-    body += '<tr>'
+    body += '<tr'+(night?' class="nightrow"':'')+'>'
       + '<td class="stick name-col"><div class="name-cell">'
-      +   '<input class="name-in" data-month="'+month+'" data-idx="'+idx+'" value="'+esc(name)+'" placeholder="職員名">'
-      +   '<button type="button" class="row-fill edit-only" data-month="'+month+'" data-idx="'+idx+'" title="選択中の状態で全日を塗る">全部</button>'
+      +   '<input class="name-in" data-month="'+month+'" data-idx="'+r.idx+'" value="'+esc(name)+'" placeholder="職員名">'
+      +   '<button type="button" class="row-fill edit-only" data-month="'+month+'" data-idx="'+r.idx+'" title="選択中の状態で全日を塗る">全部</button>'
       + '</div></td>'
       + cells
-      + '<td class="sum-col" data-sumrow="'+idx+'">'+rowSum+'</td>'
+      + '<td class="sum-col" data-sumrow="'+r.idx+'">'+rowSum+'</td>'
       + '</tr>';
+  });
+
+  // 縦計（日勤計・夜勤計）。夜勤が無い月は従来どおり「日計」1行。
+  function totRow(label, arr, cls){
+    let t = '<tr class="tot-row '+cls+'"><td class="stick name-col">'+label+'</td>';
+    let g = 0;
+    for(let d=1; d<=ndays; d++){ t += '<td class="'+wcls(d)+'">'+arr[d-1]+'</td>'; g += arr[d-1]; }
+    t += '<td class="sum-col">'+g+'</td></tr>';
+    return t;
   }
-  // 日計行
-  let totals = '<tr class="tot-row"><td class="stick name-col">日計</td>';
-  let grand = 0;
-  for(let d=1; d<=ndays; d++){ totals += '<td data-daytot="'+d+'">'+dayTotals[d-1]+'</td>'; grand += dayTotals[d-1]; }
-  totals += '<td class="sum-col" data-grand="1">'+grand+'</td></tr>';
+  let totals;
+  if(hasNight){ totals = totRow('日勤 計', dayTot, 'tot-day') + totRow('夜勤 計', nightTot, 'tot-night'); }
+  else { totals = totRow('日計', dayTot, 'tot-day'); }
 
   return '<div class="shift-month" id="shift-month-'+month+'" data-month="'+month+'">'
     + '<h3 class="shift-month-title">令和'+SHIFT_NENDO+'年度 '+month+'月</h3>'
