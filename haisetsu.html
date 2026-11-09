@@ -45,7 +45,7 @@
   #login .err{color:var(--bad);font-size:12px;min-height:16px;font-weight:700}
   /* list table (spreadsheet風) */
   .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
-  table.sheet{border-collapse:collapse;font-size:12px;width:100%;table-layout:fixed}
+  table.sheet{border-collapse:collapse;font-size:12px;width:100%;min-width:720px;table-layout:fixed}
   table.sheet th,table.sheet td{border:1px solid var(--line);padding:4px 5px;text-align:center;vertical-align:middle;word-break:break-word;overflow-wrap:anywhere}
   table.sheet thead th{background:#eef3f9;color:var(--accent);font-weight:800;position:sticky;top:0;z-index:1;font-size:11.5px}
   table.sheet tbody tr{cursor:pointer}
@@ -63,6 +63,33 @@
   table.sheet .mc .as{font-size:10.5px;color:var(--muted)}
   table.sheet td.dn-day{background:#eaf6ef} table.sheet td.dn-night{background:#eaf0fb}
   .machead{font-size:11px;color:var(--muted);font-weight:700}
+  /* ---------- スマホ用カード表示（排雪シフト一覧） ---------- */
+  .hs-cards{display:none}
+  @media (max-width:640px){
+    .tbl-scroll{display:none}
+    .hs-cards{display:block;margin-top:10px}
+  }
+  .hs-card{border:1px solid var(--line);border-radius:12px;padding:12px 13px 11px;margin-bottom:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .hs-card:active{background:#f1f6fd}
+  .hc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+  .hc-date{font-size:17px;font-weight:800;color:var(--accent)}
+  .hc-wd{font-size:13px;margin-left:1px;font-weight:700}
+  .hc-wd.sat{color:#1a5fb4} .hc-wd.sun{color:#c0392b}
+  .hc-dn{font-size:12px;font-weight:800;border-radius:999px;padding:2px 11px}
+  .hc-dn.dn-day{background:#eaf6ef;color:#2e6b45} .hc-dn.dn-night{background:#eaf0fb;color:#1a3d7c}
+  .hc-start{font-size:14px;font-weight:700;color:#333}
+  .hc-ban{margin-left:auto;font-size:12px;font-weight:800;background:#eef3f9;color:var(--accent);border-radius:999px;padding:2px 11px}
+  .hc-work{font-size:15px;font-weight:700;margin:3px 0 7px;line-height:1.5}
+  .hc-row{display:flex;gap:8px;font-size:13.5px;padding:2px 0;line-height:1.55}
+  .hc-lbl{flex:0 0 54px;color:var(--muted);font-weight:700}
+  .hc-val{flex:1;word-break:break-word;white-space:pre-wrap}
+  .hc-sec{font-size:12px;font-weight:800;color:var(--accent);margin:9px 0 4px;border-top:1px solid var(--line);padding-top:7px}
+  .hc-ms{display:flex;flex-direction:column;gap:3px}
+  .hc-m{display:flex;gap:8px;font-size:13.5px;line-height:1.5}
+  .hc-mk{flex:0 0 76px;font-weight:800;word-break:break-word}
+  .hc-mv{flex:1;word-break:break-word}
+  .hc-as{color:var(--muted);font-size:12.5px}
+  .hc-dumps{font-size:13.5px;line-height:1.75;word-break:break-word}
   /* drawer */
   #scrim{position:fixed;inset:0;background:rgba(20,28,40,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:45}
   #scrim.open{opacity:1;pointer-events:auto}
@@ -140,6 +167,9 @@
     body.print-fax .fax-tbl th, body.print-fax .fax-tbl td,
     body.print-fax .fax-tbl td.sun, body.print-fax .fax-tbl td.sat{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
+  /* 埋め込み（iframe）モード：ボードのタブ内で表示するときはヘッダー（タイトル・ログアウト）やデモ帯を隠す */
+  body.embed header{ display:none !important; }
+  body.embed #demo-banner{ display:none !important; }
 </style>
 </head>
 <body>
@@ -227,6 +257,7 @@ let ENTRIES   = [];   // [{row,id,ban,date,dn,start,work,place,site,machines:{sl
 let CFG_ROW=null, TPL_ROW=null;
 let CUR_TAB = null;          // 現在のタブ（班名 or 'all' or 'settings'）
 let DRAFT=null, DRAFT_ROW=null, DRAFT_ISNEW=false, DRAFT_DAYS=1;
+let DRAFT_DATES=[];   // 新規入力時：上の「日付」に加えてまとめて登録する日付（飛び飛び可）
 
 /*═══════════ ユーティリティ ═══════════*/
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -370,6 +401,7 @@ function renderTab(){
     + '<p class="hint">行をクリックすると右側の入力パネルが開いて編集できます。'
     +   (isAll?'（班・日付・昼夜で並んでいます）':(isNone?'（班を決めずに入れた予定の一覧です）':''))+'</p>'
     + '<div class="tbl-scroll" style="margin-top:10px">'+sheetHtml(list,isAll)+'</div>'
+    + cardsHtml(list,isAll)
     + '</div>';
   wireSheet();
 }
@@ -424,9 +456,48 @@ function sheetHtml(list,isAll){
   }).join('');
   return '<table class="sheet"><colgroup>'+cols+'</colgroup><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
 }
+function cardsHtml(list,isAll){
+  if(!list.length) return '';
+  const usedM = MACHINES.filter(function(m){ return list.some(function(e){ const mm=e.machines&&e.machines[m]; const filled=mm&&(mm.op||mm.assist);
+    if(m===BH_SLOT) return filled || (e.motomura&&String(e.motomura).trim()); return filled; }); });
+  const usedC = COMPANIES.filter(function(c){ return list.some(function(e){ const v=Number(e.dumps&&e.dumps[c]); const has=!isNaN(v)&&v>0;
+    if(c===KENUN_CO) return has || (e.driver&&String(e.driver).trim()); return has; }); });
+  function row(lbl,val){ return val?('<div class="hc-row"><span class="hc-lbl">'+lbl+'</span><span class="hc-val">'+esc(val)+'</span></div>'):''; }
+  return '<div class="hs-cards">'+list.map(function(e){
+    const dn=e.dn||''; const dnCls=dn==='夜'?'dn-night':(dn==='昼'?'dn-day':'');
+    const mlines = usedM.map(function(m){
+      const mm=(e.machines&&e.machines[m])||{}; let op=mm.op||'', as=mm.assist||'';
+      if(!(op||as) && m===BH_SLOT && e.motomura && String(e.motomura).trim()){ op='モトムラ'; as=e.motomura; }
+      if(!(op||as)) return '';
+      return '<div class="hc-m"><span class="hc-mk">'+esc(m)+'</span><span class="hc-mv">'+esc(op)+(as?' <span class="hc-as">／'+esc(as)+'</span>':'')+'</span></div>';
+    }).filter(Boolean).join('');
+    const dparts = usedC.map(function(c){
+      var v=(e.dumps&&e.dumps[c]!=null&&e.dumps[c]!=='')?e.dumps[c]:'';
+      if(c===KENUN_CO){ const dr=(e.driver&&String(e.driver).trim())?e.driver:''; if((v==='')&&!dr) return ''; return esc(c)+' '+esc(v)+(dr?'（'+esc(dr)+'）':''); }
+      if(v==='') return ''; return esc(c)+' '+esc(v);
+    }).filter(Boolean).join('　・　');
+    const tot=dumpTotal(e);
+    return '<div class="hs-card js-entry" data-id="'+esc(e.id)+'">'
+      + '<div class="hc-head">'
+      +   '<span class="hc-date">'+esc(mmdd(e.date))+'<span class="hc-wd '+wdCls(e.date)+'">('+esc(wdOf(e.date))+')</span></span>'
+      +   (dn?'<span class="hc-dn '+dnCls+'">'+esc(dn)+'</span>':'')
+      +   (e.start?'<span class="hc-start">'+esc(e.start)+'〜</span>':'')
+      +   (isAll?'<span class="hc-ban">'+esc(e.ban||'班なし')+'</span>':'')
+      + '</div>'
+      + (e.work?'<div class="hc-work">'+esc(e.work)+'</div>':'')
+      + row('箇所', e.place)
+      + row('堆積場', e.site)
+      + (mlines?'<div class="hc-sec">機械・オペ／助手</div><div class="hc-ms">'+mlines+'</div>':'')
+      + (dparts?'<div class="hc-sec">ダンプ'+(tot?'（計 '+tot+'）':'')+'</div><div class="hc-dumps">'+dparts+'</div>':'')
+      + row('警備', e.keibi)
+      + row('作業員', joinNames(e.workers))
+      + row('世話役', joinNames(e.sewa))
+      + '</div>';
+  }).join('')+'</div>';
+}
 function wireSheet(){
-  Array.prototype.forEach.call(document.querySelectorAll('#main table.sheet tbody tr'), function(tr){
-    tr.onclick=function(){ const e=ENTRIES.find(function(x){ return x.id===tr.getAttribute('data-id'); }); if(e) openEdit(e); };
+  Array.prototype.forEach.call(document.querySelectorAll('#main table.sheet tbody tr, #main .hs-card'), function(el){
+    el.onclick=function(){ const e=ENTRIES.find(function(x){ return x.id===el.getAttribute('data-id'); }); if(e) openEdit(e); };
   });
 }
 function dumpTotal(e){ let t=0; COMPANIES.forEach(function(c){ const v=Number(e.dumps&&e.dumps[c]); if(!isNaN(v)) t+=v; }); return t; }
@@ -438,13 +509,13 @@ function openNew(ban){ if(READONLY){ toast('閲覧モードのため編集でき
   let b;
   if(ban) b=ban;
   else b=(CUR_TAB!=='all'&&CUR_TAB!=='settings'&&CUR_TAB!=='none') ? CUR_TAB : '';  // 全体/班なしタブは班なし('')で開始
-  DRAFT=blankEntry(b); DRAFT_ROW=null; DRAFT_ISNEW=true; DRAFT_DAYS=1;
+  DRAFT=blankEntry(b); DRAFT_ROW=null; DRAFT_ISNEW=true; DRAFT_DAYS=1; DRAFT_DATES=[];
   if(b) applyTemplate();   // 班があればテンプレ反映。班なしは空のまま。
   openDrawer('予定入力（新規）'); document.getElementById('drawer-del').style.display='none';
 }
 function openEdit(e){ DRAFT=JSON.parse(JSON.stringify(e)); if(!DRAFT.machines) DRAFT.machines={}; MACHINES.forEach(function(m){ if(!DRAFT.machines[m]) DRAFT.machines[m]={op:'',assist:''}; });
   DRAFT.workers=toNameArr(DRAFT.workers); DRAFT.sewa=toNameArr(DRAFT.sewa);
-  DRAFT_ROW=e.row!=null?e.row:null; DRAFT_ISNEW=false; DRAFT_DAYS=1;
+  DRAFT_ROW=e.row!=null?e.row:null; DRAFT_ISNEW=false; DRAFT_DAYS=1; DRAFT_DATES=[];
   openDrawer('予定を編集'); document.getElementById('drawer-del').style.display = READONLY?'none':'';
 }
 function openDrawer(title){ document.getElementById('drawer-title').textContent=title; renderDrawer();
@@ -485,6 +556,9 @@ function renderDrawer(){
     + (DRAFT_ISNEW ? '<div class="fld" style="max-width:380px;margin-bottom:12px"><label>他の日からコピー（任意）</label>'
         + '<select onchange="copyFromEntry(this.value); this.value=\'\';">'+copySrcOptions()+'</select>'
         + '<span class="hint">過去に入れた日の予定を取り込みます。上の日付を保存したい日に変えれば、別の予定として新しく登録されます（元の予定はそのまま残ります）。</span></div>' : '')
+    + (DRAFT_ISNEW ? '<div class="fld" style="max-width:420px;margin-bottom:12px"><label>複数日にまとめて登録（任意）</label>'
+        + '<div id="df-dates">'+dateListHtml()+'</div>'
+        + '<span class="hint">上の「日付」に加えて、ここに追加した日付それぞれにも同じ内容で登録します（飛び飛びの日でOK）。それぞれ別の予定として新しく登録されます。</span></div>' : '')
     + '<div class="fldgrid">'
     +  fld('作業内容','<input value="'+esc(DRAFT.work||'')+'" placeholder="幹線拡幅 など" oninput="dfSet(\'work\',this.value)">')
     +  fld('作業箇所・町内会','<input value="'+esc(DRAFT.place||'')+'" oninput="dfSet(\'place\',this.value)">')
@@ -547,18 +621,39 @@ function nameListHtml(kind,arr,dl){
 function dfName(kind,i,v){ if(!Array.isArray(DRAFT[kind])) DRAFT[kind]=[]; DRAFT[kind][i]=v; }
 function dfAddName(kind){ if(!Array.isArray(DRAFT[kind])) DRAFT[kind]=[]; DRAFT[kind].push(''); renderDrawer(); }
 function dfDelName(kind,i){ if(!Array.isArray(DRAFT[kind])) DRAFT[kind]=[]; DRAFT[kind].splice(i,1); renderDrawer(); }
+// 複数日まとめて登録（新規時・飛び飛び可）。この一覧だけ差し替えて他の入力欄のフォーカスを保つ
+function dateListHtml(){
+  const arr=Array.isArray(DRAFT_DATES)?DRAFT_DATES:[];
+  const rows=arr.map(function(d,i){
+    return '<div class="row" style="gap:6px;margin-bottom:6px">'
+      + '<input type="date" value="'+esc(d||'')+'" onchange="dfSetDate('+i+',this.value)" style="flex:1;min-width:0">'
+      + '<button type="button" class="btn warn sm edit-only" onclick="dfDelDate('+i+')" title="削除">×</button>'
+      + '</div>';
+  }).join('');
+  return rows + '<button type="button" class="btn sec sm edit-only" onclick="dfAddDate()">＋ 日付を追加</button>';
+}
+function refreshDateList(){ const box=document.getElementById('df-dates'); if(box) box.innerHTML=dateListHtml(); }
+function dfAddDate(){ if(!Array.isArray(DRAFT_DATES)) DRAFT_DATES=[]; DRAFT_DATES.push(''); refreshDateList(); }
+function dfSetDate(i,v){ if(!Array.isArray(DRAFT_DATES)) DRAFT_DATES=[]; DRAFT_DATES[i]=v; }
+function dfDelDate(i){ if(!Array.isArray(DRAFT_DATES)) DRAFT_DATES=[]; DRAFT_DATES.splice(i,1); refreshDateList(); }
 async function saveEntry(){
   if(READONLY){ toast('閲覧モードのため編集できません'); return; }
   if(!DRAFT.date){ toast('日付を入れてください'); return; }
   DRAFT.workers=toNameArr(DRAFT.workers); DRAFT.sewa=toNameArr(DRAFT.sewa);   // 空欄を除去
-  const n = (DRAFT_ISNEW && DRAFT_DAYS>1) ? DRAFT_DAYS : 1;
-  if(n>1 && !confirm(mmdd(DRAFT.date)+' から '+n+'日分、同じ内容で登録します。よろしいですか？')) return;
+  // 登録する日付の集合：上の「日付」＋（新規のみ）追加した複数日。重複を除いて日付順に。
+  let dates=[DRAFT.date];
+  if(DRAFT_ISNEW && Array.isArray(DRAFT_DATES)){ DRAFT_DATES.forEach(function(d){ if(d) dates.push(d); }); }
+  dates = dates.filter(function(d,i){ return d && dates.indexOf(d)===i; });   // 空欄・重複を除去
+  dates.sort();
+  const n = DRAFT_ISNEW ? dates.length : 1;   // 編集時は当日のみ（既存行を更新）
+  if(n>1 && !confirm(n+'日分（'+dates.map(function(d){ return mmdd(d); }).join('・')+'）を同じ内容で登録します。よろしいですか？')) return;
   const btn=document.getElementById('drawer-save'); btn.disabled=true; btn.textContent='保存中...';
   const base=JSON.parse(JSON.stringify(DRAFT));
   let okCount=0, failed=false, err='';
   for(let i=0;i<n;i++){
     const d=JSON.parse(JSON.stringify(base));
-    if(i===0){ d.id=base.id; } else { d.id=uid(); const dt=parseISO(base.date); dt.setDate(dt.getDate()+i); d.date=isoOf(dt); }
+    d.date = dates[i];                        // それぞれの日付
+    if(i===0){ d.id=base.id; } else { d.id=uid(); }
     const sub={year:'__HS__',company:'ENT',doc:d.id,status:'',date:'',link:'',note:JSON.stringify(d)};
     if(i===0 && DRAFT_ROW!=null) sub.row=DRAFT_ROW;
     const res=await callApi({action:'saveSub',sub:sub});
@@ -784,7 +879,12 @@ function safeToReload(){
 document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible' && safeToReload()) loadAll(); });
 window.addEventListener('focus', function(){ if(safeToReload()) loadAll(); });
 
-window.addEventListener('load', function(){ if(!restoreSession()){ document.getElementById('login-pw').focus(); } });
+window.addEventListener('load', function(){
+  // 埋め込みモード（除雪業務管理ボードのタブ内にiframeで表示）：ログインを省略し、親から渡されたedit/viewで起動
+  var emb = new URLSearchParams(location.search).get('embed');
+  if(emb==='edit' || emb==='view'){ document.body.classList.add('embed'); enter(emb); return; }
+  if(!restoreSession()){ document.getElementById('login-pw').focus(); }
+});
 </script>
 </body>
 </html>
