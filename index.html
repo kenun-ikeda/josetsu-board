@@ -151,6 +151,33 @@
   .acct-x{border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;margin-right:5px}
   .acct-x.del{color:var(--bad)}
   .acct-x:hover{background:#f3f6fb}
+  /* ---------- AI電話対応タブ ---------- */
+  .ai-acc{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden}
+  .ai-acc>summary{cursor:pointer;list-style:none;padding:13px 15px;font-weight:800;font-size:15px;color:var(--accent);display:flex;align-items:center;gap:8px;background:#f5f8fc}
+  .ai-acc>summary::-webkit-details-marker{display:none}
+  .ai-acc>summary::after{content:'▾';margin-left:auto;transition:transform .2s;font-size:13px;color:var(--muted)}
+  .ai-acc[open]>summary::after{transform:rotate(180deg)}
+  .ai-acc[open]>summary{border-bottom:1px solid var(--line)}
+  .ai-body{padding:13px 15px;font-size:14px;line-height:1.75}
+  .ai-note{background:#eaf2ff;border:1px solid #bcd3f5;border-radius:8px;padding:9px 12px;margin:0 0 10px;font-weight:600}
+  .ai-warn{background:#fff3e0;border:1px solid #f0c98a;border-radius:8px;padding:9px 12px;margin:0 0 10px;font-weight:600;color:#9a5b00}
+  .ai-body h4{margin:13px 0 5px;font-size:13.5px;color:#1a3d7c}
+  .ai-ul{margin:6px 0;padding-left:1.25em} .ai-ul li{margin:4px 0}
+  .ai-steps{margin:8px 0;padding-left:0;list-style:none;counter-reset:ais}
+  .ai-steps li{position:relative;padding:6px 0 6px 32px;border-bottom:1px dashed var(--line)}
+  .ai-steps li:last-child{border-bottom:none}
+  .ai-steps li::before{counter-increment:ais;content:counter(ais);position:absolute;left:0;top:6px;background:var(--accent);color:#fff;width:22px;height:22px;border-radius:50%;text-align:center;font-size:12px;font-weight:800;line-height:22px}
+  .ai-dial{font-family:"JetBrains Mono",monospace;font-weight:800;background:#eef2f7;border-radius:6px;padding:1px 7px;white-space:nowrap}
+  table.ai-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13px}
+  table.ai-table th,table.ai-table td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  table.ai-table th{background:#f3f6fb;color:var(--accent);white-space:nowrap;width:110px}
+  .ai-flow{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+  .ai-flow .step{background:#f5f8fc;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;padding:8px 11px}
+  .ai-chip{display:inline-block;background:#eef2f7;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:700;margin:2px 4px 2px 0}
+  details.ai-sub{margin:8px 0;border:1px dashed var(--line);border-radius:8px}
+  details.ai-sub>summary{cursor:pointer;padding:8px 11px;font-weight:700;font-size:13px;color:#1a3d7c;list-style:none}
+  details.ai-sub>summary::-webkit-details-marker{display:none}
+  details.ai-sub .ai-script{padding:0 12px 10px;font-size:12.5px;line-height:1.7;white-space:pre-wrap;color:#333}
   td.num{text-align:right;font-family:"JetBrains Mono",monospace}
 
   /* ---------- modal ---------- */
@@ -362,7 +389,8 @@
   .shift-print-title{display:none}
 
   /* ---------- site links ---------- */
-  .site-links{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px}
+  .site-links{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
+  @media(max-width:760px){ .site-links{grid-template-columns:repeat(2,1fr)} }
   .site-link{display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;
     padding:18px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--accent);
     font-weight:800;font-size:14px;line-height:1.4;min-height:64px;box-shadow:0 1px 2px rgba(0,0,0,.05);
@@ -718,6 +746,7 @@
       <button data-tab="contact">連絡先・設定</button>
       <button data-tab="sites">各サイト</button>
       <button data-tab="design">設計書</button>
+      <button data-tab="aiphone">📞 AI電話対応</button>
       <button data-tab="accounts" class="nav-admin" style="display:none">⚙ 設定</button>
     </nav>
 
@@ -1061,13 +1090,14 @@
         <h2>各サイト</h2>
         <p class="hint">よく使う外部サイトへのリンク集です。各ボタンを押すと別タブで開きます。</p>
         <div class="site-links">
-          <a class="site-link" href="https://sasu.zip-site.com/manager/" target="_blank" rel="noopener">ゼンリン</a>
-          <a class="site-link" href="https://www4.city.sapporo.jp/cgi-bin/kensetsu/yuki/jyosetsu.cgi" target="_blank" rel="noopener">札幌市雪対策</a>
+          <!-- 上段：札幌市除雪作業日報作成支援システム／札幌市雪対策施設車両管理システム／ゼンリン／砂箱位置・路線図 -->
+          <a class="site-link" href="https://web.yuki-sapporo.jp/" target="_blank" rel="noopener">札幌市除雪作業日報作成支援システム</a>
           <a class="site-link" href="https://sapporo-yukivms.com/yuki/index.php" target="_blank" rel="noopener">札幌市雪対策施設車両管理システム</a>
-          <a class="site-link" href="https://www.city.sapporo.jp/atsubetsu/doboku/josetsu.html" target="_blank" rel="noopener">札幌市厚別区</a>
+          <a class="site-link" href="https://sasu.zip-site.com/manager/" target="_blank" rel="noopener">ゼンリン</a>
           <a class="site-link" href="https://www.google.com/maps/d/u/4/viewer?ll=43.03952514930254%2C141.497839297318&z=18&mid=1H6tNQGTptwmDk_6SooaygfR0MvFUJrA" target="_blank" rel="noopener">砂箱位置・路線図</a>
-          <a class="site-link" href="https://icom.navitime.biz/login" target="_blank" rel="noopener">ICOM（無線機マップ）</a>
-          <a class="site-link" href="https://web.yuki-sapporo.jp/r7/#/Login/" target="_blank" rel="noopener">札幌市除雪作業日報作成支援システム</a>
+          <!-- 下段：札幌市雪対策／札幌市厚別区／メニュー／店舗情報 -->
+          <a class="site-link" href="https://www4.city.sapporo.jp/cgi-bin/kensetsu/yuki/jyosetsu.cgi" target="_blank" rel="noopener">札幌市雪対策</a>
+          <a class="site-link" href="https://www.city.sapporo.jp/atsubetsu/doboku/josetsu.html" target="_blank" rel="noopener">札幌市厚別区</a>
           <a class="site-link" href="https://www.hottomotto.com/menu_list/index/1" target="_blank" rel="noopener">お昼（ほっともっと メニュー）</a>
           <a class="site-link" href="https://store.hottomotto.com/b/hottomotto/info/63475/" target="_blank" rel="noopener">お昼（ほっともっと 店舗情報）</a>
         </div>
@@ -1219,6 +1249,166 @@
         </div>
         <p class="hint" id="check-hint">状態のボタンを押すたびに「未→LINE既読→電話済→連絡つかず→未」と切り替わります。</p>
         <div class="check-tbl" id="check-table"></div>
+      </div>
+    </section>
+
+    <!-- AI電話対応（試行運用の手引き：北ケ閲覧・各企業には非表示） -->
+    <section class="tab" id="tab-aiphone">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">📞 AI電話対応（夜間自動受付）の手引き</h2>
+          <div class="spacer"></div>
+          <span class="pill">令和8年度 試行運用</span>
+        </div>
+        <p class="hint">札幌市「AIを活用した除雪センターの電話対応自動化」試行運用のまとめです。導入システムは <b>IVRy（アイブリー）</b>。夜間（21:00〜翌6:00）の市民からの電話をAIが自動受付し、受付内容がメールで通知されます。各見出しをタップで開けます。</p>
+      </div>
+
+      <details class="ai-acc" open>
+        <summary>📅 AIが対応する時間（導入時間）</summary>
+        <div class="ai-body">
+          <div class="ai-note">夜間の <b>21:00〜翌6:00</b> がAI対応。日中はこれまで通り職員が対応します。土日は連続して導入します。</div>
+          <ul class="ai-ul">
+            <li><b>平日</b>：月〜金とも 21:00〜翌6:00</li>
+            <li><b>土日</b>：金 21:00 〜 月 6:00（連続）</li>
+            <li><b>年末年始</b>：12/28 21:00 〜 1/4 6:00（連続）</li>
+            <li><b>祝日（3連休）</b>：1/8(金)21:00〜1/11(火)6:00 ／ 2/10(水)21:00〜2/12(金)6:00 ／ 2/22(月)21:00〜2/24(水)6:00</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="ai-acc" open>
+        <summary>🔄 稼働中の流れ（受電〜確認）</summary>
+        <div class="ai-body">
+          <div class="ai-flow">
+            <div class="step">① システム稼働中は、除雪センターの<b>電話呼び出し音は鳴りません</b>。</div>
+            <div class="step">② AIの受電対応が完了すると、登録メールアドレスへ「受付通知」が<b>即時送信</b>されます。</div>
+            <div class="step">③ システムにログインし、職員が内容を確認したうえで<b>現場調整</b>等を行います。</div>
+          </div>
+          <div class="ai-note"><b>折り返しは原則不要</b>です。市民が折り返しを希望と残していても、必ずしも折り返す必要はありません（現場の緊急性・状況に応じて各センターで判断）。</div>
+        </div>
+      </details>
+
+      <details class="ai-acc">
+        <summary>⚠️ 気象警報が出たとき</summary>
+        <div class="ai-body">
+          <div class="ai-warn">大雪等の気象警報が発令された場合は、<b>自動受付を一時中断し、職員による直接対応（手動受付）に切り替えます。</b></div>
+          <p>本システム導入に伴い、夜間（21:00〜6:00）のセンター職員を当初設計で1名減員としています。<b>増分協議を交わしていない地区</b>で、警報対応等により急遽1名追加配置した場合、その1名分は<b>附帯工（普通作業員・夜間単価）</b>として設計変更・費用計上の対象となります。</p>
+        </div>
+      </details>
+
+      <details class="ai-acc" open>
+        <summary>🧭 対応判断（現地確認・作業・折り返し）</summary>
+        <div class="ai-body">
+          <p class="hint" style="margin:0 0 8px">受付メールの内容をもとに、下記の目安で判断してください（「除雪センターの対応判断」より）。</p>
+          <table class="ai-table">
+            <tr><th>現地確認の有無</th><td>受付内容をもとに、必要な場合に実施。緊急性の有無などから確認のタイミングを柔軟に判断。<b>夜間の現地確認は必須ではありません。</b></td></tr>
+            <tr><th>作業の有無</th><td>内容や現地確認の結果から必要性を判断。<b>緊急性が高い場合は即時対応（翌朝まで）を基本</b>。それ以外は調整がついた後に実施。<b>過剰要求の場合は対応しません。</b></td></tr>
+            <tr><th>折り返し連絡</th><td><b>原則として行いません。</b>ただし次の場合は実施を検討：<br>① 現地の住所など、対応検討に必要な情報がシステム上に記録できていない<br>② 緊急性が高く作業が必要だが、事情により対応まで時間がかかる<br>③ 物損や私有地への雪入れなど、市民と業者間で直接対話が必要<br>④ その他、マルチが必要と判断した場合</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <details class="ai-acc">
+        <summary>✍️ メモ欄・ステータスの入力（集計に使用）</summary>
+        <div class="ai-body">
+          <h4>メモ欄（作業の有無）</h4>
+          <p>案件別の管理画面のメモ欄に、次のいずれかを記載してください。集計は文字検索で抽出するため、<b>誤字のないよう</b>お願いします。</p>
+          <div><span class="ai-chip">作業有</span><span class="ai-chip">緊急作業有（夜間に即時対応した場合）</span><span class="ai-chip">作業無</span></div>
+          <p style="margin-top:6px">※「作業有」「緊急作業有」の場合は<b>判断理由</b>も記載（例：「作業瑕疵や交通障害等が発生しており緊急性があると判断した」「順次対応予定の案件であったため」等）。</p>
+          <h4>ステータス欄</h4>
+          <p>「対応中」「対応済」「要対応」から選択。メモ記載まで完了し処理済みとなったら <b>「対応済」</b> を選択してください（集計は雪対策室が適宜実施）。</p>
+        </div>
+      </details>
+
+      <details class="ai-acc">
+        <summary>📞 市民対応のルール</summary>
+        <div class="ai-body">
+          <h4>夜間に苦情→日中に再度連絡してきた場合</h4>
+          <p>昼夜で対応有無の判断が変わらないようにします。翌日対応や確認予定の案件はその旨を、お断りの案件は判断理由を伝えてください。納得せず繰り返し連絡してくる等は<b>カスハラマニュアル</b>に沿って対応します。</p>
+          <h4>土木センターに苦情が入った場合</h4>
+          <p>除雪センターに状況確認のうえで回答します。「土木センターにかければ対応してくれる」といったケースは避けるよう注意してください。</p>
+          <h4>試行そのものへの苦情が来た場合</h4>
+          <p>基本的に <b>雪対策室 事業課 211-2662</b> を案内してください（時間帯の確認など軽微なものは対応可）。</p>
+        </div>
+      </details>
+
+      <details class="ai-acc">
+        <summary>☎️ ボイスワープ操作（転送の開始・停止）</summary>
+        <div class="ai-body">
+          <div class="ai-note">毎日の切替は除雪センター側で行います。<b>開始＝21:00直前／停止＝翌6:00</b>（西区のみ開始17:00・停止8:00）。</div>
+          <h4>転送を開始する（夜 21:00 直前）</h4>
+          <ol class="ai-steps">
+            <li>受話器をあげて <span class="ai-dial">1 4 2</span> をダイヤル</li>
+            <li>停止/開始のガイダンス →「<b>1</b>」（開始）</li>
+            <li>転送条件のガイダンス →「<b>1</b>」（無条件転送）</li>
+            <li>受話器を置いて完了</li>
+          </ol>
+          <h4>転送を停止する（朝 6:00）</h4>
+          <ol class="ai-steps">
+            <li>受話器をあげて <span class="ai-dial">1 4 2</span> をダイヤル</li>
+            <li>停止/開始のガイダンス →「<b>0</b>」（停止）</li>
+            <li>受話器を置いて完了</li>
+          </ol>
+          <h4>事前設定（12/1 21:00までに・各センター）</h4>
+          <p>シーズン開始前に <b>転送先電話番号の登録</b>（<span class="ai-dial">1 4 2</span> → 2 → 案内に従い登録）と <b>リモートコントロールの設定</b>（<span class="ai-dial">1 4 2</span> → 4 → 3 → 1 → 暗証番号登録）が必要です。暗証番号など具体的な番号・手順は配布資料「<b>ボイスワープ設定について</b>」をご確認ください（転送先番号は各地区確定後に別途共有）。</p>
+          <p class="hint" style="margin-top:6px">※3/20でセンター閉鎖のため、同じ手順で「閉鎖後の電話対応担当者」へ転送されるよう再設定してください。</p>
+        </div>
+      </details>
+
+      <details class="ai-acc">
+        <summary>🔐 セキュリティ・運用ルール（遵守事項）</summary>
+        <div class="ai-body">
+          <ul class="ai-ul">
+            <li><b>ログイン端末</b>：区土木部と相互確認した端末のみ。登録外の端末からはログイン不可。センター外への持ち出しは原則禁止。入口から離れ第三者の目に触れにくい場所に設置。</li>
+            <li><b>通知先アドレス</b>：除雪センター用の共有アドレスが基本（推奨）。個人アドレスは最大5件まで、モバイル等センター外に持ち出す端末で受信するアドレスは不可。</li>
+            <li><b>パスワード</b>：業務に関係する職員のみで共有。漏洩時は速やかに雪対策室 事業課へ報告し変更。</li>
+            <li><b>端末管理</b>：ログインしっぱなしの放置は禁止。一定時間でスリープ＋再認証を設定。可能な限り特定職員のみログインできる措置を。</li>
+            <li><b>禁止操作</b>：受電ルールの分岐・内容編集など、別紙に記載のない操作は不可。<b>契約管理メニュー（契約変更に関する項目・ボタン）には絶対に触れない。</b></li>
+            <li><b>情報の廃棄</b>：管理画面から得た情報のメモ・通知メールは、対応完了後に廃棄。個人情報は「安全管理措置実施申出書」に準じて取り扱う。</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="ai-acc">
+        <summary>🗣 AIアナウンスの流れ（市民側の案内）</summary>
+        <div class="ai-body">
+          <p>市民がプッシュボタンで用件を選ぶ方式です（今年度は発話で用件を特定する「音声認識QA」も一部試験導入）。</p>
+          <div class="ai-flow">
+            <div class="step"><b>最初の案内</b> → <span class="ai-chip">1 出動状況・ルール</span><span class="ai-chip">2 国道</span><span class="ai-chip">3 市道・道道の苦情要望</span></div>
+            <div class="step"><b>1 出動状況・制度</b>：HP・データ放送・冬のくらしガイド等を案内。希望者にSMSでリンク通知 → 終了（センター対応不要）</div>
+            <div class="step"><b>2 国道</b>：札幌道路事務所 <b>011-856-4611</b> を案内 → 終了（センター対応不要）</div>
+            <div class="step"><b>3 苦情要望</b> → 再分岐 <span class="ai-chip">1 間口</span><span class="ai-chip">2 交差点</span><span class="ai-chip">3 ザクザク・ワダチ</span><span class="ai-chip">4 歩道</span><span class="ai-chip">5 砂箱</span><span class="ai-chip">6 その他</span></div>
+            <div class="step">各案件で <b>氏名(任意)・電話番号・現場住所・状況</b>を聞き取り → 内容が整理され、指定アドレスに受付完了メールが届きます。</div>
+          </div>
+          <details class="ai-sub">
+            <summary>▶ 最初のアナウンス文（全文）</summary>
+            <div class="ai-script">除雪センターです。ただ今の時間は、自動音声案内にてご用件を承っております。折り返しの連絡や、職員と直接話をしたい、等のご要望はお受けできかねますので、あらかじめご了承ください。この通話は正確な内容把握のため録音させていただきます。
+音声に従って、該当する番号を選択してください。音声の途中でも操作は可能です。
+・除雪の出動状況の確認や、除雪のルールや制度に関するお問い合わせは、1を。
+・国道の除雪に関するお問い合わせは、2を。
+・市道、道道、の除雪に関するご意見やご要望は、3を押してください。</div>
+          </details>
+          <p class="hint" style="margin-top:6px">※各案件で「作業の有無は除雪センターで判断」「判断結果の折り返し連絡は致しかねる」旨を案内します。具体的な読み上げ画面・編集方法は配布の操作マニュアル（受電ルールの確認・編集編）を参照。</p>
+        </div>
+      </details>
+
+      <details class="ai-acc">
+        <summary>📋 事前準備・スケジュール（担当者向け）</summary>
+        <div class="ai-body">
+          <ul class="ai-ul">
+            <li><b>ログイン：11/16〜</b> 可能（アカウント発行前はログインできません）。</li>
+            <li>アカウント（メール・PW）準備【区土木】…11/6まで。組織アドレスは避け、地区ごとに識別可能なアドレスを。</li>
+            <li>閲覧環境（端末・通知先）準備【マルチ】…11月中下旬まで。<br>〈推奨A〉個人に紐づかない共用PC＋センター専用の新規アドレス。〈代替B〉指定職員のPC＋待機職員アドレス最大5件（モバイル受信不可）。</li>
+            <li>協議簿の取り交わし【区土木】…利用環境・運用ルールを確認。</li>
+            <li>緊急連絡先（システムに流れない直通＝代表番号に紐づく子番号）の共有先整理【区土木・マルチ】…11/30まで（NTT調整後に番号共有）。</li>
+            <li>ボイスワープ初期設定【マルチ】…12/1 21:00まで（転送先番号は確定後に共有）。</li>
+          </ul>
+          <p class="hint" style="margin-top:6px">操作説明：マルチ主任＝執行管理勉強会／センター長＝区土木または雪対策室で個別対応（事前に日程調整）。全23地区巡回は困難なため上記体制に協力を。</p>
+        </div>
+      </details>
+
+      <div class="card">
+        <p class="hint" style="margin:0">このページは配布資料（概要／電話履歴の確認／受電ルールの確認・編集／ボイスワープ設定／導入にあたってのお願い／対応判断／操作・運用マニュアル／アナウンス台本）の要点をまとめたものです。システム画面つきの詳しい操作手順は、各配布資料（PDF）もあわせてご確認ください。</p>
       </div>
     </section>
 
@@ -1450,7 +1640,7 @@ const ROLE_TABS = {
   admin:    {_default:'edit'},
   kitaedit: {_default:'view', home:'edit', address:'edit', report:'edit', haisetsu:'edit', check:'edit', accounts:'hidden'},
   kitaview: {_default:'hidden', haisetsu:'view', accounts:'hidden'},
-  center:   {_default:'hidden', home:'edit', alert:'edit', map:'edit', address:'edit', report:'edit', shift:'view', contact:'view', sites:'view', design:'view', haisetsu:'hidden', check:'hidden', accounts:'hidden'},
+  center:   {_default:'hidden', home:'edit', alert:'edit', map:'edit', address:'edit', report:'edit', shift:'view', contact:'view', sites:'view', design:'view', aiphone:'view', haisetsu:'hidden', check:'hidden', accounts:'hidden'},
   company:  {_default:'hidden', alert:'edit', accounts:'hidden'},
   legacyview:{_default:'view', accounts:'hidden'}
 };
