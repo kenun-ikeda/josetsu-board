@@ -351,7 +351,7 @@
   .shift-tbl th.sat .dnum,.shift-tbl th.sat .dwd{color:#1c5fb0}
   .shift-tbl th.sun .dnum,.shift-tbl th.sun .dwd{color:#c0392b}
   .shift-tbl th.sat{background:#eef4fb} .shift-tbl th.sun{background:#fdeeec}
-  .shift-tbl td.cell{width:30px;height:30px;cursor:pointer;font-size:14px;font-weight:700;user-select:none;background:#fff;touch-action:none}
+  .shift-tbl td.cell{width:30px;height:30px;cursor:pointer;font-size:14px;font-weight:700;user-select:none;background:#fff;touch-action:pan-x pan-y}
   .shift-tbl td.c-toki{background:#cfe8f7}
   .shift-tbl td.c-kyu{background:#d9d9d9}
   .shift-tbl .name-col{min-width:110px;text-align:left}
@@ -741,7 +741,7 @@
       <button data-tab="address">住所検索</button>
       <button data-tab="shift">勤務予定表</button>
       <button data-tab="haisetsu">排雪シフト</button>
-      <button data-tab="check">連絡チェック</button>
+      <button data-tab="check">新雪出動連絡</button>
       <button data-tab="report">安全日報</button>
       <button data-tab="contact">連絡先・設定</button>
       <button data-tab="sites">各サイト</button>
@@ -1215,7 +1215,7 @@
       <!-- ランチャー（ボード内表示）：日付を選んで全画面の別タブでチェック表を開く -->
       <div class="card" id="check-launcher">
         <div class="check-bar">
-          <h2 style="margin:0">新雪除雪 連絡チェック</h2>
+          <h2 style="margin:0">新雪出動連絡</h2>
         </div>
         <p class="hint">出動日を選ぶ（または新しい日付を入れる）→「チェックリストを開く」を押すと、全画面の別タブでチェック表が開きます。途中で閉じても、同じ日付で開けば続きから表示されます。名簿はふだんは全日共通で、その日だけ変えたいときは開いた画面の「この日だけ名簿を変更」から直せます。</p>
         <div class="check-bar" style="margin-top:4px">
@@ -1233,7 +1233,7 @@
       <!-- 全画面チェック表（?view=check で別タブ表示） -->
       <div class="card" id="check-screen" style="display:none">
         <div class="check-bar">
-          <h2 style="margin:0" id="check-screen-title">連絡チェック</h2>
+          <h2 style="margin:0" id="check-screen-title">新雪出動連絡</h2>
           <div class="spacer"></div>
           <span class="pill" id="check-progress"></span>
           <button class="btn sec sm no-print" onclick="printCheck()">🖨 印刷</button>
@@ -1646,9 +1646,9 @@ const ROLE_TABS = {
 };
 const ROLE_HELP = {
   admin:'すべてのタブを編集でき、このアカウント設定も管理できます。',
-  kitaedit:'全タブを閲覧でき、ホーム・住所検索・安全日報・排雪シフト・連絡チェックを編集できます。',
+  kitaedit:'全タブを閲覧でき、ホーム・住所検索・安全日報・排雪シフト・新雪出動連絡を編集できます。',
   kitaview:'排雪シフトのみ閲覧できます。',
-  center:'ホーム・機械調書・排雪マップ・住所検索・安全日報を編集、勤務予定表・連絡先設定・各サイト・設計書を閲覧できます（排雪シフト／連絡チェックは非表示）。',
+  center:'ホーム・機械調書・排雪マップ・住所検索・安全日報を編集、勤務予定表・連絡先設定・各サイト・設計書を閲覧できます（排雪シフト／新雪出動連絡は非表示）。',
   company:'機械調書のみ（全社分の閲覧・編集）が可能です。'
 };
 function tabAccess(tab){
@@ -1940,6 +1940,7 @@ let SHIFT_PAINT = '通';            // パレットで選択中の入力状態�
 let shiftDragging = false;         // ドラッグ塗り中
 let shiftDragMonth = null;         // ドラッグ塗り対象の月（月をまたぐ塗りを防ぐ）
 let shiftChangedRows = {};         // ドラッグ中に変更された行 idx の集合（局所描画用）
+let shiftTap = null;               // スマホ：タップ判定用 {td,x,y,moved}（スワイプ=スクロール、タップ=1マス塗り）
 let SHIFT_DIRTY = new Set();        // 未保存の変更（キー = 'month:idx'）。💾保存で永続化
 let offline  = false;
 let editingRow = null; // 編集中の行番号（新規は null）
@@ -3464,13 +3465,19 @@ function renderShift(){
   const grid = document.getElementById('shift-grid');
   // セル：pointerdownで塗り開始（クリック＝1マス、ドラッグ＝連続塗り）。data-monthで対象月を特定。
   Array.prototype.forEach.call(grid.querySelectorAll('td.cell'), function(td){
-    td.onpointerdown = function(e){
-      e.preventDefault();
-      shiftDragging = true;
-      shiftDragMonth = Number(td.getAttribute('data-month'));
-      shiftChangedRows = {};
-      paintShiftCell(td);
-    };
+    td.addEventListener('pointerdown', function(e){
+      if(e.pointerType === 'mouse'){
+        // PC：押した瞬間から連続塗り（ドラッグで複数マス）
+        e.preventDefault();
+        shiftDragging = true;
+        shiftDragMonth = Number(td.getAttribute('data-month'));
+        shiftChangedRows = {};
+        paintShiftCell(td);
+      }else{
+        // スマホ/タブレット：スクロール優先。指を動かさずタップした時だけ1マス塗る
+        shiftTap = { td: td, x: e.clientX, y: e.clientY, moved: false };
+      }
+    });
   });
   Array.prototype.forEach.call(grid.querySelectorAll('input.name-in'), function(inp){
     inp.onchange = function(){ saveShiftName(Number(inp.getAttribute('data-month')), Number(inp.getAttribute('data-idx')), inp.value); };
@@ -3600,12 +3607,28 @@ function wireShiftGlobalListeners(){
   if(window.__shiftWired) return;
   window.__shiftWired = true;
   document.addEventListener('pointermove', function(e){
+    // スマホ：少しでも動いたらスワイプ（スクロール）とみなしタップ塗りを中止
+    if(shiftTap && !shiftTap.moved && (Math.abs(e.clientX-shiftTap.x)>8 || Math.abs(e.clientY-shiftTap.y)>8)) shiftTap.moved = true;
     if(!shiftDragging) return;
     const el = document.elementFromPoint(e.clientX, e.clientY);
     // 同一月の表内でのみ塗る（月をまたぐドラッグは無視）
     if(el && el.classList && el.classList.contains('cell') && Number(el.getAttribute('data-month'))===shiftDragMonth) paintShiftCell(el);
   });
-  document.addEventListener('pointerup', onShiftPointerUp);
+  document.addEventListener('pointerup', function(e){
+    // スマホ：動かさずタップした時だけ1マス塗る
+    if(shiftTap){
+      if(!shiftTap.moved && e.pointerType!=='mouse'){
+        shiftDragMonth = Number(shiftTap.td.getAttribute('data-month'));
+        shiftChangedRows = {};
+        paintShiftCell(shiftTap.td);
+        shiftChangedRows = {};
+      }
+      shiftTap = null;
+    }
+    onShiftPointerUp();
+  });
+  // スクロール開始などでポインタがキャンセルされたらタップ塗りは行わない
+  document.addEventListener('pointercancel', function(){ shiftTap = null; });
 }
 // ドラッグ終了：ローカル更新のみ（保存は「💾 保存」ボタン）。塗った行は paintShiftCell で未保存登録済み
 function onShiftPointerUp(){
@@ -5323,9 +5346,9 @@ function renderCheckFull(){
   }
   const title=document.getElementById('check-screen-title');
   if(title){
-    if(masterEdit) title.textContent='連絡チェック　共通の名簿（全日のひな形）の編集';
-    else if(CHECK_EDIT) title.textContent='連絡チェック　'+checkDateLabel(CHECK_DATE)+'（この日だけの名簿）';
-    else title.textContent='連絡チェック　'+checkDateLabel(CHECK_DATE)+(dayHasOwnRoster(CHECK_DATE)?'（この日専用の名簿）':'');
+    if(masterEdit) title.textContent='新雪出動連絡　共通の名簿（全日のひな形）の編集';
+    else if(CHECK_EDIT) title.textContent='新雪出動連絡　'+checkDateLabel(CHECK_DATE)+'（この日だけの名簿）';
+    else title.textContent='新雪出動連絡　'+checkDateLabel(CHECK_DATE)+(dayHasOwnRoster(CHECK_DATE)?'（この日専用の名簿）':'');
   }
   renderCheckProgress();
   const eb=document.getElementById('check-edit-btn');
