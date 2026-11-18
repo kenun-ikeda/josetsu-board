@@ -211,6 +211,11 @@
   .rt-sw{width:34px;height:26px;padding:0;border:1px solid var(--line);border-radius:5px;cursor:pointer;vertical-align:middle;background:#fff}
   .rt-clabel{width:66px !important;display:inline-block;margin-left:5px;vertical-align:middle}
   .rt-chip{display:inline-block;width:26px;height:13px;border-radius:3px;border:1px solid rgba(0,0,0,.25);vertical-align:middle;margin-right:6px}
+  #rv-pdf{width:100%;height:72vh;border:0;background:#fff;display:block}
+  @media(max-width:900px){ #rv-pdf{height:44vh} }
+  .rv-dropmask{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:16px;background:rgba(26,115,232,.12);border:3px dashed var(--accent);border-radius:10px;color:var(--accent);font-weight:800;font-size:15px;z-index:4;pointer-events:none}
+  .rv-wrap.dragover .rv-dropmask{display:flex}
+  .rv-dropbar{margin-top:8px;font-size:12px;color:var(--muted);text-align:center}
   td.num{text-align:right;font-family:"JetBrains Mono",monospace}
 
   /* ---------- modal ---------- */
@@ -1460,14 +1465,26 @@
       <div class="rv-split">
         <div class="rv-maps">
           <div class="card" style="margin-bottom:0">
-            <div class="rv-toolbar">
+            <div class="rv-toolbar" id="rv-toolbar-png">
               <button type="button" class="rv-zbtn" onclick="routeZoom(-1)" title="縮小">−</button>
               <button type="button" class="rv-zbtn" onclick="routeZoom(1)" title="拡大">＋</button>
               <button class="btn sec sm" onclick="routeZoom(0)">リセット</button>
               <button class="btn sec sm" onclick="routeOpenImg()">🔍 別タブ</button>
               <span class="pill" id="rv-zoom-label"></span>
             </div>
-            <div class="rv-wrap" id="rv-wrap"><img class="rv-img" id="rv-img" alt="路線図" ondragstart="return false"></div>
+            <div class="rv-toolbar" id="rv-toolbar-pdf" style="display:none">
+              <span class="pill">📄 PDF（全員に表示）</span>
+              <button class="btn sec sm" onclick="routeOpenImg()">🔍 別タブで開く</button>
+              <button class="btn sec sm edit-only" onclick="routePickPdf()">差し替え</button>
+              <button class="btn sec sm edit-only" onclick="routeClearPdf()">PDFを外す</button>
+            </div>
+            <div class="rv-wrap" id="rv-wrap">
+              <img class="rv-img" id="rv-img" alt="路線図" ondragstart="return false">
+              <iframe id="rv-pdf" title="路線図PDF" style="display:none"></iframe>
+              <div class="rv-dropmask" id="rv-dropmask">📄 PDFをここにドロップして地図を差し替え</div>
+            </div>
+            <div class="rv-dropbar edit-only">地図をPDFで差し替え：ここにPDFをドロップ、または <button type="button" class="btn sec sm" onclick="routePickPdf()">📄 PDFを選ぶ</button>（全員に反映）</div>
+            <input type="file" id="rv-file" accept="application/pdf,.pdf" style="display:none" onchange="routeFileChosen(this)">
           </div>
         </div>
         <div class="rv-lists">
@@ -2005,6 +2022,7 @@ function normalizeRoute(o){
   ROUTE_MAPS.forEach(function(m){
     const src=maps[m.key] ? maps[m.key] : {};
     out.maps[m.key]={
+      pdfId:(src.pdfId||''),
       combos:(Array.isArray(src.combos)?src.combos:[]).map(function(r){ return {sec:r.sec||'', company:r.company||'', combo:r.combo||'', color:r.color||'', hex:r.hex||''}; }),
       detail:(Array.isArray(src.detail)?src.detail:[]).map(function(r){ return {company:r.company||'', kind:r.kind||'', no:r.no||'', driver:r.driver||'', color:r.color||'', hex:r.hex||''}; })
     };
@@ -2012,7 +2030,7 @@ function normalizeRoute(o){
   return out;
 }
 function defaultRoute(){ return normalizeRoute(DEFAULT_ROUTE); }
-function routeData(key){ if(!ROUTE_SAVED) ROUTE_SAVED=defaultRoute(); if(!ROUTE_SAVED.maps[key]) ROUTE_SAVED.maps[key]={combos:[],detail:[]}; return ROUTE_SAVED.maps[key]; }
+function routeData(key){ if(!ROUTE_SAVED) ROUTE_SAVED=defaultRoute(); if(!ROUTE_SAVED.maps[key]) ROUTE_SAVED.maps[key]={pdfId:'',combos:[],detail:[]}; return ROUTE_SAVED.maps[key]; }
 let MREG_ROW = null;               // __MREG__レコードの行番号
 let MREG_COMPANY = '*';            // 機械調書タブで表示中の会社（'*'=すべて）
 let NOTICES = [];                  // お知らせ・注意事項ボード [{row, ts, name, body}]（新しい順で描画）
@@ -5651,7 +5669,7 @@ document.querySelectorAll('nav button').forEach(function(b){
 // ログイン状態の記憶キー（この端末のブラウザにのみ保存。再読み込みしても再入力不要にする）
 /*──────── 路線図（厚別北マルチ：地図ビューア＋編集可能な割当表） ────────*/
 let ROUTE_ZOOM = 1;   // 1=幅フィット
-function renderRoute(){ renderRouteSubnav(); renderRouteMap(); renderRouteTables(); }
+function renderRoute(){ renderRouteSubnav(); renderRouteMap(); renderRouteTables(); wireRouteDrop(); }
 function curRouteMap(){ return ROUTE_MAPS.find(function(m){ return m.key===ROUTE_MAP; }) || ROUTE_MAPS[0]; }
 function renderRouteSubnav(){
   const nav=document.getElementById('rv-subnav'); if(!nav) return;
@@ -5660,17 +5678,76 @@ function renderRouteSubnav(){
   }).join('');
 }
 function routeSwitch(key){ ROUTE_MAP=key; ROUTE_ZOOM=1; renderRouteSubnav(); renderRouteMap(); renderRouteTables(); }
+let ROUTE_LOCAL = {};   // この端末だけの一時表示（デモ／アップ前）: key -> objectURL
+function routePdfUrl(key){
+  const d=routeData(key);
+  if(ROUTE_LOCAL[key]) return ROUTE_LOCAL[key];
+  if(d.pdfId) return 'https://drive.google.com/file/d/'+d.pdfId+'/preview';
+  return '';
+}
 function renderRouteMap(){
-  const img=document.getElementById('rv-img'); if(!img) return;
-  const m=curRouteMap();
+  const img=document.getElementById('rv-img'); const frame=document.getElementById('rv-pdf'); if(!img) return;
+  const barP=document.getElementById('rv-toolbar-png'); const barD=document.getElementById('rv-toolbar-pdf');
+  const m=curRouteMap(); const pdf=routePdfUrl(m.key);
+  if(pdf && frame){
+    if(frame.getAttribute('data-src')!==pdf){ frame.setAttribute('data-src',pdf); frame.src=pdf; }
+    frame.style.display='block'; img.style.display='none';
+    if(barP) barP.style.display='none'; if(barD) barD.style.display='';
+    return;
+  }
+  if(frame){ frame.style.display='none'; if(frame.getAttribute('data-src')){ frame.src='about:blank'; frame.removeAttribute('data-src'); } }
+  if(barP) barP.style.display=''; if(barD) barD.style.display='none';
+  img.style.display='block';
   if(img.getAttribute('data-key')!==m.key){
     img.setAttribute('data-key', m.key);
-    img.style.display='block';
     img.onerror=function(){ img.style.display='none'; };
     img.onload=function(){ img.style.display='block'; applyRouteZoom(); };
     img.src=m.img;
   }
   applyRouteZoom();
+}
+/* ドラッグ＆ドロップでPDFを差し替え（全員に反映＝Google Drive保存） */
+function wireRouteDrop(){
+  if(window.__routeDropWired) return; window.__routeDropWired=true;
+  const wrap=document.getElementById('rv-wrap'); if(!wrap) return;
+  ['dragenter','dragover'].forEach(function(ev){ wrap.addEventListener(ev,function(e){ if(READONLY) return; e.preventDefault(); e.stopPropagation(); wrap.classList.add('dragover'); }); });
+  ['dragleave','dragend'].forEach(function(ev){ wrap.addEventListener(ev,function(e){ wrap.classList.remove('dragover'); }); });
+  wrap.addEventListener('drop',function(e){ e.preventDefault(); e.stopPropagation(); wrap.classList.remove('dragover'); if(READONLY){ toast('閲覧モードのため差し替えできません'); return; } const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) routeUploadPdf(curRouteMap().key, f); });
+}
+function routePickPdf(){ if(READONLY){ toast('閲覧モードのため差し替えできません'); return; } const el=document.getElementById('rv-file'); if(el){ el.value=''; el.click(); } }
+function routeFileChosen(el){ const f=el.files&&el.files[0]; if(f) routeUploadPdf(curRouteMap().key, f); }
+function fileToB64(file){ return new Promise(function(resolve,reject){ const r=new FileReader(); r.onload=function(){ const s=String(r.result||''); const i=s.indexOf(','); resolve(i>=0?s.slice(i+1):s); }; r.onerror=reject; r.readAsDataURL(file); }); }
+async function routeUploadPdf(key, file){
+  if(READONLY){ toast('閲覧モードのため差し替えできません'); return; }
+  const isPdf=(file && ((file.type&&file.type.indexOf('pdf')>=0) || /\.pdf$/i.test(file.name||'')));
+  if(!isPdf){ toast('PDFファイルをドロップしてください'); return; }
+  if(file.size > 25*1024*1024){ toast('PDFが大きすぎます（25MBまで）'); return; }
+  if(DEMO){
+    try{ if(ROUTE_LOCAL[key]) URL.revokeObjectURL(ROUTE_LOCAL[key]); }catch(e){}
+    ROUTE_LOCAL[key]=URL.createObjectURL(file); renderRouteMap();
+    toast('デモ：この端末のみ表示（本番はGoogle Driveに保存して全員に表示されます）'); return;
+  }
+  toast('PDFをアップロード中…');
+  let b64; try{ b64=await fileToB64(file); }catch(e){ toast('ファイルを読み込めませんでした'); return; }
+  const d=routeData(key);
+  const res=await callApi({action:'saveRouteMap', key:key, filename:(file.name||'route'), dataB64:b64, oldId:(d.pdfId||'')});
+  if(res && res.ok && res.id){
+    d.pdfId=res.id;
+    try{ if(ROUTE_LOCAL[key]){ URL.revokeObjectURL(ROUTE_LOCAL[key]); delete ROUTE_LOCAL[key]; } }catch(e){}
+    await routeSave(false);
+    renderRouteMap();
+    toast('地図を差し替えました（全員に表示されます）');
+  }else{
+    toast('アップロードに失敗しました'+(res&&res.error?'：'+res.error:'')+' ※GAS（サーバー）の更新が必要です');
+  }
+}
+async function routeClearPdf(){
+  if(READONLY){ toast('閲覧モードのため操作できません'); return; }
+  if(!confirm('差し替えたPDFを外して、元の地図画像に戻します。よろしいですか？')) return;
+  const key=curRouteMap().key; const d=routeData(key); const oldId=d.pdfId; d.pdfId='';
+  try{ if(ROUTE_LOCAL[key]){ URL.revokeObjectURL(ROUTE_LOCAL[key]); delete ROUTE_LOCAL[key]; } }catch(e){}
+  if(!DEMO && oldId){ try{ callApi({action:'delRouteMap', id:oldId}); }catch(e){} }
+  await routeSave(false); renderRouteMap(); toast('元の地図に戻しました');
 }
 function applyRouteZoom(){
   const img=document.getElementById('rv-img'); const wrap=document.getElementById('rv-wrap'); if(!img||!wrap) return;
@@ -5683,7 +5760,12 @@ function routeZoom(dir){
   else ROUTE_ZOOM=Math.min(6, Math.max(1, Math.round((ROUTE_ZOOM+(dir>0?0.5:-0.5))*10)/10));
   applyRouteZoom();
 }
-function routeOpenImg(){ window.open(curRouteMap().img, '_blank', 'noopener'); }
+function routeOpenImg(){
+  const m=curRouteMap(); const d=routeData(m.key);
+  if(ROUTE_LOCAL[m.key]){ window.open(ROUTE_LOCAL[m.key], '_blank', 'noopener'); return; }
+  if(d.pdfId){ window.open('https://drive.google.com/file/d/'+d.pdfId+'/view', '_blank', 'noopener'); return; }
+  window.open(m.img, '_blank', 'noopener');
+}
 function renderRouteTables(){
   const el=document.getElementById('rv-tables'); if(!el) return;
   const m=curRouteMap(); const d=routeData(m.key); const ed=!READONLY;
