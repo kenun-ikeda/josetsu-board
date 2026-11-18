@@ -178,6 +178,39 @@
   details.ai-sub>summary{cursor:pointer;padding:8px 11px;font-weight:700;font-size:13px;color:#1a3d7c;list-style:none}
   details.ai-sub>summary::-webkit-details-marker{display:none}
   details.ai-sub .ai-script{padding:0 12px 10px;font-size:12.5px;line-height:1.7;white-space:pre-wrap;color:#333}
+  /* ---------- 路線図タブ ---------- */
+  .rv-subnav{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .rv-subbtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit}
+  .rv-subbtn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .rv-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .rv-zbtn{border:1px solid var(--line);background:#fff;border-radius:8px;width:38px;height:36px;font-size:18px;font-weight:800;cursor:pointer;color:var(--accent)}
+  .rv-wrap{position:relative;overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:10px;background:#fff;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+  .rv-img{display:block;height:auto;user-select:none;-webkit-user-drag:none}
+  .rt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.rt-tbl{width:100%;min-width:540px;border-collapse:collapse;margin:6px 0 2px;font-size:13px}
+  table.rt-tbl th,table.rt-tbl td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:middle}
+  table.rt-tbl th{background:#f3f6fb;color:var(--accent);font-size:12px;white-space:nowrap}
+  table.rt-tbl td.c-sec{white-space:nowrap}
+  .rt-in{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;background:#fff}
+  .rt-in:focus{outline:none;border-color:var(--accent)}
+  .rt-x{border:1px solid var(--line);background:#fff;color:var(--bad);border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px}
+  .rt-x:hover{background:#fdecea}
+  .rt-del-cell{text-align:center}
+  .rt-sec-title{font-weight:800;color:#1a3d7c;margin:14px 0 4px;font-size:13.5px}
+  .rt-sec-title:first-child{margin-top:2px}
+  .rv-split{display:flex;gap:14px;align-items:flex-start}
+  .rv-maps{flex:0 0 45%;position:sticky;top:10px}
+  .rv-lists{flex:1 1 55%;min-width:0}
+  @media(max-width:900px){
+    .rv-split{flex-direction:column;gap:10px}
+    .rv-maps{position:sticky;top:0;flex-basis:auto;width:100%;z-index:6;background:var(--bg,#eef2f7);padding-top:4px}
+    .rv-lists{width:100%}
+    .rv-maps .rv-wrap{max-height:42vh}
+  }
+  .rt-color{white-space:nowrap}
+  .rt-sw{width:34px;height:26px;padding:0;border:1px solid var(--line);border-radius:5px;cursor:pointer;vertical-align:middle;background:#fff}
+  .rt-clabel{width:66px !important;display:inline-block;margin-left:5px;vertical-align:middle}
+  .rt-chip{display:inline-block;width:26px;height:13px;border-radius:3px;border:1px solid rgba(0,0,0,.25);vertical-align:middle;margin-right:6px}
   td.num{text-align:right;font-family:"JetBrains Mono",monospace}
 
   /* ---------- modal ---------- */
@@ -747,6 +780,7 @@
       <button data-tab="sites">各サイト</button>
       <button data-tab="design">設計書</button>
       <button data-tab="aiphone">📞 AI電話対応</button>
+      <button data-tab="route">🗺 路線図</button>
       <button data-tab="accounts" class="nav-admin" style="display:none">⚙ 設定</button>
     </nav>
 
@@ -1412,6 +1446,36 @@
       </div>
     </section>
 
+    <!-- 路線図（厚別北マルチ） -->
+    <section class="tab" id="tab-route">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">🗺 路線図（厚別北マルチ）</h2>
+          <div class="spacer"></div>
+          <button class="btn sec sm edit-only" onclick="routeSave(true)">💾 保存</button>
+        </div>
+        <p class="hint">車道除雪・歩道除雪の路線図です。地図と表を横並び（スマホは地図を上に固定）で表示し、<b>線色の見本</b>で地図の線と照らし合わせられます（G=グレーダー／TS=タイヤショベル／官=菅貸車／業=業持ち車／SR=小ロータリー／HR=ハンドロータリー）。地図は拡大しても荒くなりません。表（会社名・機械№・組合せ・機種・車号・運転手・線色）は編集でき、変更は自動保存されます。</p>
+        <div class="rv-subnav" id="rv-subnav"></div>
+      </div>
+      <div class="rv-split">
+        <div class="rv-maps">
+          <div class="card" style="margin-bottom:0">
+            <div class="rv-toolbar">
+              <button type="button" class="rv-zbtn" onclick="routeZoom(-1)" title="縮小">−</button>
+              <button type="button" class="rv-zbtn" onclick="routeZoom(1)" title="拡大">＋</button>
+              <button class="btn sec sm" onclick="routeZoom(0)">リセット</button>
+              <button class="btn sec sm" onclick="routeOpenImg()">🔍 別タブ</button>
+              <span class="pill" id="rv-zoom-label"></span>
+            </div>
+            <div class="rv-wrap" id="rv-wrap"><img class="rv-img" id="rv-img" alt="路線図" ondragstart="return false"></div>
+          </div>
+        </div>
+        <div class="rv-lists">
+          <div class="card" id="rv-tables" style="margin-bottom:0"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ACCOUNTS（アカウント設定：管理者のみ） -->
     <section class="tab" id="tab-accounts">
       <div class="card">
@@ -1640,7 +1704,7 @@ const ROLE_TABS = {
   admin:    {_default:'edit'},
   kitaedit: {_default:'view', home:'edit', address:'edit', report:'edit', haisetsu:'edit', check:'edit', accounts:'hidden'},
   kitaview: {_default:'hidden', haisetsu:'view', accounts:'hidden'},
-  center:   {_default:'hidden', home:'edit', alert:'edit', map:'edit', address:'edit', report:'edit', shift:'view', contact:'view', sites:'view', design:'view', aiphone:'view', haisetsu:'hidden', check:'hidden', accounts:'hidden'},
+  center:   {_default:'hidden', home:'edit', alert:'edit', map:'edit', address:'edit', report:'edit', shift:'view', contact:'view', sites:'view', design:'view', aiphone:'view', route:'view', haisetsu:'hidden', check:'hidden', accounts:'hidden'},
   company:  {_default:'hidden', alert:'edit', accounts:'hidden'},
   legacyview:{_default:'view', accounts:'hidden'}
 };
@@ -1908,6 +1972,47 @@ let CHECK_FULLSCREEN = false;      // 全画面チェック表モード（?view=
 let CHECK_FS_DATE = '';            // 全画面表示する出動日
 let CHECK_FS_EDIT = false;         // 全画面で名簿編集として開くか
 let MREG = [];                     // 機械調書（簡易版）[{id,cat,name,regno,expire,company}]（__MREG__マーカーで全員共有保存）
+let ROUTE_SAVED = null;            // 路線図（厚別北マルチ）{maps:{key:{combos:[],detail:[]}}}（__ROUTE__マーカーで全員共有保存）
+let ROUTE_ROW = null;              // __ROUTE__レコードの行番号
+let ROUTE_MAP = 'car_w';           // 路線図タブで表示中の地図キー
+const ROUTE_MAPS = [
+  {key:'car_w',  label:'車道・厚別西', img:'route/car_w.png',  kind:'car'},
+  {key:'car_e',  label:'車道・厚別東', img:'route/car_e.png',  kind:'car'},
+  {key:'walk_w', label:'歩道・厚別西', img:'route/walk_w.png', kind:'walk'},
+  {key:'walk_e', label:'歩道・厚別東', img:'route/walk_e.png', kind:'walk'}
+];
+const DEFAULT_ROUTE = {
+  car_w: {
+    combos: [{sec:'4車線級',company:'開北工業㈱',combo:'G 80-27　TS 17-83',color:'幹線',hex:'#00B0F0'},{sec:'4車線級',company:'陸奥建設㈱',combo:'G 32-46　TS 64-71',color:'',hex:'#00B0F0'},{sec:'4車線級',company:'㈱ケンウン',combo:'TS 62-97（横断歩道　WA80　）',color:'',hex:'#00B0F0'},{sec:'2～4車線級',company:'開北工業㈱',combo:'G 80-27　TS 17-83',color:'幹線',hex:'#A50021'},{sec:'2～4車線級',company:'陸奥建設㈱',combo:'G 32-46　TS 64-71',color:'',hex:'#A50021'},{sec:'2車線級・生活道路',company:'開北工業㈱',combo:'G 80-27　TS 17-83',color:'補助幹',hex:'#663300'},{sec:'2車線級・生活道路',company:'陸奥建設㈱',combo:'G 32-46　TS 64-71',color:'',hex:'#663300'}],
+    detail: [{company:'開北工業㈱',kind:'官G',no:'80-27',driver:'菅藤',color:'補助幹',hex:'#7030A0'},{company:'開北工業㈱',kind:'業TS',no:'17-83',driver:'佐藤',color:'間口',hex:'#7030A0'},{company:'陸奥建設㈱',kind:'業G',no:'32-46',driver:'上村(広明）',color:'補助幹',hex:'#FF0000'},{company:'陸奥建設㈱',kind:'業TS',no:'64-71',driver:'堀川',color:'間口',hex:'#FF0000'},{company:'陸奥建設㈱',kind:'業TS',no:'50-33',driver:'幅田',color:'生活',hex:'#FFFF00'},{company:'陸奥建設㈱',kind:'業TS',no:'80-21',driver:'上村（凌哉）',color:'生活',hex:'#3333FF'},{company:'小橋北豊㈱',kind:'業G',no:'27-16',driver:'済藤',color:'補助幹',hex:'#3333FF'},{company:'小橋北豊㈱',kind:'業TS',no:'67-21',driver:'成田',color:'間口',hex:'#FF0066'},{company:'㈱ケンウン',kind:'業TS',no:'90-14',driver:'畠山',color:'生活',hex:'#FF0066'},{company:'㈱ケンウン',kind:'業TS',no:'23-20',driver:'村井',color:'生活',hex:'#002060'},{company:'㈱みらい・コンテック',kind:'業TS',no:'14-14',driver:'荒谷',color:'生活',hex:'#CC9900'},{company:'㈱札幌緑興',kind:'業TS',no:'35-91',driver:'及川',color:'生活',hex:'#993366'},{company:'㈱北海メンテナンス',kind:'業TS',no:'77-74',driver:'吉田',color:'生活',hex:'#00FFCC'}]
+  },
+  car_e: {
+    combos: [{sec:'4車線級',company:'北日本重機㈱',combo:'G     76-58　69-93　70-32 　　　TS　23-20　20-17',color:'幹線',hex:'#00B0F0'},{sec:'2～4車線級',company:'北日本重機㈱',combo:'G     76-58　69-93 TS　23-20　20-17',color:'幹線',hex:'#00B050'},{sec:'2～4車線級',company:'小橋北豊㈱',combo:'G 9-34　TS 67-21　(2往復)',color:'幹線',hex:'#663300'}],
+    detail: [{company:'北日本重機㈱',kind:'官G',no:'76-58',driver:'菅沼',color:'補助幹',hex:'#FFC000'},{company:'北日本重機㈱',kind:'業G',no:'69-93',driver:'佐井川',color:'補助幹',hex:'#FF0000'},{company:'北日本重機㈱',kind:'業G',no:'70-32',driver:'辻',color:'補助幹',hex:'#7030A0'},{company:'北日本重機㈱',kind:'業TS',no:'90-14',driver:'近藤',color:'間口',hex:'#FFC000'},{company:'北日本重機㈱',kind:'業TS',no:'20-17',driver:'佐々木(蓮)',color:'間口',hex:'#FF0000'},{company:'北日本重機㈱',kind:'業TS',no:'20-15',driver:'三木',color:'生活',hex:'#3333FF'},{company:'北日本重機㈱',kind:'業TS',no:'20-18',driver:'栗山',color:'生活 間口',hex:'#FF0066'},{company:'北日本重機㈱',kind:'業TS',no:'23-21',driver:'佐々木(剛)',color:'生活',hex:'#FFFF00'},{company:'小橋北豊㈱',kind:'業G',no:'27-16',driver:'済藤',color:'補助幹',hex:'#002060'},{company:'小橋北豊㈱',kind:'業TS',no:'67-21',driver:'成田',color:'間口',hex:'#002060'},{company:'小橋北豊㈱',kind:'業TS',no:'60-03',driver:'安田',color:'生活',hex:'#CC9900'},{company:'開北工業㈱',kind:'業TS',no:'91-95',driver:'杉',color:'生活',hex:'#993366'},{company:'開北工業㈱',kind:'業TS',no:'30-25',driver:'藤居',color:'生活',hex:'#00FFCC'},{company:'㈱ケンウン',kind:'業TS',no:'18-32',driver:'丸一',color:'生活',hex:'#669900'},{company:'㈱札幌緑興',kind:'業TS',no:'93-96',driver:'瀧田',color:'生活',hex:'#FF33CC'}]
+  },
+  walk_w: {
+    combos: [],
+    detail: [{company:'陸奥建設㈱',kind:'SR',no:'18-23',driver:'夏井',color:'',hex:'#FFC000'},{company:'㈱札幌緑興',kind:'SR',no:'19-45',driver:'初山',color:'',hex:'#FF33CC'},{company:'㈱札幌緑興',kind:'SR',no:'20-41',driver:'佐藤',color:'',hex:'#92D050'},{company:'㈱みらい・コンテック',kind:'SR',no:'27-47',driver:'高島',color:'',hex:'#92D050'},{company:'㈱みらい・コンテック',kind:'HR',no:'',driver:'村上',color:'',hex:'#7030A0'},{company:'㈱みらい・コンテック',kind:'人力除雪',no:'',driver:'西・赤川',color:'',hex:'#7A0000'},{company:'㈱ケンウン',kind:'HR',no:'',driver:'川上',color:'',hex:'#FFFF00'}]
+  },
+  walk_e: {
+    combos: [],
+    detail: [{company:'北日本重機㈱',kind:'SR',no:'23-76',driver:'佐々木翔太',color:'',hex:'#FF33CC'},{company:'北日本重機㈱',kind:'SR',no:'563',driver:'北山',color:'',hex:'#FFC000'},{company:'開北工業㈱',kind:'SR',no:'24-94',driver:'西村',color:'',hex:'#00FFCC'},{company:'開北工業㈱',kind:'SR',no:'24-94',driver:'西村',color:'車道 拡幅',hex:'#00FFCC'},{company:'開北工業㈱',kind:'SR',no:'21-25',driver:'藤田',color:'',hex:'#3333FF'},{company:'開北工業㈱',kind:'HR',no:'カー69',driver:'西村',color:'',hex:'#FF0000'},{company:'㈱ケンウン',kind:'HR',no:'ケー69',driver:'川上',color:'',hex:'#669900'},{company:'㈱ケンウン',kind:'',no:'人力除雪',driver:'土田',color:'',hex:'#669900'}]
+  },
+};
+function normalizeRoute(o){
+  const out={maps:{}};
+  const maps=(o && o.maps) ? o.maps : (o||{});   // {maps:{...}} でも {car_w:...} でも受ける
+  ROUTE_MAPS.forEach(function(m){
+    const src=maps[m.key] ? maps[m.key] : {};
+    out.maps[m.key]={
+      combos:(Array.isArray(src.combos)?src.combos:[]).map(function(r){ return {sec:r.sec||'', company:r.company||'', combo:r.combo||'', color:r.color||'', hex:r.hex||''}; }),
+      detail:(Array.isArray(src.detail)?src.detail:[]).map(function(r){ return {company:r.company||'', kind:r.kind||'', no:r.no||'', driver:r.driver||'', color:r.color||'', hex:r.hex||''}; })
+    };
+  });
+  return out;
+}
+function defaultRoute(){ return normalizeRoute(DEFAULT_ROUTE); }
+function routeData(key){ if(!ROUTE_SAVED) ROUTE_SAVED=defaultRoute(); if(!ROUTE_SAVED.maps[key]) ROUTE_SAVED.maps[key]={combos:[],detail:[]}; return ROUTE_SAVED.maps[key]; }
 let MREG_ROW = null;               // __MREG__レコードの行番号
 let MREG_COMPANY = '*';            // 機械調書タブで表示中の会社（'*'=すべて）
 let NOTICES = [];                  // お知らせ・注意事項ボード [{row, ts, name, body}]（新しい順で描画）
@@ -2330,8 +2435,18 @@ async function loadData(){
       });
       // 未保存（__MREG__行が無い）なら埋め込みの既定データで初期表示
       if(MREG.length===0 && MREG_ROW==null){ MREG = defaultMreg(); }
+      // 路線図（厚別北マルチ）レコード（年度='__ROUTE__'）を分離
+      ROUTE_ROW = null; ROUTE_SAVED = null;
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__ROUTE__'){
+          ROUTE_ROW = s.row;
+          try{ const o = JSON.parse(s.note||'{}'); if(o && typeof o==='object') ROUTE_SAVED = normalizeRoute(o); }catch(e){}
+        }
+      });
+      if(!ROUTE_SAVED && ROUTE_ROW==null){ ROUTE_SAVED = defaultRoute(); }
+      if(!ROUTE_SAVED){ ROUTE_SAVED = defaultRoute(); }
       // 提出物タブには各マーカーを出さない
-      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__' && y !== '__HS__' && y !== '__DESIGN__' && y !== '__CAL__' && y !== '__CHECK__' && y !== '__MREG__'; });
+      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__' && y !== '__HS__' && y !== '__DESIGN__' && y !== '__CAL__' && y !== '__CHECK__' && y !== '__MREG__' && y !== '__ROUTE__'; });
     }
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
@@ -5485,6 +5600,7 @@ function openHaisetsuNewTab(){
 /*════════════════ タブ切替 ════════════════*/
 /*──────── 役割（権限）に応じたタブ表示・編集可否 ────────*/
 const TAB_RENDER = {
+  route:   function(){ renderRoute(); },
   home:    function(){ renderHome(); renderCalendar(); },
   alert:   function(){ renderMreg(); },
   map:     function(){ renderMap(); renderUnpan(); },
@@ -5533,6 +5649,114 @@ document.querySelectorAll('nav button').forEach(function(b){
 
 /*════════════════ ログイン ════════════════*/
 // ログイン状態の記憶キー（この端末のブラウザにのみ保存。再読み込みしても再入力不要にする）
+/*──────── 路線図（厚別北マルチ：地図ビューア＋編集可能な割当表） ────────*/
+let ROUTE_ZOOM = 1;   // 1=幅フィット
+function renderRoute(){ renderRouteSubnav(); renderRouteMap(); renderRouteTables(); }
+function curRouteMap(){ return ROUTE_MAPS.find(function(m){ return m.key===ROUTE_MAP; }) || ROUTE_MAPS[0]; }
+function renderRouteSubnav(){
+  const nav=document.getElementById('rv-subnav'); if(!nav) return;
+  nav.innerHTML=ROUTE_MAPS.map(function(m){
+    return '<button type="button" class="rv-subbtn'+(m.key===ROUTE_MAP?' active':'')+'" onclick="routeSwitch(\''+m.key+'\')">'+esc(m.label)+'</button>';
+  }).join('');
+}
+function routeSwitch(key){ ROUTE_MAP=key; ROUTE_ZOOM=1; renderRouteSubnav(); renderRouteMap(); renderRouteTables(); }
+function renderRouteMap(){
+  const img=document.getElementById('rv-img'); if(!img) return;
+  const m=curRouteMap();
+  if(img.getAttribute('data-key')!==m.key){
+    img.setAttribute('data-key', m.key);
+    img.style.display='block';
+    img.onerror=function(){ img.style.display='none'; };
+    img.onload=function(){ img.style.display='block'; applyRouteZoom(); };
+    img.src=m.img;
+  }
+  applyRouteZoom();
+}
+function applyRouteZoom(){
+  const img=document.getElementById('rv-img'); const wrap=document.getElementById('rv-wrap'); if(!img||!wrap) return;
+  const base=Math.max(100, wrap.clientWidth-2);
+  img.style.width=(base*ROUTE_ZOOM)+'px';
+  const lbl=document.getElementById('rv-zoom-label'); if(lbl) lbl.textContent='拡大 '+Math.round(ROUTE_ZOOM*100)+'%';
+}
+function routeZoom(dir){
+  if(dir===0) ROUTE_ZOOM=1;
+  else ROUTE_ZOOM=Math.min(6, Math.max(1, Math.round((ROUTE_ZOOM+(dir>0?0.5:-0.5))*10)/10));
+  applyRouteZoom();
+}
+function routeOpenImg(){ window.open(curRouteMap().img, '_blank', 'noopener'); }
+function renderRouteTables(){
+  const el=document.getElementById('rv-tables'); if(!el) return;
+  const m=curRouteMap(); const d=routeData(m.key); const ed=!READONLY;
+  let html='';
+  if(m.kind==='car'){
+    html+='<div class="rt-sec-title">路線種別ごとの組み合わせ'+(ed?'　<button class="btn sec sm edit-only" onclick="routeAdd(\''+m.key+'\',\'combos\')" style="margin-left:6px">＋ 行を追加</button>':'')+'</div>';
+    html+=comboTableHtml(m.key, d.combos, ed);
+  }
+  html+='<div class="rt-sec-title">機械・担当の明細'+(ed?'　<button class="btn sec sm edit-only" onclick="routeAdd(\''+m.key+'\',\'detail\')" style="margin-left:6px">＋ 行を追加</button>':'')+'</div>';
+  html+=detailTableHtml(m.key, d.detail, ed);
+  el.innerHTML=html;
+}
+function rtInput(key,table,idx,field,val,ph){
+  return '<input class="rt-in" value="'+esc(val||'')+'" placeholder="'+(ph||'')+'" oninput="routeSet(\''+key+'\',\''+table+'\','+idx+',\''+field+'\',this.value)">';
+}
+function rtDelCell(key,table,idx){ return '<td class="rt-del-cell"><button type="button" class="rt-x" onclick="routeDel(\''+key+'\',\''+table+'\','+idx+')">×</button></td>'; }
+// 線色セル：色見本（編集可）＋種別ラベル。地図の線の色と照らし合わせられます。
+function rtColorCell(key,table,idx,r,ed){
+  const hex=(r.hex && /^#?[0-9A-Fa-f]{6}$/.test(r.hex)) ? (r.hex[0]==='#'?r.hex:'#'+r.hex) : '#1a73e8';
+  if(ed){
+    return '<td class="rt-color"><input type="color" class="rt-sw" value="'+hex+'" oninput="routeSet(\''+key+'\',\''+table+'\','+idx+',\'hex\',this.value)" title="線色">'
+      + '<input class="rt-in rt-clabel" value="'+esc(r.color||'')+'" placeholder="種別" oninput="routeSet(\''+key+'\',\''+table+'\','+idx+',\'color\',this.value)"></td>';
+  }
+  return '<td class="rt-color"><span class="rt-chip" style="background:'+hex+'"></span>'+esc(r.color||'')+'</td>';
+}
+function comboTableHtml(key, rows, ed){
+  const head='<tr><th style="width:110px">路線種別</th><th style="width:150px">会社名</th><th>機械№・組合せ</th><th style="width:'+(ed?'120px':'110px')+'">線色</th>'+(ed?'<th style="width:40px"></th>':'')+'</tr>';
+  if(!rows.length) return '<div class="rt-scroll"><table class="rt-tbl"><thead>'+head+'</thead><tbody><tr><td colspan="'+(ed?5:4)+'" class="empty" style="border:none">行がありません。</td></tr></tbody></table></div>';
+  const body=rows.map(function(r,i){
+    if(ed) return '<tr><td>'+rtInput(key,'combos',i,'sec',r.sec,'4車線級 等')+'</td><td>'+rtInput(key,'combos',i,'company',r.company)+'</td><td>'+rtInput(key,'combos',i,'combo',r.combo,'G 80-27　TS 17-83')+'</td>'+rtColorCell(key,'combos',i,r,ed)+rtDelCell(key,'combos',i)+'</tr>';
+    return '<tr><td class="c-sec">'+esc(r.sec||'')+'</td><td>'+esc(r.company||'')+'</td><td>'+esc(r.combo||'')+'</td>'+rtColorCell(key,'combos',i,r,ed)+'</tr>';
+  }).join('');
+  return '<div class="rt-scroll"><table class="rt-tbl"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>';
+}
+function detailTableHtml(key, rows, ed){
+  const head='<tr><th style="width:160px">会社名</th><th style="width:76px">機種</th><th style="width:84px">車号(機械№)</th><th>運転手</th><th style="width:'+(ed?'120px':'110px')+'">線色</th>'+(ed?'<th style="width:40px"></th>':'')+'</tr>';
+  if(!rows.length) return '<div class="rt-scroll"><table class="rt-tbl"><thead>'+head+'</thead><tbody><tr><td colspan="'+(ed?6:5)+'" class="empty" style="border:none">行がありません。</td></tr></tbody></table></div>';
+  const body=rows.map(function(r,i){
+    if(ed) return '<tr><td>'+rtInput(key,'detail',i,'company',r.company)+'</td><td>'+rtInput(key,'detail',i,'kind',r.kind,'業TS 等')+'</td><td>'+rtInput(key,'detail',i,'no',r.no,'80-27')+'</td><td>'+rtInput(key,'detail',i,'driver',r.driver)+'</td>'+rtColorCell(key,'detail',i,r,ed)+rtDelCell(key,'detail',i)+'</tr>';
+    return '<tr><td>'+esc(r.company||'')+'</td><td>'+esc(r.kind||'')+'</td><td>'+esc(r.no||'')+'</td><td>'+esc(r.driver||'')+'</td>'+rtColorCell(key,'detail',i,r,ed)+'</tr>';
+  }).join('');
+  return '<div class="rt-scroll"><table class="rt-tbl"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>';
+}
+function routeSet(key,table,idx,field,val){
+  if(READONLY) return;
+  const d=routeData(key); if(!d[table]||!d[table][idx]) return;
+  d[table][idx][field]=val; routeSaveDebounced();
+}
+function routeAdd(key,table){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  const d=routeData(key);
+  if(table==='combos') d.combos.push({sec:'',company:'',combo:'',color:''});
+  else d.detail.push({company:'',kind:'',no:'',driver:'',color:''});
+  renderRouteTables(); routeSave(true);
+}
+function routeDel(key,table,idx){
+  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+  if(!confirm('この行を削除します。よろしいですか？')) return;
+  const d=routeData(key); d[table].splice(idx,1);
+  renderRouteTables(); routeSave(true);
+}
+let _routeSaveTimer=null;
+function routeSaveDebounced(){ if(_routeSaveTimer) clearTimeout(_routeSaveTimer); _routeSaveTimer=setTimeout(function(){ routeSave(false); },800); }
+async function routeSave(showToast){
+  if(READONLY) return;
+  if(!ROUTE_SAVED) ROUTE_SAVED=defaultRoute();
+  const sub={year:'__ROUTE__', company:'路線図', doc:'data', status:'', date:'', link:'', note:JSON.stringify(ROUTE_SAVED)};
+  if(ROUTE_ROW!=null) sub.row=ROUTE_ROW;
+  const res=await callApi({action:'saveSub', sub:sub});
+  if(res && res.ok){ if(!offline && res.row!=null) ROUTE_ROW=res.row; if(showToast) toast(offline?'保存しました（オフライン：この端末のみ）':'路線図の割当を保存しました'); }
+  else{ toast('路線図の保存に失敗しました'+(res&&res.error?'：'+res.error:'')); }
+}
+
 /*──────── アカウント設定（管理者のみ・パスワードはサーバー側に保存） ────────*/
 let ACCOUNTS = [];          // 管理者が編集するアカウント一覧（パスワードは含まない）
 let editingAcctId = null;
