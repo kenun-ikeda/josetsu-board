@@ -199,11 +199,11 @@
   .rt-sec-title{font-weight:800;color:#1a3d7c;margin:14px 0 4px;font-size:13.5px}
   .rt-sec-title:first-child{margin-top:2px}
   .rv-split{display:flex;gap:14px;align-items:flex-start}
-  .rv-maps{flex:0 0 45%;position:sticky;top:10px}
+  .rv-maps{flex:0 0 45%;max-width:45%;min-width:0;position:sticky;top:10px}
   .rv-lists{flex:1 1 55%;min-width:0}
   @media(max-width:900px){
     .rv-split{flex-direction:column;gap:10px}
-    .rv-maps{position:sticky;top:0;flex-basis:auto;width:100%;z-index:6;background:var(--bg,#eef2f7);padding-top:4px}
+    .rv-maps{position:sticky;top:0;flex-basis:auto;width:100%;max-width:none;z-index:6;background:var(--bg,#eef2f7);padding-top:4px}
     .rv-lists{width:100%}
     .rv-maps .rv-wrap{height:46vh}
   }
@@ -5781,12 +5781,12 @@ function routeOpenImg(){
   else if(d.pdfId) mapHtml='<iframe class="r2map" src="https://drive.google.com/file/d/'+d.pdfId+'/preview"></iframe>';
   else mapHtml='<img class="r2img" src="'+esc(abs(m.img))+'" alt="路線図">';
   const legend=routeLegendHtml(m.key);
-  const css='*{box-sizing:border-box}body{font-family:system-ui,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;margin:0;padding:14px;color:#1a2b3c}h2{margin:0 0 10px;font-size:19px}h3{color:#1a3d7c;margin:14px 0 4px;font-size:15px}'
-    +'.r2wrap{display:flex;gap:16px;align-items:flex-start}.r2mapbox{flex:0 0 52%;position:sticky;top:10px}.r2leg{flex:1 1 48%;min-width:0}'
-    +'.r2img{width:100%;height:auto;display:block;border:1px solid #cdd6e0;border-radius:8px}.r2map{width:100%;height:84vh;border:1px solid #cdd6e0;border-radius:8px}'
-    +'table.rt-tbl{width:100%;border-collapse:collapse;margin:4px 0;font-size:13px}table.rt-tbl th,table.rt-tbl td{border:1px solid #cdd6e0;padding:6px 8px;text-align:left;vertical-align:middle}table.rt-tbl th{background:#f3f6fb;color:#1a4b8e;font-size:12px}'
-    +'.rt-chip{display:inline-block;width:26px;height:13px;border-radius:3px;border:1px solid rgba(0,0,0,.25);vertical-align:middle;margin-right:6px}.rt-color{white-space:nowrap}.rt-scroll{overflow-x:auto}.empty{color:#889;padding:6px}'
-    +'@media print{.r2mapbox{position:static}.r2map{height:auto;min-height:60vh}}@media(max-width:800px){.r2wrap{flex-direction:column}.r2mapbox{position:static;flex-basis:auto;width:100%}}';
+  const css='*{box-sizing:border-box}body{font-family:system-ui,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;margin:0;padding:8px;color:#1a2b3c}h2{margin:0 0 6px;font-size:16px}h3{color:#1a3d7c;margin:9px 0 3px;font-size:12px}.r2leg h3:first-child{margin-top:0}'
+    +'.r2wrap{display:flex;gap:10px;align-items:flex-start}.r2mapbox{flex:0 0 69%;max-width:69%;min-width:0;position:sticky;top:8px}.r2leg{flex:1 1 31%;min-width:0}'
+    +'.r2img{width:100%;height:auto;display:block;border:1px solid #cdd6e0;border-radius:6px}.r2map{width:100%;height:93vh;border:1px solid #cdd6e0;border-radius:6px}'
+    +'table.rt-tbl{width:100%;border-collapse:collapse;margin:2px 0;font-size:11px;table-layout:auto}table.rt-tbl th,table.rt-tbl td{border:1px solid #cdd6e0;padding:3px 5px;text-align:left;vertical-align:middle}table.rt-tbl th{background:#f3f6fb;color:#1a4b8e;font-size:10.5px;width:auto!important}'
+    +'.rt-chip{display:inline-block;width:20px;height:10px;border-radius:2px;border:1px solid rgba(0,0,0,.25);vertical-align:middle;margin-right:4px}.rt-color{white-space:nowrap}.rt-scroll{overflow-x:auto}.empty{color:#889;padding:6px}'
+    +'@media print{body{padding:0}.r2mapbox{position:static}.r2map{height:auto;min-height:60vh}}@media(max-width:800px){.r2wrap{flex-direction:column}.r2mapbox{position:static;flex-basis:auto;max-width:none;width:100%}}';
   const html='<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>路線図 '+esc(m.label)+'<\/title><style>'+css+'<\/style><\/head>'
     +'<body><h2>🗺 路線図 — '+esc(m.label)+'</h2><div class="r2wrap"><div class="r2mapbox">'+mapHtml+'</div><div class="r2leg">'+legend+'</div></div><\/body><\/html>';
   const w=window.open('', '_blank');
