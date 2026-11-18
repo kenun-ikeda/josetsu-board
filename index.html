@@ -137,8 +137,15 @@
   .mreg-in{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;background:#fff}
   .mreg-in.cat{text-align:center}
   .mreg-in:focus{outline:none;border-color:var(--accent)}
-  .mreg-del-cell{text-align:center}
-  .mreg-x{border:1px solid var(--line);background:#fff;color:var(--bad);border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1}
+  table.mreg-tbl th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+  table.mreg-tbl th.sortable:hover{background:#e6eef8}
+  .mreg-arrow{font-size:10px;color:#9aa7b5;margin-left:3px}
+  table.mreg-tbl th.sortable.on .mreg-arrow{color:var(--accent)}
+  th.mreg-selcol,td.mreg-selcell{width:34px;text-align:center}
+  td.mreg-selcell input,th.mreg-selcol input{width:17px;height:17px;cursor:pointer}
+  .mreg-gpscell{text-align:center}
+  .mreg-gpscell input{width:17px;height:17px;cursor:pointer}
+  .mreg-in.mreg-term-missing,td.mreg-term-missing{background:#ffd6e5}
   .mreg-x:hover{background:#fdecea}
   .role-badge{background:#eaf2ff;color:#1a4b8e;border:1px solid #bcd3f5;border-radius:999px;padding:3px 11px;font-size:11.5px;font-weight:800;margin-right:8px;white-space:nowrap}
   table.acct-tbl{width:100%;border-collapse:collapse}
@@ -842,9 +849,10 @@
           <h2 style="margin:0">機械調書</h2>
           <div class="spacer"></div>
           <span class="pill" id="mreg-total"></span>
+          <button class="btn sec sm" id="mreg-del-btn" onclick="mregDeleteSelected()" style="display:none">🗑 選択を削除</button>
           <button class="btn sec sm edit-only" onclick="mregAddRow()">＋ 機械を追加</button>
         </div>
-        <p class="hint">所有企業ごとに機械の一覧を表示します（「すべて」で全社まとめて表示）。車検期限が切れている行は赤、満了が近い行（残り60日以内）は黄色で表示されます。編集モードでは各欄を直接入力でき、変更は自動で保存されます。車検期限は「R10年10月22日」のように和暦で入力してください。</p>
+        <p class="hint">所有企業ごとに機械の一覧を表示します（「すべて」で全社まとめて表示）。車検期限が切れている行は赤、満了が近い行（残り60日以内）は黄色で表示されます。編集モードでは各欄を直接入力でき、変更は自動で保存されます。車検期限は「R10年10月22日」のように和暦で入力してください。GPS端末を載せる機械は「GPS端末」にチェックし、端末番号を入力してください（未入力はピンク色）。見出しをクリックすると昇順／降順で並び替えできます。削除は管理者のみ：左端のチェックを入れて「選択を削除」。</p><datalist id="mreg-term-list"></datalist>
         <div class="mreg-subnav" id="mreg-subnav"></div>
       </div>
       <div class="card">
@@ -1948,7 +1956,9 @@ function normalizeMreg(arr){
       name:  (m.name||m.n||''),
       regno: (m.regno||m.r||''),
       expire:(m.expire||m.e||''),
-      company:(m.company||m.co||'')
+      company:(m.company||m.co||''),
+      gps:   (m.gps===true || m.gps==='true'),
+      termno:(m.termno!=null?String(m.termno):'')
     };
   });
 }
@@ -2035,6 +2045,9 @@ function defaultRoute(){ return normalizeRoute(DEFAULT_ROUTE); }
 function routeData(key){ if(!ROUTE_SAVED) ROUTE_SAVED=defaultRoute(); if(!ROUTE_SAVED.maps[key]) ROUTE_SAVED.maps[key]={pdfId:'',combos:[],detail:[]}; return ROUTE_SAVED.maps[key]; }
 let MREG_ROW = null;               // __MREG__レコードの行番号
 let MREG_COMPANY = '*';            // 機械調書タブで表示中の会社（'*'=すべて）
+let MREG_SORT = {field:'', dir:1}; // 機械調書の並び替え（field空=既定順）
+// GPS端末番号の候補（札幌市貸与0523〜0560／厚別区北地区01〜09）
+const MREG_TERMS = (function(){ var a=[]; for(var i=523;i<=560;i++){ a.push('札幌市貸与'+('000'+i).slice(-4)); } for(var j=1;j<=9;j++){ a.push('厚別区北地区'+('0'+j).slice(-2)); } return a; })();
 let NOTICES = [];                  // お知らせ・注意事項ボード [{row, ts, name, body}]（新しい順で描画）
 let MAPPOINTS = [];                // 排雪マップの地点 [{row,name,planStart,planEnd,doneDate,manager,x,y,note,type,color,points,status}]
 let addingPoint = false;           // 地点追加モード（地図クリックで配置）
@@ -4049,10 +4062,17 @@ function renderAlert(){ renderMreg(); }  // 旧「車検アラート」→「機
 /*──────── 機械調書（企業別一覧・車検切れ表示・編集可） ────────*/
 function renderMreg(){
   renderMregSubnav();
+  // 端末番号の候補リスト
+  const dl=document.getElementById('mreg-term-list');
+  if(dl && !dl.childNodes.length) dl.innerHTML = MREG_TERMS.map(function(t){ return '<option value="'+esc(t)+'">'; }).join('');
   renderMregBody();
   const exp = MREG.filter(function(m){ return mregStatus(m.expire)==='exp'; }).length;
+  const gps = MREG.filter(function(m){ return m.gps; }).length;
   const t = document.getElementById('mreg-total');
-  if(t) t.textContent = '全'+MREG.length+'台'+(exp? ' ／ 車検切れ '+exp+'台':'');
+  if(t) t.textContent = '全'+MREG.length+'台'+(exp? ' ／ 車検切れ '+exp+'台':'')+(gps? ' ／ GPS '+gps+'台':'');
+  // 削除ボタンは管理者＆編集時のみ
+  const db=document.getElementById('mreg-del-btn');
+  if(db) db.style.display = (isAdmin() && !READONLY) ? '' : 'none';
 }
 function mregSwitchCompany(key){ MREG_COMPANY = key; renderMregSubnav(); renderMregBody(); }
 function renderMregSubnav(){
@@ -4069,19 +4089,56 @@ function renderMregSubnav(){
       +'" onclick="mregSwitchCompany(\''+String(b.key).replace(/'/g,"\\'")+'\')">'+b.label+'</button>';
   }).join('');
 }
+function mregArrow(field){
+  if(MREG_SORT.field!==field) return '<span class="mreg-arrow">⇅</span>';
+  return '<span class="mreg-arrow">'+(MREG_SORT.dir>0?'▲':'▼')+'</span>';
+}
+function mregTh(field, label, cls){
+  const on = (MREG_SORT.field===field) ? ' on' : '';
+  return '<th class="sortable'+(cls?' '+cls:'')+on+'" onclick="mregSort(\''+field+'\')">'+label+mregArrow(field)+'</th>';
+}
 function renderMregHead(all, editable){
   const h = document.getElementById('mreg-head'); if(!h) return;
-  const cols = '<th class="cat">区分</th><th>機械名</th><th>登録番号</th><th class="exp">車検期限</th>'
-    + (all?'<th>所有企業</th>':'') + '<th class="stat">状態</th>' + (editable?'<th class="del"></th>':'');
+  const admin = isAdmin();
+  let cols = '';
+  if(editable && admin) cols += '<th class="mreg-selcol"><input type="checkbox" title="全選択" onclick="mregSelAll(this)"></th>';
+  cols += mregTh('cat','区分','cat') + mregTh('name','機械名') + mregTh('regno','登録番号') + mregTh('expire','車検期限','exp')
+    + (all? mregTh('company','所有企業') : '')
+    + mregTh('gps','GPS端末') + mregTh('termno','端末番号') + mregTh('status','状態','stat');
   h.innerHTML = '<tr>'+cols+'</tr>';
+}
+function mregSortVal(m, field){
+  switch(field){
+    case 'cat': { var n=parseInt(m.cat,10); return isNaN(n)?99999:n; }
+    case 'expire': { var d=warekiToDate(m.expire); return d?d.getTime():99999999999999; }
+    case 'status': { var o={exp:0,soon:1,ok:2,none:3}; return o[mregStatus(m.expire)]; }
+    case 'gps': return m.gps?0:1;
+    default: return String(m[field]||'');
+  }
+}
+function sortMregList(list){
+  if(!MREG_SORT.field) return list;
+  const f=MREG_SORT.field, dir=MREG_SORT.dir;
+  return list.slice().sort(function(a,b){
+    var va=mregSortVal(a,f), vb=mregSortVal(b,f);
+    if(typeof va==='string' || typeof vb==='string') return String(va).localeCompare(String(vb),'ja')*dir;
+    return (va-vb)*dir;
+  });
+}
+function mregSort(field){
+  if(MREG_SORT.field===field){ MREG_SORT.dir = -MREG_SORT.dir; }
+  else { MREG_SORT.field=field; MREG_SORT.dir=1; }
+  renderMregBody();
 }
 function renderMregBody(){
   const tb = document.getElementById('mreg-body'); if(!tb) return;
   const all = (MREG_COMPANY==='*');
   const editable = !READONLY;
+  const admin = isAdmin();
   renderMregHead(all, editable);
-  const list = all ? MREG.slice() : MREG.filter(function(m){ return m.company===MREG_COMPANY; });
-  const span = (all?5:4) + 1 + (editable?1:0);
+  let list = all ? MREG.slice() : MREG.filter(function(m){ return m.company===MREG_COMPANY; });
+  list = sortMregList(list);
+  const span = (editable&&admin?1:0) + 4 + (all?1:0) + 2 + 1;
   if(list.length===0){
     tb.innerHTML = '<tr><td colspan="'+span+'" class="empty" style="border:none">機械がありません。'
       + (editable? '「＋ 機械を追加」から登録してください。':'') + '</td></tr>';
@@ -4092,16 +4149,19 @@ function renderMregBody(){
     const rowcls = (st==='exp'||st==='soon') ? st : '';
     const west = warekiToWestern(m.expire);
     const statCell = '<td class="mreg-stat">'+tagHtml(st)+(west? '<div class="mreg-west">'+west+'</div>':'')+'</td>';
+    const missing = (m.gps && !String(m.termno||'').trim());
     if(editable){
       const id = esc(m.id);
       return '<tr class="'+rowcls+'" data-id="'+id+'">'
+        + (admin? '<td class="mreg-selcell"><input type="checkbox" class="mreg-sel" data-id="'+id+'"></td>':'')
         + '<td><input class="mreg-in cat" value="'+esc(m.cat)+'" oninput="mregSet(\''+id+'\',\'cat\',this.value)"></td>'
         + '<td><input class="mreg-in" value="'+esc(m.name)+'" oninput="mregSet(\''+id+'\',\'name\',this.value)"></td>'
         + '<td><input class="mreg-in" value="'+esc(m.regno)+'" oninput="mregSet(\''+id+'\',\'regno\',this.value)"></td>'
         + '<td><input class="mreg-in exp" value="'+esc(m.expire)+'" placeholder="R10年10月22日" onchange="mregExpireChange(\''+id+'\',this.value)" oninput="mregSet(\''+id+'\',\'expire\',this.value)"></td>'
         + (all? '<td><input class="mreg-in" value="'+esc(m.company)+'" oninput="mregSet(\''+id+'\',\'company\',this.value)"></td>':'')
+        + '<td class="mreg-gpscell"><input type="checkbox" '+(m.gps?'checked':'')+' onchange="mregGps(\''+id+'\',this.checked)"></td>'
+        + '<td><input class="mreg-in mreg-term'+(missing?' mreg-term-missing':'')+'" list="mreg-term-list" value="'+esc(m.termno||'')+'" placeholder="端末番号" oninput="mregTerm(\''+id+'\',this.value,this)"></td>'
         + statCell
-        + '<td class="mreg-del-cell"><button type="button" class="mreg-x" title="この機械を削除" onclick="mregDelRow(\''+id+'\')">×</button></td>'
         + '</tr>';
     }
     return '<tr class="'+rowcls+'">'
@@ -4110,6 +4170,8 @@ function renderMregBody(){
       + '<td class="mono">'+esc(m.regno||'—')+'</td>'
       + '<td class="mono">'+esc(m.expire||'—')+'</td>'
       + (all? '<td>'+esc(m.company||'')+'</td>':'')
+      + '<td class="mreg-gpscell">'+(m.gps?'✓':'')+'</td>'
+      + '<td class="mono'+(missing?' mreg-term-missing':'')+'">'+esc(m.termno||(m.gps?'未設定':'—'))+'</td>'
       + statCell
       + '</tr>';
   }).join('');
@@ -4141,12 +4203,30 @@ function mregAddRow(){
     if(tr){ const inp = tr.querySelector('input'); if(inp) inp.focus(); tr.scrollIntoView({block:'center'}); }
   }, 40);
 }
-function mregDelRow(id){
-  if(READONLY){ toast('閲覧モードのため編集できません'); return; }
+function mregGps(id, checked){
+  if(READONLY) return;
   const m = mregFind(id); if(!m) return;
-  const label = (m.name||'') + (m.regno? '（'+m.regno+'）':'');
-  if(!confirm('この機械を削除します。よろしいですか？\n'+label)) return;
-  MREG = MREG.filter(function(x){ return x.id!==id; });
+  m.gps = !!checked;
+  renderMregBody();   // 端末番号のピンク表示・合計を更新
+  renderMreg();
+  mregSaveDebounced();
+}
+function mregTerm(id, val, el){
+  if(READONLY) return;
+  const m = mregFind(id); if(!m) return;
+  m.termno = val;
+  if(el){ const miss = (m.gps && !String(val||'').trim()); el.classList.toggle('mreg-term-missing', miss); }
+  mregSaveDebounced();
+}
+function mregSelAll(cb){
+  Array.prototype.forEach.call(document.querySelectorAll('#mreg-body .mreg-sel'), function(x){ x.checked = cb.checked; });
+}
+function mregDeleteSelected(){
+  if(READONLY || !isAdmin()){ toast('管理者のみ削除できます'); return; }
+  const ids = Array.prototype.map.call(document.querySelectorAll('#mreg-body .mreg-sel:checked'), function(x){ return x.getAttribute('data-id'); });
+  if(!ids.length){ toast('削除する行の左端にチェックを入れてください'); return; }
+  if(!confirm('チェックした '+ids.length+' 件を削除します。よろしいですか？')) return;
+  MREG = MREG.filter(function(m){ return ids.indexOf(m.id)<0; });
   renderMreg();
   renderSummary();
   mregSave(true);
