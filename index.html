@@ -162,6 +162,11 @@
   .gps-comp{color:#5a6673;font-size:12px}
   .gps-kindcol,.gps-statecol{white-space:nowrap;text-align:center;color:var(--muted)}
   .gps-asgcol{white-space:normal}
+  .gps-stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .gps-chip{background:#eef2f7;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;color:#2a3a49}
+  .gps-chip.ok{background:#e7f6ec;border-color:#b6e0c3;color:#0f5c33}
+  .gps-chip.warn{background:#fff0d9;border-color:#f0d6a8;color:#9a5b00}
+  .gps-chip b{font-weight:800}
   .role-badge{background:#eaf2ff;color:#1a4b8e;border:1px solid #bcd3f5;border-radius:999px;padding:3px 11px;font-size:11.5px;font-weight:800;margin-right:8px;white-space:nowrap}
   table.acct-tbl{width:100%;border-collapse:collapse}
   table.acct-tbl th,table.acct-tbl td{border:1px solid var(--line);padding:8px 10px;font-size:13px;text-align:left;vertical-align:middle}
@@ -1528,6 +1533,7 @@
           <span class="pill" id="gps-master-total"></span>
         </div>
         <p class="hint">全車に搭載するGPS端末（札幌市貸与0523〜0560＝38台／厚別区北地区01〜09＝9台　計47台）の管理台帳です。<b>機械調書</b>で「GPS端末」にチェックし端末番号を入れた機械は、この台帳に自動で反映されます（連動）。機械調書に載らない<b>官貸車</b>は下の表で登録してください。1つの端末が2台に付いている場合は <b class="gps-dupwarn">⚠重複</b> として赤く表示します。編集は管理者のみです。</p>
+        <div class="gps-stats" id="gps-stats"></div>
       </div>
       <div class="card">
         <h3 style="margin:.1em 0 .5em">端末一覧（全47台）</h3>
@@ -4357,7 +4363,8 @@ function gpsKanStateHtml(k){
 // デモ用サンプル割当（本番では実データのみ）
 function seedDemoGps(){
   try{
-    var terms=['札幌市貸与0523','札幌市貸与0524','札幌市貸与0525','厚別区北地区01'], c=0;
+    // 端末番号あり3台＋未設定2台（割り振り前の状態をデモで表現）
+    var terms=['札幌市貸与0523','札幌市貸与0524','厚別区北地区01','',''], c=0;
     for(var i=0;i<MREG.length && c<terms.length;i++){ if(!MREG[i].gps){ MREG[i].gps=true; MREG[i].termno=terms[c]; c++; } }
   }catch(e){}
   if(!GPSTERM.length){
@@ -4377,9 +4384,24 @@ function renderGpsterm(){
   if(dlc) dlc.innerHTML = companyList().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
   renderGpstermMaster();
   renderGpstermKan();
+  renderGpsStats();
   var admEdit = (isAdmin() && !READONLY);
   var db=document.getElementById('gps-del-btn'); if(db) db.style.display = admEdit ? '' : 'none';
   var ab=document.getElementById('gps-add-btn'); if(ab) ab.style.display = admEdit ? '' : 'none';
+}
+// 割り振り前の状態：機械調書のGPSチェック台数（うち端末番号あり／未設定）と官貸車台数
+function renderGpsStats(){
+  var st=document.getElementById('gps-stats'); if(!st) return;
+  var gps = MREG.filter(function(m){ return m.gps; }).length;
+  var withT = MREG.filter(function(m){ return m.gps && String(m.termno||'').trim(); }).length;
+  var noT = gps - withT;
+  var kan = GPSTERM.length;
+  var kanT = GPSTERM.filter(function(k){ return String(k.termno||'').trim(); }).length;
+  st.innerHTML =
+      '<span class="gps-chip"><b>機械調書のGPSチェック</b> '+gps+'台</span>'
+    + '<span class="gps-chip ok">端末番号あり '+withT+'台</span>'
+    + '<span class="gps-chip '+(noT>0?'warn':'ok')+'">端末未設定 '+noT+'台</span>'
+    + '<span class="gps-chip"><b>官貸車</b> '+kan+'台'+(kan!==kanT?'（端末あり '+kanT+'）':'')+'</span>';
 }
 function renderGpstermMaster(){
   var tb=document.getElementById('gps-master-body'); if(!tb) return;
@@ -4458,6 +4480,7 @@ function gpsKanSet(id, field, val, el){
     var tr=el.closest('tr');
     if(tr){ var kc=tr.querySelector('.gps-kindcol'); if(kc) kc.textContent=termKind(val); var st=tr.querySelector('.gps-statecol'); if(st) st.innerHTML=gpsKanStateHtml(k); if(gpsAssignments(String(val||'').trim()).length>1) tr.classList.add('gps-dup'); else tr.classList.remove('gps-dup'); }
     renderGpstermMaster();  // 上の一覧（別テーブル）を更新：入力中フォーカスに影響なし
+    renderGpsStats();       // 官貸車の端末あり台数を更新
   }
   gpsKanSaveDebounced();
 }
