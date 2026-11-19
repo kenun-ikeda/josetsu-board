@@ -147,6 +147,21 @@
   .mreg-gpscell input{width:17px;height:17px;cursor:pointer}
   .mreg-in.mreg-term-missing,td.mreg-term-missing{background:#ffd6e5}
   .mreg-x:hover{background:#fdecea}
+  /* ---------- GPS端末タブ ---------- */
+  .gps-tbl td,.gps-tbl th{vertical-align:middle}
+  .gps-tno{white-space:nowrap;font-weight:600}
+  .gps-empty,.gps-off{color:#9aa7b4}
+  .gps-on{color:#1a7f37;font-weight:700}
+  tr.gps-free td{background:#fafbfc}
+  tr.gps-dup td{background:#ffe3e3}
+  .gps-dupwarn{color:#c0271c;font-weight:800}
+  .gps-asg{padding:1px 0;white-space:normal}
+  .gps-srctag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;margin-right:5px;font-weight:700}
+  .gps-srctag.mreg{background:#e3f0ff;color:#1558b0}
+  .gps-srctag.kan{background:#fff0d9;color:#9a5b00}
+  .gps-comp{color:#5a6673;font-size:12px}
+  .gps-kindcol,.gps-statecol{white-space:nowrap;text-align:center;color:var(--muted)}
+  .gps-asgcol{white-space:normal}
   .role-badge{background:#eaf2ff;color:#1a4b8e;border:1px solid #bcd3f5;border-radius:999px;padding:3px 11px;font-size:11.5px;font-weight:800;margin-right:8px;white-space:nowrap}
   table.acct-tbl{width:100%;border-collapse:collapse}
   table.acct-tbl th,table.acct-tbl td{border:1px solid var(--line);padding:8px 10px;font-size:13px;text-align:left;vertical-align:middle}
@@ -795,6 +810,7 @@
       <button data-tab="design">設計書</button>
       <button data-tab="aiphone">📞 AI電話対応</button>
       <button data-tab="route">🗺 路線図</button>
+      <button data-tab="gpsterm">📡 GPS端末</button>
       <button data-tab="accounts" class="nav-admin" style="display:none">⚙ 設定</button>
     </nav>
 
@@ -1503,6 +1519,43 @@
       </div>
     </section>
 
+    <!-- GPS端末（全47端末の台帳＋官貸車） -->
+    <section class="tab" id="tab-gpsterm">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">📡 GPS端末</h2>
+          <div class="spacer"></div>
+          <span class="pill" id="gps-master-total"></span>
+        </div>
+        <p class="hint">全車に搭載するGPS端末（札幌市貸与0523〜0560＝38台／厚別区北地区01〜09＝9台　計47台）の管理台帳です。<b>機械調書</b>で「GPS端末」にチェックし端末番号を入れた機械は、この台帳に自動で反映されます（連動）。機械調書に載らない<b>官貸車</b>は下の表で登録してください。1つの端末が2台に付いている場合は <b class="gps-dupwarn">⚠重複</b> として赤く表示します。編集は管理者のみです。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin:.1em 0 .5em">端末一覧（全47台）</h3>
+        <div class="tbl-wrap">
+          <table class="mreg-tbl gps-tbl">
+            <thead><tr><th>端末番号</th><th>区分</th><th>状態</th><th>装着機械・運転車両</th></tr></thead>
+            <tbody id="gps-master-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <h3 style="margin:0">官貸車の登録（機械調書に載らない市貸与車）</h3>
+          <div class="spacer"></div>
+          <button class="btn sec sm" id="gps-del-btn" onclick="gpsKanDelSelected()" style="display:none">🗑 選択を削除</button>
+          <button class="btn sec sm" id="gps-add-btn" onclick="gpsKanAdd()" style="display:none">＋ 官貸車を追加</button>
+        </div>
+        <p class="hint">官貸車（市から借りているグレーダー・小型ロータリー等）の端末番号・機種・車号・企業名を登録します。登録した端末は上の一覧にも反映されます。端末番号が未入力の行はピンク色になります。</p>
+        <datalist id="gps-term-list"></datalist><datalist id="gps-kind-list"></datalist><datalist id="gps-comp-list"></datalist>
+        <div class="tbl-wrap">
+          <table class="mreg-tbl gps-tbl">
+            <thead id="gps-kan-head"></thead>
+            <tbody id="gps-kan-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- ACCOUNTS（アカウント設定：管理者のみ） -->
     <section class="tab" id="tab-accounts">
       <div class="card">
@@ -1731,7 +1784,7 @@ const ROLE_TABS = {
   admin:    {_default:'edit'},
   kitaedit: {_default:'view', home:'edit', address:'edit', report:'edit', haisetsu:'edit', check:'edit', accounts:'hidden'},
   kitaview: {_default:'hidden', haisetsu:'view', accounts:'hidden'},
-  center:   {_default:'hidden', home:'edit', alert:'edit', map:'edit', address:'edit', report:'edit', shift:'view', contact:'view', sites:'view', design:'view', aiphone:'view', route:'view', haisetsu:'hidden', check:'hidden', accounts:'hidden'},
+  center:   {_default:'hidden', home:'edit', alert:'edit', map:'edit', address:'edit', report:'edit', shift:'view', contact:'view', sites:'view', design:'view', aiphone:'view', route:'view', gpsterm:'view', haisetsu:'hidden', check:'hidden', accounts:'hidden'},
   company:  {_default:'hidden', alert:'edit', accounts:'hidden'},
   legacyview:{_default:'view', accounts:'hidden'}
 };
@@ -1752,6 +1805,7 @@ const DEMO = GAS_URL.indexOf('PASTE') >= 0;         // true ならGAS無しで�
 const HAISETSU_SRC = 'haisetsu.html';               // 排雪シフト埋め込み元（デモ版では haisetsu_demo.html に差し替え）
 
 /*════════════════ 定数 ════════════════*/
+const JV_NAME = '北日本重機ほか7社道路維持除雪共同企業体';  // 企業体の正式名称（ヘッダー表示等）
 const CATEGORIES = ["除雪トラック","ロータリ除雪車","除雪ドーザ","小型ロータリ","タイヤショベル","歩道除雪車","ダンプトラック","その他"];
 const OWNERSHIP  = ["所有","リース","レンタル","市貸与"];
 // 排雪マップ エリア用カラーパレット
@@ -2046,8 +2100,24 @@ function routeData(key){ if(!ROUTE_SAVED) ROUTE_SAVED=defaultRoute(); if(!ROUTE_
 let MREG_ROW = null;               // __MREG__レコードの行番号
 let MREG_COMPANY = '*';            // 機械調書タブで表示中の会社（'*'=すべて）
 let MREG_SORT = {field:'', dir:1}; // 機械調書の並び替え（field空=既定順）
-// GPS端末番号の候補（札幌市貸与0523〜0560／厚別区北地区01〜09）
+// GPS端末番号の候補（札幌市貸与0523〜0560＝38台／厚別区北地区01〜09＝9台　計47台）
 const MREG_TERMS = (function(){ var a=[]; for(var i=523;i<=560;i++){ a.push('札幌市貸与'+('000'+i).slice(-4)); } for(var j=1;j<=9;j++){ a.push('厚別区北地区'+('0'+j).slice(-2)); } return a; })();
+// GPS端末タブ：官貸車（機械調書に載らない市貸与車）[{id,termno,kind,carno,company}]（__GPSTERM__マーカーで全員共有保存）
+let GPSTERM = [];
+let GPSTERM_ROW = null;             // __GPSTERM__レコードの行番号
+const GPSTERM_KINDS = ['G','TS','SR','HR','ロータリ','バックホウ','除雪ドーザ','その他'];  // 官貸車の機種候補
+function termKind(t){ t=String(t||''); if(t.indexOf('札幌市貸与')===0) return '札幌市貸与'; if(t.indexOf('厚別区北地区')===0) return '厚別区北地区'; return t?'その他':''; }
+function normalizeGpsterm(arr){
+  return (arr||[]).map(function(k,i){
+    return {
+      id:     k.id || ('g'+(i+1)+'_'+Math.random().toString(36).slice(2,6)),
+      termno: (k.termno!=null?String(k.termno):''),
+      kind:   (k.kind||''),
+      carno:  (k.carno||''),
+      company:(k.company||'')
+    };
+  });
+}
 let NOTICES = [];                  // お知らせ・注意事項ボード [{row, ts, name, body}]（新しい順で描画）
 let MAPPOINTS = [];                // 排雪マップの地点 [{row,name,planStart,planEnd,doneDate,manager,x,y,note,type,color,points,status}]
 let addingPoint = false;           // 地点追加モード（地図クリックで配置）
@@ -2163,8 +2233,8 @@ function mockCurrentNendo(){
   return '令和' + (fy - 2018) + '年度';
 }
 const mockStore = {
-  config: {lead:30, jv:'厚別建設 企業体', district:'厚別区北地区', year:mockCurrentNendo(),
-           defaultEmail:'genba-kanri@example.com', signature:'厚別建設 企業体　管理部',
+  config: {lead:30, jv:'北日本重機ほか7社道路維持除雪共同企業体', district:'厚別区北地区', year:mockCurrentNendo(),
+           defaultEmail:'genba-kanri@example.com', signature:'北日本重機ほか7社道路維持除雪共同企業体　管理部',
            calendarUrl:'https://calendar.google.com/calendar/embed?src=atsukitazyosetsu%40gmail.com&ctz=Asia%2FTokyo',
            mapUrl:'map.png', mapUrl2:''},
   machines: [
@@ -2388,6 +2458,8 @@ async function loadData(){
   const res = await callApi({action:'list'});
   if(res && res.ok){
     CONFIG   = res.config || CONFIG;
+    // 企業体名：未設定または旧プレースホルダなら正式名称を使用
+    if(!CONFIG.jv || CONFIG.jv==='○○建設 企業体' || CONFIG.jv==='厚別建設 企業体') CONFIG.jv = JV_NAME;
     MACHINES = Array.isArray(res.machines) ? res.machines : [];
     {
       // 提出物の中に紛れ込む「安全日報の台数」レコード（年度='__REPMACH__'）を分離
@@ -2478,8 +2550,18 @@ async function loadData(){
       });
       if(!ROUTE_SAVED && ROUTE_ROW==null){ ROUTE_SAVED = defaultRoute(); }
       if(!ROUTE_SAVED){ ROUTE_SAVED = defaultRoute(); }
+      // GPS端末（官貸車）レコード（年度='__GPSTERM__'）を分離
+      GPSTERM_ROW = null; GPSTERM = [];
+      rawSubs.forEach(function(s){
+        if((s.year||'') === '__GPSTERM__'){
+          GPSTERM_ROW = s.row;
+          try{ const o = JSON.parse(s.note||'{}'); if(o && Array.isArray(o.kans)) GPSTERM = normalizeGpsterm(o.kans); }catch(e){}
+        }
+      });
       // 提出物タブには各マーカーを出さない
-      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__' && y !== '__HS__' && y !== '__DESIGN__' && y !== '__CAL__' && y !== '__CHECK__' && y !== '__MREG__' && y !== '__ROUTE__'; });
+      SUBMISSIONS = rawSubs.filter(function(s){ const y=(s.year||''); return y !== '__REPMACH__' && y !== '__SETTINGS__' && y !== '__UNPAN__' && y !== '__HS__' && y !== '__DESIGN__' && y !== '__CAL__' && y !== '__CHECK__' && y !== '__MREG__' && y !== '__ROUTE__' && y !== '__GPSTERM__'; });
+      // デモ表示用：GPS割当のサンプルを用意（本番では実データのみ）
+      if(DEMO) seedDemoGps();
     }
     if(Array.isArray(res.docs) && res.docs.length) DOCS = res.docs;
     if(Array.isArray(res.subStatus) && res.subStatus.length) SUB_STATUS = res.subStatus;
@@ -4249,6 +4331,169 @@ function renderCompanyDatalist(){
     companyList().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
 }
 
+/*──────── GPS端末（全47端末の台帳＋官貸車管理。__GPSTERM__マーカーで全員共有保存） ────────*/
+// ある端末番号の割当を集める（機械調書のGPS機械＋官貸車）
+function gpsAssignments(termno){
+  termno = String(termno||'').trim(); if(!termno) return [];
+  var out = [];
+  MREG.forEach(function(m){
+    if(m.gps && String(m.termno||'').trim()===termno){
+      out.push({src:'mreg', company:(m.company||''), label:(m.name||'（機械名未設定）')});
+    }
+  });
+  GPSTERM.forEach(function(k){
+    if(String(k.termno||'').trim()===termno){
+      var nm = [k.kind, k.carno].filter(Boolean).join(' ');
+      out.push({src:'kan', company:(k.company||''), label:(nm||'官貸車')});
+    }
+  });
+  return out;
+}
+function gpsKanStateHtml(k){
+  var t = String(k.termno||'').trim();
+  if(!t) return '<span class="gps-off">端末未設定</span>';
+  return (gpsAssignments(t).length>1) ? '<span class="gps-dupwarn">⚠重複</span>' : '<span class="gps-on">装着</span>';
+}
+// デモ用サンプル割当（本番では実データのみ）
+function seedDemoGps(){
+  try{
+    var terms=['札幌市貸与0523','札幌市貸与0524','札幌市貸与0525','厚別区北地区01'], c=0;
+    for(var i=0;i<MREG.length && c<terms.length;i++){ if(!MREG[i].gps){ MREG[i].gps=true; MREG[i].termno=terms[c]; c++; } }
+  }catch(e){}
+  if(!GPSTERM.length){
+    GPSTERM = normalizeGpsterm([
+      {termno:'札幌市貸与0540', kind:'G',  carno:'80-27', company:'開北工業㈱'},
+      {termno:'札幌市貸与0541', kind:'SR', carno:'18-23', company:'陸奥建設㈱'},
+      {termno:'厚別区北地区05', kind:'G',  carno:'27-16', company:'小橋北豊㈱'}
+    ]);
+  }
+}
+function renderGpsterm(){
+  var dlt=document.getElementById('gps-term-list');
+  if(dlt && !dlt.childNodes.length) dlt.innerHTML = MREG_TERMS.map(function(t){ return '<option value="'+esc(t)+'">'; }).join('');
+  var dlk=document.getElementById('gps-kind-list');
+  if(dlk && !dlk.childNodes.length) dlk.innerHTML = GPSTERM_KINDS.map(function(t){ return '<option value="'+esc(t)+'">'; }).join('');
+  var dlc=document.getElementById('gps-comp-list');
+  if(dlc) dlc.innerHTML = companyList().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
+  renderGpstermMaster();
+  renderGpstermKan();
+  var admEdit = (isAdmin() && !READONLY);
+  var db=document.getElementById('gps-del-btn'); if(db) db.style.display = admEdit ? '' : 'none';
+  var ab=document.getElementById('gps-add-btn'); if(ab) ab.style.display = admEdit ? '' : 'none';
+}
+function renderGpstermMaster(){
+  var tb=document.getElementById('gps-master-body'); if(!tb) return;
+  var used=0, dup=0;
+  tb.innerHTML = MREG_TERMS.map(function(t){
+    var asg = gpsAssignments(t);
+    var on = asg.length>0; if(on) used++;
+    var isDup = asg.length>1; if(isDup) dup++;
+    var cell;
+    if(!asg.length){ cell = '<span class="gps-empty">空き</span>'; }
+    else {
+      cell = asg.map(function(a){
+        var tag = a.src==='mreg' ? '<span class="gps-srctag mreg">機械調書</span>' : '<span class="gps-srctag kan">官貸車</span>';
+        return '<div class="gps-asg">'+tag+esc(a.label)+(a.company? ' <span class="gps-comp">'+esc(a.company)+'</span>':'')+'</div>';
+      }).join('');
+    }
+    var cls = isDup ? 'gps-dup' : (on ? '' : 'gps-free');
+    return '<tr class="'+cls+'">'
+      + '<td class="mono gps-tno">'+esc(t)+'</td>'
+      + '<td class="gps-kindcol">'+esc(termKind(t))+'</td>'
+      + '<td class="gps-statecol">'+(on?'<span class="gps-on">装着</span>':'<span class="gps-off">空き</span>')+(isDup?' <span class="gps-dupwarn">⚠重複</span>':'')+'</td>'
+      + '<td class="gps-asgcol">'+cell+'</td>'
+      + '</tr>';
+  }).join('');
+  var s=document.getElementById('gps-master-total');
+  if(s) s.textContent = '全'+MREG_TERMS.length+'端末 ／ 装着 '+used+' ／ 空き '+(MREG_TERMS.length-used)+(dup? ' ／ ⚠重複 '+dup:'');
+}
+function renderGpstermKan(){
+  var tb=document.getElementById('gps-kan-body'); if(!tb) return;
+  var editable = !READONLY, admin = isAdmin();
+  var head=document.getElementById('gps-kan-head');
+  if(head){
+    var hc='';
+    if(editable && admin) hc += '<th class="mreg-selcol"><input type="checkbox" title="全選択" onclick="gpsKanSelAll(this)"></th>';
+    hc += '<th>端末番号</th><th>区分</th><th>機種</th><th>車号</th><th>企業名</th><th class="stat">状態</th>';
+    head.innerHTML = '<tr>'+hc+'</tr>';
+  }
+  var span = (editable&&admin?1:0) + 6;
+  if(!GPSTERM.length){
+    tb.innerHTML = '<tr><td colspan="'+span+'" class="empty" style="border:none">官貸車は登録されていません。'+(editable&&admin?'「＋ 官貸車を追加」から登録してください。':'')+'</td></tr>';
+    return;
+  }
+  tb.innerHTML = GPSTERM.map(function(k){
+    var t = String(k.termno||'').trim();
+    var isDup = t && gpsAssignments(t).length>1;
+    var missing = !t;
+    if(editable){
+      var id=esc(k.id);
+      return '<tr data-id="'+id+'"'+(isDup?' class="gps-dup"':'')+'>'
+        + (admin? '<td class="mreg-selcell"><input type="checkbox" class="gps-sel" data-id="'+id+'"></td>':'')
+        + '<td><input class="mreg-in mreg-term'+(missing?' mreg-term-missing':'')+'" list="gps-term-list" value="'+esc(k.termno)+'" placeholder="端末番号" oninput="gpsKanSet(\''+id+'\',\'termno\',this.value,this)"></td>'
+        + '<td class="gps-kindcol">'+esc(termKind(k.termno))+'</td>'
+        + '<td><input class="mreg-in" list="gps-kind-list" value="'+esc(k.kind)+'" placeholder="機種" oninput="gpsKanSet(\''+id+'\',\'kind\',this.value)"></td>'
+        + '<td><input class="mreg-in" value="'+esc(k.carno)+'" placeholder="車号" oninput="gpsKanSet(\''+id+'\',\'carno\',this.value)"></td>'
+        + '<td><input class="mreg-in" list="gps-comp-list" value="'+esc(k.company)+'" placeholder="企業名" oninput="gpsKanSet(\''+id+'\',\'company\',this.value)"></td>'
+        + '<td class="gps-statecol">'+gpsKanStateHtml(k)+'</td>'
+        + '</tr>';
+    }
+    return '<tr'+(isDup?' class="gps-dup"':'')+'>'
+      + '<td class="mono gps-tno">'+esc(k.termno||'—')+'</td>'
+      + '<td class="gps-kindcol">'+esc(termKind(k.termno))+'</td>'
+      + '<td>'+esc(k.kind||'')+'</td>'
+      + '<td>'+esc(k.carno||'')+'</td>'
+      + '<td>'+esc(k.company||'')+'</td>'
+      + '<td class="gps-statecol">'+gpsKanStateHtml(k)+'</td>'
+      + '</tr>';
+  }).join('');
+}
+function gpsKanFind(id){ return GPSTERM.find(function(k){ return k.id===id; }); }
+function gpsKanSet(id, field, val, el){
+  if(READONLY) return;
+  var k=gpsKanFind(id); if(!k) return;
+  k[field]=val;
+  if(field==='termno' && el){
+    el.classList.toggle('mreg-term-missing', !String(val||'').trim());
+    var tr=el.closest('tr');
+    if(tr){ var kc=tr.querySelector('.gps-kindcol'); if(kc) kc.textContent=termKind(val); var st=tr.querySelector('.gps-statecol'); if(st) st.innerHTML=gpsKanStateHtml(k); if(gpsAssignments(String(val||'').trim()).length>1) tr.classList.add('gps-dup'); else tr.classList.remove('gps-dup'); }
+    renderGpstermMaster();  // 上の一覧（別テーブル）を更新：入力中フォーカスに影響なし
+  }
+  gpsKanSaveDebounced();
+}
+function gpsKanAdd(){
+  if(READONLY || !isAdmin()){ toast('管理者のみ追加できます'); return; }
+  var row=normalizeGpsterm([{termno:'',kind:'',carno:'',company:''}])[0];
+  GPSTERM.push(row);
+  renderGpsterm();
+  gpsKanSave(true);
+  setTimeout(function(){ var tr=document.querySelector('#gps-kan-body tr[data-id="'+row.id+'"]'); if(tr){ var inp=tr.querySelector('input.mreg-term'); if(inp) inp.focus(); tr.scrollIntoView({block:'center'}); } }, 40);
+}
+function gpsKanSelAll(cb){ Array.prototype.forEach.call(document.querySelectorAll('#gps-kan-body .gps-sel'), function(x){ x.checked=cb.checked; }); }
+function gpsKanDelSelected(){
+  if(READONLY || !isAdmin()){ toast('管理者のみ削除できます'); return; }
+  var ids=Array.prototype.map.call(document.querySelectorAll('#gps-kan-body .gps-sel:checked'), function(x){ return x.getAttribute('data-id'); });
+  if(!ids.length){ toast('削除する行の左端にチェックを入れてください'); return; }
+  if(!confirm('チェックした '+ids.length+' 件の官貸車を削除します。よろしいですか？')) return;
+  GPSTERM = GPSTERM.filter(function(k){ return ids.indexOf(k.id)<0; });
+  renderGpsterm();
+  gpsKanSave(true);
+}
+var _gpsSaveTimer=null;
+function gpsKanSaveDebounced(){ if(_gpsSaveTimer) clearTimeout(_gpsSaveTimer); _gpsSaveTimer=setTimeout(function(){ gpsKanSave(false); }, 800); }
+async function gpsKanSave(showToast){
+  if(READONLY) return;
+  var sub={year:'__GPSTERM__', company:'GPS端末', doc:'kans', status:'', date:'', link:'', note:JSON.stringify({kans:GPSTERM})};
+  if(GPSTERM_ROW!=null) sub.row=GPSTERM_ROW;
+  var res=await callApi({action:'saveSub', sub:sub});
+  if(res && res.ok){
+    if(!offline && res.row!=null) GPSTERM_ROW=res.row;
+    if(showToast) toast(offline ? '保存しました（オフライン：この端末のみ・共有されていません）' : 'GPS端末（官貸車）を保存しました');
+  }else{
+    toast('GPS端末の保存に失敗しました'+(res && res.error?'：'+res.error:''));
+  }
+}
+
 /*════════════════ 提出物管理 ════════════════*/
 function subStatusColor(status){
   if(status==='提出済' || status==='確認済') return {bg:'#e7f5ec', fg:'#1a7f4b'};
@@ -5701,6 +5946,7 @@ function openHaisetsuNewTab(){
 /*──────── 役割（権限）に応じたタブ表示・編集可否 ────────*/
 const TAB_RENDER = {
   route:   function(){ renderRoute(); },
+  gpsterm: function(){ renderGpsterm(); },
   home:    function(){ renderHome(); renderCalendar(); },
   alert:   function(){ renderMreg(); },
   map:     function(){ renderMap(); renderUnpan(); },
